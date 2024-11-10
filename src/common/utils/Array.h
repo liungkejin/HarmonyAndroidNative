@@ -18,7 +18,7 @@ public:
     Array() {}
 
     Array(const Array &other) : m_capacity(other.m_capacity),
-                                m_data_size(other.m_data_size),
+                                m_put_size(other.m_put_size),
                                 m_data(other.m_data), Object(other) {}
 
     ~Array() {
@@ -68,9 +68,17 @@ public:
         size_t unitSize = sizeof(T);
         uint8_t *dst = obtainBytes(size * unitSize, strict);
         memcpy(dst, src, size * unitSize);
-        m_data_size = size * unitSize;
+        m_put_size = size * unitSize;
 
-        return m_data_size / sizeof(T);
+        return m_put_size / sizeof(T);
+    }
+
+    /**
+     * 注意： 这里只有在 put 之后才能使用 size() 方法
+     */
+    template<typename T>
+    int size() {
+        return m_put_size / sizeof(T);
     }
 
     void free() {
@@ -104,7 +112,7 @@ private:
 private:
     uint8_t *m_data = nullptr;
     size_t m_capacity = 0;
-    size_t m_data_size = 0;
+    size_t m_put_size = 0;
 };
 
 NAMESPACE_END

@@ -70,6 +70,8 @@ include_directories(src)
 add_library(${PROJ_NAME} SHARED
         src/common/utils/Log.cpp
         src/common/Common.cpp
+        src/common/gles/GLUtil.cpp
+        src/common/gles/EGLCtx.cpp
         ${PLATFORM_SOURCES}
 )
 
@@ -85,6 +87,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             jnigraphics
             GLESv2
             GLESv3
+            EGL
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM_SOURCES
