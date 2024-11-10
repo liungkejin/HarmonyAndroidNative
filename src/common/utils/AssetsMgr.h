@@ -175,7 +175,7 @@ public:
         return openDir(path) != nullptr;
     }
 
-    RawData read(const char *path) {
+    RawData readAll(const char *path) {
         auto file = openFile(path);
         if (file == nullptr) {
             return {};
