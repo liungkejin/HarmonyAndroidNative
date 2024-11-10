@@ -3,14 +3,14 @@
 //
 
 #include <android/asset_manager_jni.h>
-#include "AppContext.h"
+#include "common/AppContext.h"
 #include "android/utils/JNIUtils.h"
+#include "android/utils/AssetsMgrAndroid.h"
 
 NAMESPACE_DEFAULT
 
-struct Context {
-
-    AssetsMgr *asset_mgr = nullptr;
+struct AndroidContext {
+    AssetsMgrAndroid *asset_mgr = nullptr;
     jobject asset_mgr_global_obj = nullptr;
 
     std::string files_dir;
@@ -21,7 +21,7 @@ struct Context {
 
     int sdk_int = 0;
 };
-static Context g_context;
+static AndroidContext g_context;
 static bool initialized() {
     return g_context.asset_mgr != nullptr;
 }
@@ -82,13 +82,13 @@ void AppContext::initialize(JNIEnv *env, jobject context) {
         g_context.asset_mgr_global_obj = env->NewGlobalRef(localAssetMgr);
         AAssetManager *mgr = AAssetManager_fromJava(env, g_context.asset_mgr_global_obj);
         _FATAL_IF(mgr == nullptr, "AAssetManager_fromJava failed")
-        g_context.asset_mgr = new AssetsMgr(mgr);
+        g_context.asset_mgr = new AssetsMgrAndroid(mgr);
     }
 }
 
-AssetsMgr& AppContext::assetManager() {
+AssetsMgr* AppContext::assetsManager() {
     _FATAL_IF(!initialized(), "AppContext not initialized")
-    return *g_context.asset_mgr;
+    return (AssetsMgr *)g_context.asset_mgr;
 }
 
 int AppContext::sdkInt() {
@@ -103,7 +103,7 @@ int AppContext::sdkInt() {
     return g_context.sdk_int;
 }
 
-std::string AppContext::pkgName() {
+std::string AppContext::bundleName() {
     _FATAL_IF(!initialized(), "AppContext not initialized")
     return g_context.package_name;
 }

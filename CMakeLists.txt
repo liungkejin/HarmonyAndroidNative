@@ -70,7 +70,6 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM_SOURCES
             src/android/AppContext.cpp
             src/android/utils/JNIUtils.cpp
-            src/android/utils/AssetsMgr.cpp
     )
     set(PLATFORM_LIBS
             android
@@ -84,7 +83,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM_SOURCES
             src/harmony/AppContext.cpp
             src/harmony/utils/NapiUtils.cpp
-            src/harmony/utils/AssetsMgr.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so

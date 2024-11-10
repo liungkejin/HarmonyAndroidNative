@@ -15,4 +15,6 @@
 #define DELETE_TO_NULL(ptr)  if (ptr) { delete ptr; ptr = nullptr; }
 #define DELETE_ARR_TO_NULL(ptr)  if (ptr) { delete [] ptr; ptr = nullptr; }
 
+#ifndef NAMESPACE_DEFAULT
 #define NAMESPACE_DEFAULT NAMESPACE_BEG(znative)
+#endif

@@ -88,4 +88,50 @@ void setLogFile(const char *path)
 #### AppContext.h
 
 ```cpp
+// 初始化 AppContext
+AppContext::initialize(xxx);
+
+// 初始化之后就可以获取 AssetsMgr
+AppContext::getAssetsMgr()
+```
+
+#### AssetsMgr.h
+
+```cpp
+bool isFile(const char *path) {
+    return openFile(path) != nullptr;
+}
+
+virtual bool isDirectory(const char *path) {
+    return openDir(path) != nullptr;
+}
+
+/**
+ * 打开目录
+ * @param path
+ * @return 没有文件夹打开失败返回 nullptr
+ */
+virtual std::shared_ptr<AssetDir> openDir(const char *path) = 0;
+
+std::shared_ptr<AssetFile> openFile(const char *path) {
+    return openFile(path, AssetsReadMode::STREAMING);
+}
+
+/**
+ * 打开文件
+ * @param path
+ * @return 没有文件打开失败返回 nullptr
+ */
+virtual std::shared_ptr<AssetFile> openFile(const char *path, AssetsReadMode mode) = 0;
+
+std::shared_ptr<AssetFile64> openFile64(const char *path) {
+    return openFile64(path, AssetsReadMode::STREAMING);
+}
+
+/**
+ * 打开大文件
+ * @param path
+ * @return 没有文件打开失败返回 nullptr
+ */
+virtual std::shared_ptr<AssetFile64> openFile64(const char *path, AssetsReadMode mode) = 0;
 ```

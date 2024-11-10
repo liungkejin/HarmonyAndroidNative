@@ -2,22 +2,28 @@
 // Created by LiangKeJin on 2024/11/9.
 //
 
-#include "AppContext.h"
+#include "common/AppContext.h"
+#include "harmony/utils/AssetsMgrHarmony.h"
 #include <bundle/native_interface_bundle.h>
 #include <rawfile/raw_file_manager.h>
 
+#include <memory>
+
 NAMESPACE_DEFAULT
 
-struct Context {
+struct HarmonyContext {
     napi_ref native_resource_mgr = nullptr;
-    AssetsMgr* assets_mgr = nullptr;
+    AssetsMgrHarmony *assets_mgr = nullptr;
+    std::string files_dir;
+    std::string cache_dir;
 };
-static Context g_context;
+static HarmonyContext g_context;
 static bool initialized() {
     return g_context.native_resource_mgr != nullptr;
 }
 
-void AppContext::initialize(napi_env &env, napi_value& jsResMgr) {
+void AppContext::initialize(napi_env &env, napi_value& jsResMgr,
+                            std::string& dirFiles, std::string& dirCache) {
     _WARN_RETURN_IF(initialized(), void(), "AppContext already initialized")
 
     NapiEnv napiEnv(env);
@@ -26,12 +32,15 @@ void AppContext::initialize(napi_env &env, napi_value& jsResMgr) {
     NativeResourceManager *resMgr = OH_ResourceManager_InitNativeResourceManager(
             env, napiEnv.getRefValue(g_context.native_resource_mgr));
     _FATAL_IF(resMgr == nullptr, "OH_ResourceManager_InitNativeResourceManager failed")
-    g_context.assets_mgr = new AssetsMgr(resMgr);
+    g_context.assets_mgr = new AssetsMgrHarmony(resMgr);
+
+    g_context.files_dir = dirFiles;
+    g_context.cache_dir = dirCache;
 }
 
-AssetsMgr& AppContext::assetsMgr() {
+AssetsMgr* AppContext::assetsManager() {
     _FATAL_IF(!initialized(), "AppContext::assetsMgr() called before initialized")
-    return *g_context.assets_mgr;
+    return (AssetsMgr *) g_context.assets_mgr;
 }
 
 std::string AppContext::appId() {
@@ -50,6 +59,16 @@ std::string AppContext::fingerprint() {
 
 std::string AppContext::identifier() {
     return OH_NativeBundle_GetAppIdentifier();
+}
+
+std::string AppContext::filesDir() {
+    _FATAL_IF(!initialized(), "AppContext not initialized")
+    return g_context.files_dir;
+}
+
+std::string AppContext::cacheDir() {
+    _FATAL_IF(!initialized(), "AppContext not initialized")
+    return g_context.cache_dir;
 }
 
 NAMESPACE_END
