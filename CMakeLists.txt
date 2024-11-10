@@ -5,6 +5,7 @@ project(${PROJ_NAME})
 
 set(CMAKE_CXX_STANDARD 14)
 
+option(SHARED_LIB "Build shared library" ON)
 option(OPENCV_ENABLE "Use OpenCV" OFF)
 option(LIBYUV_ENABLE "Use libyuv" ON)
 
@@ -67,12 +68,11 @@ if (${USE_LIBYUV})
 endif ()
 
 include_directories(src)
-add_library(${PROJ_NAME} SHARED
+set(COMMON_SOURCES
         src/common/utils/Log.cpp
         src/common/Common.cpp
         src/common/gles/GLUtil.cpp
         src/common/gles/EGLCtx.cpp
-        ${PLATFORM_SOURCES}
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
@@ -138,6 +138,26 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     )
 endif ()
 
+# install
+set(INSTALL_DIR ${CMAKE_SOURCE_DIR}/build/${PLATFORM}/install)
+install(FILES src/Namespace.h src/ZNative.h DESTINATION ${INSTALL_DIR}/include)
+install(DIRECTORY src/common DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY src/${PLATFORM} DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
+
+if (${BUILD_SHARED_LIBS})
+    add_library(${PROJ_NAME} SHARED
+            ${COMMON_SOURCES}
+            ${PLATFORM_SOURCES}
+    )
+else ()
+    add_library(${PROJ_NAME} STATIC
+            ${COMMON_SOURCES}
+            ${PLATFORM_SOURCES}
+    )
+    # TODO 静态库还需要安装依赖库
+endif ()
+
+install(TARGETS ${PROJ_NAME} DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
 
 target_link_libraries(${PROJ_NAME} PUBLIC
         ${PLATFORM_LIBS}

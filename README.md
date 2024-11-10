@@ -35,6 +35,7 @@ build/                   # 构建目录
             |_ arm64-v8a/ 
         |_ release/      # HarmonyOS Release 构建目录
             |_ arm64-v8a/ 
+   |_ install/           # 安装目录
 src/                     # 源码目录
     |_ android/          # Android 源码目录
     |_ harmony/          # HarmonyOS 源码目录
