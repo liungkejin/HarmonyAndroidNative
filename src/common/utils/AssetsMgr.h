@@ -9,6 +9,7 @@
 
 #include "Namespace.h"
 #include "common/utils/Array.h"
+#include "common/utils/RawData.h"
 #include "common/Object.h"
 #include <cstdint>
 #include <vector>
@@ -78,6 +79,18 @@ public:
 
 public:
 
+    RawData readAll() {
+        int64_t length = size();
+        if (length < 1) {
+            return {};
+        }
+        RawData data(length);
+        seek(0, AssetsSeekMode::MODE_SET);
+        int64_t readLength = read(data.data(), length);
+        _ERROR_RETURN_IF(readLength != length, RawData(), "readAll failed, read length(%d) != file length(%d)", readLength, length);
+        return data;
+    }
+
     /**
      * 读取所有数据
      * @return buffer
@@ -105,7 +118,7 @@ public:
         if (data == nullptr) {
             return "";
         }
-        return {(const char *) data, (uint64_t) length};
+        return {(const char *) data, (size_t) length};
     }
 
 protected:
@@ -160,6 +173,14 @@ public:
 
     virtual bool isDirectory(const char *path) {
         return openDir(path) != nullptr;
+    }
+
+    RawData read(const char *path) {
+        auto file = openFile(path);
+        if (file == nullptr) {
+            return {};
+        }
+        return file->readAll();
     }
 
     /**

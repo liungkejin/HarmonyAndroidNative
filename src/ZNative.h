@@ -6,12 +6,15 @@
 
 #pragma once
 
+#include "common/utils/BaseUtils.h"
+#include "common/utils/YuvUtils.h"
+#include "common/utils/Array.h"
+#include "common/utils/TimeUtils.h"
+#include "common/utils/AssetsMgr.h"
+#include "common/utils/EventppWrap.h"
+#include "common/utils/EventThread.h"
+#include "common/utils/FileUtils.h"
 #include "common/utils/Log.h"
 
-// 为了防止缩进，IDE 无法修改namespace的缩进
-#define NAMESPACE_BEG(ns) namespace ns {
-#define NAMESPACE_END }
-
-#ifndef NAMESPACE_DEFAULT
-#define NAMESPACE_DEFAULT NAMESPACE_BEG(znative)
-#endif
+#include "common/Object.h"
+#include "common/AppContext.h"
