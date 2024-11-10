@@ -5,7 +5,7 @@ project(${PROJ_NAME})
 
 set(CMAKE_CXX_STANDARD 14)
 
-option(SHARED_LIB "Build shared library" ON)
+option(BUILD_SHARED_LIB "Build shared library" ON)
 option(OPENCV_ENABLE "Use OpenCV" OFF)
 option(LIBYUV_ENABLE "Use libyuv" ON)
 
@@ -70,6 +70,7 @@ endif ()
 include_directories(src)
 set(COMMON_SOURCES
         src/common/utils/Log.cpp
+        src/common/utils/YuvUtils.cpp
         src/common/Common.cpp
         src/common/gles/GLUtil.cpp
         src/common/gles/EGLCtx.cpp
@@ -144,7 +145,7 @@ install(FILES src/Namespace.h src/ZNative.h DESTINATION ${INSTALL_DIR}/include)
 install(DIRECTORY src/common DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY src/${PLATFORM} DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
 
-if (${BUILD_SHARED_LIBS})
+if (${BUILD_SHARED_LIB})
     add_library(${PROJ_NAME} SHARED
             ${COMMON_SOURCES}
             ${PLATFORM_SOURCES}
