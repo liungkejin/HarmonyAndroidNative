@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "ZNative.h"
+#include "Namespace.h"
 
 NAMESPACE_DEFAULT
 

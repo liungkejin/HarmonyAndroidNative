@@ -66,6 +66,13 @@ if (${USE_LIBYUV})
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} yuv)
 endif ()
 
+include_directories(src)
+add_library(${PROJ_NAME} SHARED
+        src/common/utils/Log.cpp
+        src/common/Common.cpp
+        ${PLATFORM_SOURCES}
+)
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM_SOURCES
             src/android/AppContext.cpp
@@ -128,11 +135,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     )
 endif ()
 
-include_directories(src)
-add_library(${PROJ_NAME} SHARED
-        src/common/utils/Log.cpp
-        ${PLATFORM_SOURCES}
-)
 
 target_link_libraries(${PROJ_NAME} PUBLIC
         ${PLATFORM_LIBS}

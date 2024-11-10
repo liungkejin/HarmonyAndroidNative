@@ -10,7 +10,7 @@
 #include <string>
 #include <uv.h>
 #include <napi/native_api.h>
-#include "ZNative.h"
+#include "Namespace.h"
 
 
 #define NAPI_RETVAL_NOTHING

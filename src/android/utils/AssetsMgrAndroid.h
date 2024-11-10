@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "ZNative.h"
+#include "Namespace.h"
 #include "common/Object.h"
 #include "common/utils/Array.h"
 #include "common/utils/AssetsMgr.h"
