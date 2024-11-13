@@ -18,3 +18,8 @@
 
 #include "common/Object.h"
 #include "common/AppContext.h"
+
+#include "common/gles/GLUtil.h"
+#include "common/gles/GLEngine.h"
+#include "common/gles/filter/TextureFilter.h"
+#include "common/gles/filter/NV21Filter.h"

@@ -136,3 +136,30 @@ std::shared_ptr<AssetFile64> openFile64(const char *path) {
  */
 virtual std::shared_ptr<AssetFile64> openFile64(const char *path, AssetsReadMode mode) = 0;
 ```
+
+#### GLEngine.h
+
+非常方便的创建一个 GL 环境
+
+```cpp
+GLEngine engine("main", 3);
+engine.updateSurface(window, width, height);
+
+// 在 Android 上对应的是 NativeWindow, 需要自己管理 surface 的生命周期
+NativeWindow window = NativeWindow::fromSurface(env, jsurface);
+window.bindToGLEngine(engine);
+
+// 在 鸿蒙 上对应 XComponent，鸿蒙上有 XComponentGLBinder, 不需要管理 surface 的生命周期
+XComponentGLBinder binder(&engine);
+binder.bind("xcomponent_id");
+
+engine.postRender([](int width, int height) {
+    if (width == 0 || height == 0) {
+        return false; // 返回 false 表示不 swapbuffer
+    }
+    GLUtils::clearColor(0.0f, 0.0f, 0.0f, 1.0f);
+    return true; // 返回 true 表示swapbuffer
+});
+
+engine.destroy();
+```
