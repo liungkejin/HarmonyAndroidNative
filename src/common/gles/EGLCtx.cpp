@@ -8,7 +8,15 @@
 
 NAMESPACE_DEFAULT
 
-EGLCtx::EGLCtx(int version, EGLCtx *shared) : m_gl_version(version), m_shared_ctx(shared) {
+EGLCtx::EGLCtx(const char *name, int version) : m_name(name), m_gl_version(version) {
+    initialize(version, nullptr);
+}
+
+EGLCtx::EGLCtx(const char *name, EGLCtx &shared) : m_name(name), m_gl_version(shared.m_gl_version) {
+    initialize(shared.m_gl_version, shared.m_context);
+}
+
+void EGLCtx::initialize(int version, EGLContext sharedCtx) {
     m_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
     _FATAL_IF(m_display == EGL_NO_DISPLAY, "EGLCtx: Unable to get egl display")
 
@@ -17,13 +25,13 @@ EGLCtx::EGLCtx(int version, EGLCtx *shared) : m_gl_version(version), m_shared_ct
 
     int renderType = version == 2 ? EGL_OPENGL_ES2_BIT : EGL_OPENGL_ES3_BIT;
     int attribList[] = {
-        EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-        EGL_RED_SIZE, 8, 
-        EGL_GREEN_SIZE, 8,
-        EGL_BLUE_SIZE, 8,
-        EGL_ALPHA_SIZE, 8,
-        EGL_RENDERABLE_TYPE, renderType,
-        EGL_NONE
+            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
+            EGL_RED_SIZE, 8,
+            EGL_GREEN_SIZE, 8,
+            EGL_BLUE_SIZE, 8,
+            EGL_ALPHA_SIZE, 8,
+            EGL_RENDERABLE_TYPE, renderType,
+            EGL_NONE
     };
 
     result = eglChooseConfig(m_display, attribList, &m_configs, 1, &m_configs_size);
@@ -32,28 +40,14 @@ EGLCtx::EGLCtx(int version, EGLCtx *shared) : m_gl_version(version), m_shared_ct
     /* Create EGLContext from */
     int attrib_list[] = {EGL_CONTEXT_CLIENT_VERSION, version, EGL_NONE};
 
-    EGLContext sharedContext = shared != nullptr ? shared->m_context : nullptr;
-    m_context = eglCreateContext(m_display, m_configs, sharedContext, attrib_list);
+    m_context = eglCreateContext(m_display, m_configs, sharedCtx, attrib_list);
     _FATAL_IF(m_context == EGL_NO_CONTEXT, "EGLCtx: Unable to create egl context, version: %d", version)
 
-    _INFO("create egl context success! context: %p, version: %d, shared ctx: %p", m_context, version, shared);
+    _INFO("create (%s) egl context success! context: %p, version: %d, shared ctx: %p", m_name, m_context, version, sharedCtx);
 }
 
 EGLCtx::~EGLCtx() {
-    if (m_surface != EGL_NO_SURFACE) {
-        if (!eglDestroySurface(m_display, m_surface)) {
-            _WARN("~EGLCtx: destroy egl surface failed: %d", eglGetError());
-        }
-        m_surface = EGL_NO_SURFACE;
-    }
-    EGLContext ctx = m_context;
-    if (!eglDestroyContext(m_display, m_context)) {
-        _WARN("~EGLCtx: destroy egl context failed: %d", eglGetError());
-    }
-    if (!eglTerminate(m_display)) {
-        _WARN("~EGLCtx: destroy display failed = %d", eglGetError());
-    }    
-    _INFO("~EGLCtx: destroyed: %p", ctx);
+    destroy();
 }
 
 bool EGLCtx::makeCurrent(void *window) {
@@ -74,7 +68,7 @@ bool EGLCtx::makeCurrent(void *window) {
         return true;
     }
     
-    EGLNativeWindowType eglWindow = reinterpret_cast<EGLNativeWindowType>(window);
+    auto eglWindow = reinterpret_cast<EGLNativeWindowType>(window);
     
     // 此处启用SRGB模式会导致颜色发白
     // EGLint winAttribs[] = {EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR, EGL_NONE};
@@ -83,7 +77,7 @@ bool EGLCtx::makeCurrent(void *window) {
     _ERROR_RETURN_IF(m_surface == EGL_NO_SURFACE, false, "EGLCtx: Unable to create egl surface: %d", eglGetError())
 
     if (!eglMakeCurrent(m_display, m_surface, m_surface, m_context)) {
-        _ERROR("EGLCtx: eglMakeCurrent error: %d", eglGetError());
+        _WARN("EGLCtx: eglMakeCurrent error: %d", eglGetError());
         eglDestroySurface(m_display, m_surface);
         m_surface = EGL_NO_SURFACE;
         return false;
@@ -105,6 +99,28 @@ bool EGLCtx::swapBuffers() {
 
 void EGLCtx::setPtNs(int64_t ptNs) {
     //PFNEGLPRESENTATIONTIMEANDROIDPROC(m_display, m_surface, ptNs);
+}
+
+void EGLCtx::destroy() {
+    if (m_context == EGL_NO_CONTEXT) {
+        return;
+    }
+    if (m_surface != EGL_NO_SURFACE) {
+        if (!eglDestroySurface(m_display, m_surface)) {
+            _WARN("EGLCtx: destroy egl surface failed: %d", eglGetError());
+        }
+        m_surface = EGL_NO_SURFACE;
+    }
+    EGLContext ctx = m_context;
+    if (!eglDestroyContext(m_display, m_context)) {
+        _WARN("EGLCtx: destroy egl context failed: %d", eglGetError());
+    }
+    if (!eglTerminate(m_display)) {
+        _WARN("EGLCtx: destroy display failed = %d", eglGetError());
+    }
+    _INFO("EGLCtx(%s): destroyed: %p", m_name, ctx);
+    m_context = EGL_NO_CONTEXT;
+    m_display = EGL_NO_DISPLAY;
 }
 
 NAMESPACE_END

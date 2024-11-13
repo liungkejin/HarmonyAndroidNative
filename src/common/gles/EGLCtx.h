@@ -13,7 +13,9 @@ NAMESPACE_DEFAULT
 
 class EGLCtx {
 public:
-    EGLCtx(int version = 3, EGLCtx *shared = nullptr);
+    explicit EGLCtx(const char *name, int version = 3);
+
+    explicit EGLCtx(const char *name, EGLCtx &shared);
     
     ~EGLCtx();
 
@@ -28,21 +30,25 @@ public:
     
     void setPtNs(int64_t ptNs);
 
-private:
-    const int m_gl_version;
-    
-    EGLDisplay m_display;
-    int m_major, m_minor;
+    void destroy();
 
-    EGLConfig m_configs;
+private:
+    void initialize(int version, EGLContext sharedCtx);
+
+private:
+    const std::string m_name;
+    const int m_gl_version;
+
+    EGLDisplay m_display = EGL_NO_DISPLAY;
+    int m_major = 0, m_minor = 0;
+
+    EGLConfig m_configs = nullptr;
     int m_configs_size = 0;
 
-    EGLContext m_context;
+    EGLContext m_context = EGL_NO_CONTEXT;
     
     void *m_surface_window = nullptr;
     EGLSurface m_surface = EGL_NO_SURFACE;
-
-    EGLCtx *m_shared_ctx = nullptr;
 };
 
 NAMESPACE_END
