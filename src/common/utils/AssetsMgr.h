@@ -183,6 +183,14 @@ public:
         return file->readAll();
     }
 
+    std::string readText(const char *path) {
+        auto file = openFile(path);
+        if (file == nullptr) {
+            return "";
+        }
+        return file->readText();
+    }
+
     /**
      * 打开目录
      * @param path
