@@ -18,6 +18,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM "android")
     set(TARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
     # Android 的宏定义在 toolchain.cmake 中就定义了为 __ANDROID__
+    message(STATUS "android api: ${ANDROID_NATIVE_API_LEVEL}")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM "harmony")
     set(TARGET_ARCH ${OHOS_ARCH})
@@ -98,6 +99,18 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             src/harmony/utils/NapiUtils.cpp
             src/harmony/xcomp/XComponent.cpp
             src/harmony/xcomp/XCompGLBinder.cpp
+            src/harmony/cam/CamDevice.cpp
+            src/harmony/cam/CamInput.cpp
+            src/harmony/cam/CamManager.cpp
+            src/harmony/cam/CamUtils.cpp
+            src/harmony/cam/CaptureSession.cpp
+            src/harmony/cam/MetadataOutput.cpp
+            src/harmony/cam/PhotoOutput.cpp
+            src/harmony/cam/PreviewOutput.cpp
+            src/harmony/cam/VideoOutput.cpp
+            src/harmony/image/MDKImageReader.cpp
+            src/harmony/image/NativeImageReader.cpp
+            src/harmony/masset/MediaAssetMgr.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so
