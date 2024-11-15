@@ -82,7 +82,7 @@ class NIRImage : Object {
 public:
     NIRImage() : m_native(nullptr), m_own(false) {}
 
-    NIRImage(OHImageNative *img, bool own = true) : m_native(img), m_own(own) {
+    explicit NIRImage(OHImageNative *img, bool own = true) : m_native(img), m_own(own) {
         OHImageErrorCode error = OH_ImageNative_GetImageSize(m_native, &m_image_size);
         _ERROR_IF(error, "OH_ImageNative_GetImageSize, error: %d", error);
 
@@ -118,13 +118,13 @@ public:
 
     ImageComponent component(int i) {
         _FATAL_IF(i < 0 || i >= m_comp_size, "component index(%d) out of range(%d)", i, m_comp_size)
-        return ImageComponent(m_native, m_comp_types[i]);
+        return {m_native, m_comp_types[i]};
     }
 
 private:
     bool m_own;
     OHImageNative *m_native;
-    OHImageSize m_image_size;
+    OHImageSize m_image_size = {};
 
     uint32_t *m_comp_types = new uint32_t[8];
     size_t m_comp_size = 0;

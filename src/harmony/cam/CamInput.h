@@ -12,6 +12,7 @@
 NAMESPACE_DEFAULT
 
 class CamInput;
+
 class CaptureSession;
 
 class CamInputCallback {
@@ -25,15 +26,17 @@ class CamInput {
 
 public:
     CamInput(const CamDevice &device, Camera_Input *input);
+
     ~CamInput();
 
 public:
-    inline const CamDevice device() const { return m_device; }
+    inline const CamDevice& device() const { return m_device; }
 
     /**
      * 注册 onError 回调
      */
     CamErrorCode registerCallback(CamInputCallback *callback);
+
     /**
      * 注销回调
      */

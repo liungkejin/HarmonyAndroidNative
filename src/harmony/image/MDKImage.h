@@ -20,7 +20,7 @@ typedef struct OhosImageComponent MDKImageComponent;
 // 封装 ImageNative
 class MDKImage : Object {
 public:
-    MDKImage(MDKImageNative *img) : m_native(img) {}
+    explicit MDKImage(MDKImageNative *img) : m_native(img) {}
 
     MDKImage(napi_env env, napi_value value) {
         m_native = OH_Image_InitImageNative(env, value);

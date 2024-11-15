@@ -11,7 +11,7 @@
 #include "common/utils/BaseUtils.h"
 #include "CamDevice.h"
 #include "harmony/image/NIRImage.h"
-#include "harmony//masset/MediaAsset.h"
+#include "harmony/masset/MediaAsset.h"
 #include <cstdint>
 #include <ohcamera/photo_output.h>
 

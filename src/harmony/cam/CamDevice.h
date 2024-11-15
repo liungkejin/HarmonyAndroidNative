@@ -17,12 +17,16 @@ NAMESPACE_DEFAULT
 struct CamProfile {
 public:
     CamProfile() : format(CAMERA_FORMAT_YUV_420_SP), width(0), height(0), minFps(0), maxFps(0) {}
-    CamProfile(const Camera_Profile &p)
-        : format(p.format), width(p.size.width), height(p.size.height), minFps(0), maxFps(0) {}
-    CamProfile(const Camera_VideoProfile &p)
-        : format(p.format), width(p.size.width), height(p.size.height), minFps(p.range.min), maxFps(p.range.max) {}
+
+    explicit CamProfile(const Camera_Profile &p)
+            : format(p.format), width(p.size.width), height(p.size.height), minFps(0), maxFps(0) {}
+
+    explicit CamProfile(const Camera_VideoProfile &p)
+            : format(p.format), width(p.size.width), height(p.size.height), minFps(p.range.min), maxFps(p.range.max) {}
+
     CamProfile(const CamProfile &other)
-        : format(other.format), width(other.width), height(other.height), minFps(other.minFps), maxFps(other.maxFps) {}
+            : format(other.format), width(other.width), height(other.height), minFps(other.minFps),
+              maxFps(other.maxFps) {}
 
     CamProfile &operator=(const CamProfile &other) {
         format = other.format;
@@ -39,10 +43,10 @@ public:
         result.append(", ").append(std::to_string(width)).append("x").append(std::to_string(height));
         if (minFps != 0 || maxFps != 0) {
             result.append(", fps[")
-                .append(std::to_string(minFps))
-                .append(",")
-                .append(std::to_string(maxFps))
-                .append("]");
+                    .append(std::to_string(minFps))
+                    .append(",")
+                    .append(std::to_string(maxFps))
+                    .append("]");
         }
         result.append("}");
         return result;
@@ -59,17 +63,18 @@ public:
 // 封装 Camera_OutputCapability
 class CamOutputCapability {
 public:
-    CamOutputCapability(const Camera_OutputCapability *cap);
+    explicit CamOutputCapability(const Camera_OutputCapability *cap);
+
     ~CamOutputCapability() = default;
 
 public:
-    inline int previewProfileSize() const { return m_preview_profiles.size(); }
+    inline size_t previewProfileSize() const { return m_preview_profiles.size(); }
 
-    inline int photoProfileSize() const { return m_photo_profiles.size(); }
+    inline size_t photoProfileSize() const { return m_photo_profiles.size(); }
 
-    inline int videoProfileSize() const { return m_video_profiles.size(); }
+    inline size_t videoProfileSize() const { return m_video_profiles.size(); }
 
-    inline int metadataTypeSize() const { return m_metadata_types.size(); }
+    inline size_t metadataTypeSize() const { return m_metadata_types.size(); }
 
     /**
      * 找到最接近 expectWidth,expectHeight的同比例的预览分辨率
@@ -103,16 +108,27 @@ private:
 class CamDevice {
 public:
     CamDevice();
-    CamDevice(const Camera_Device *d);
+
+    explicit CamDevice(const Camera_Device *d);
+
     CamDevice(const CamDevice &d);
+
     ~CamDevice();
 
+public:
+
     CamDevice &operator=(const Camera_Device *d);
+
     CamDevice &operator=(const CamDevice &d);
 
-    bool operator==(const CamDevice &other) const { return cam_id != nullptr && other.cam_id != nullptr && strcmp(cam_id, other.cam_id) == 0; }
+    bool operator==(const CamDevice &other) const {
+        return cam_id != nullptr && other.cam_id != nullptr && strcmp(cam_id, other.cam_id) == 0;
+    }
+
     bool operator!=(const CamDevice &other) const { return !(*this == other); }
+
     bool operator<(const CamDevice &other) const { return strcmp(cam_id, other.cam_id) < 0; }
+
     bool operator>(const CamDevice &other) const { return strcmp(cam_id, other.cam_id) > 0; }
 
     inline char *id() const { return cam_id; }
@@ -140,20 +156,21 @@ private:
     Camera_Connection cam_connection_type;
 
     // 这里之所以不使用 const 是因为 Camera_Device 的 cameraId 是 char *
-    char *cam_id = nullptr;
+    char *cam_id;
 };
 
 class CamDeviceList {
 public:
     CamDeviceList() {}
+
     CamDeviceList(const CamDeviceList &other) {
         m_list.clear();
-        for (const auto &device : other.m_list) {
+        for (const auto &device: other.m_list) {
             m_list.push_back(device);
         }
     }
 
-    void add(const Camera_Device *d) { m_list.push_back(CamDevice(d)); }
+    void add(const Camera_Device *d) { m_list.emplace_back(d); }
 
     void add(const CamDevice &d) { m_list.push_back(d); }
 
@@ -176,7 +193,7 @@ public:
     }
 
     const CamDevice *findCamera(Camera_Position pos, Camera_Type type) {
-        for (const auto &device : m_list) {
+        for (const auto &device: m_list) {
             if (device.position() == pos && device.type() == type) {
                 return &device;
             }
@@ -187,7 +204,7 @@ public:
     void dump() const {
         _INFO(">>>Dumping camera device list, size(%d)", m_list.size());
         int index = 0;
-        for (const auto &device : m_list) {
+        for (const auto &device: m_list) {
             std::string s = device.toString();
             _INFO("camera(%d): %s", index, s.c_str());
             index += 1;

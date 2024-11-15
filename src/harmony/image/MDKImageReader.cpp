@@ -66,7 +66,7 @@ MDKImage MDKImageReader::readLatestImage() {
         return MDKImage(nullptr);
     }
     
-    return MDKImage(m_jni_env, js_image);
+    return {m_jni_env, js_image};
 }
 
 MDKImage MDKImageReader::readNextImage() {
@@ -76,7 +76,7 @@ MDKImage MDKImageReader::readNextImage() {
     int code = OH_Image_Receiver_ReadNextImage(m_native, &js_image);
     _ERROR_RETURN_IF(code != IMAGE_RESULT_SUCCESS, MDKImage(nullptr), "ReadNextImage failed. err code = %d", code)
 
-    return MDKImage(m_jni_env, js_image);
+    return {m_jni_env, js_image};
 }
 
 int MDKImageReader::setImageListener(MDKImageListener listener) {

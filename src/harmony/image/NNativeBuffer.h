@@ -16,7 +16,8 @@ NAMESPACE_DEFAULT
 // 封装 OH_NativeBuffer
 class NNativeBuffer : Object {
 public:
-    NNativeBuffer(int width, int height, int format, int usage, int stride) : m_owner(true) {
+    NNativeBuffer(int width, int height, int format, int usage, int stride) : m_owner(true), m_width(width), m_height(height),
+                                                                             m_format(format), m_usage(usage), m_stride(stride) {
         OH_NativeBuffer_Config config = {width, height, format, usage, stride};
         m_buffer = OH_NativeBuffer_Alloc(&config);
         _ERROR_IF(m_buffer == nullptr,

@@ -115,7 +115,7 @@ NNativeWindow *NativeImageReader::surface() {
     return m_window;
 }
 
-uint64_t NativeImageReader::surfaceId() {
+uint64_t NativeImageReader::surfaceId() const {
     //    _FATAL_IF(!m_native, "NativeImageReader not created while call surfaceId()")
     //
     //    uint64_t id = 0;
@@ -158,7 +158,7 @@ NIRImage NativeImageReader::readNextImage() {
 int NativeImageReader::setImageListener(NativeImageListener *listener) {
     _FATAL_IF(!m_native, "NativeImageReader not create")
 
-    Image_ErrorCode error;
+    Image_ErrorCode error = IMAGE_SUCCESS;
     if (listener) {
         if (!g_callback_mgr.hasAnyCallback(m_native)) {
             error = OH_ImageReceiverNative_On(m_native, onImageReceiverCallback);

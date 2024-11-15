@@ -30,15 +30,15 @@ public:
 
     int create(uint32_t width, uint32_t height, int32_t capacity);
 
-    inline int width() const { return m_width; }
+    inline int width() const { return (int) m_width; }
     
-    inline int height() const { return m_height; }
+    inline int height() const { return (int) m_height; }
     
     inline int capacity() const { return m_capacity; }
     
     NNativeWindow *surface();
 
-    uint64_t surfaceId();
+    uint64_t surfaceId() const;
     
     const char *surfaceIdString();
 

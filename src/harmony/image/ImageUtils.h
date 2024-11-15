@@ -14,7 +14,7 @@ NAMESPACE_DEFAULT
 
 class ImageUtils {
 public:
-    static const char *errorString(int code) {
+    static std::string errorString(int code) {
         switch (code) {
         case IMAGE_SUCCESS :
             return "SUCCESS";
@@ -47,12 +47,11 @@ public:
         case IMAGE_ENCODE_FAILED :
             return "ENCODE_FAILED";
         default :
-            _WARN("Unknown error code: %d", code);
-            return "UNKNOWN_ERROR";
+            return std::string("UNKNOWN_ERROR_CODE_") + std::to_string(code);
         }
     }
 
-    static const char *formatString(int format) {
+    static std::string formatString(int format) {
         switch (format) {
         case PIXEL_FORMAT_RGB_565 :
             return "PIXEL_FORMAT_RGB_565";
@@ -77,8 +76,7 @@ public:
         case PIXEL_FORMAT_YCRCB_P010 :
             return "PIXEL_FORMAT_YCRCB_P010";
         default :
-            _WARN("Unknown pixel format: %d", format);
-            return "UNKNOWN_PIXEL_FORMAT";
+            return std::string("UNKNOWN_FORMAT_") + std::to_string(format);
         }
     }
 

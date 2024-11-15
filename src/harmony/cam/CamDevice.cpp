@@ -16,8 +16,8 @@ static const CamProfile *findExpectProfile(const std::vector<CamProfile> &profil
     const CamProfile *result = nullptr;
     long delta = LONG_MAX;
     for (auto &p : profiles) {
-        int width = p.width;
-        int height = p.height;
+        int width = (int) p.width;
+        int height = (int) p.height;
         // 目前format没有用，所有的都是 JPEG 格式，但是内部又都是 NV21 格式
         if (width * expectHeight != height * expectWidth) {
             continue;
@@ -46,17 +46,17 @@ CamOutputCapability::CamOutputCapability(const Camera_OutputCapability *cap) {
     for (int i = 0; i < cap->previewProfilesSize; ++i) {
         Camera_Profile *profile = cap->previewProfiles[i];
         //_INFO("preview profile %d %dx%d", profile->format, profile->size.width, profile->size.height);
-        m_preview_profiles.push_back(CamProfile(*profile));
+        m_preview_profiles.emplace_back(*profile);
     }
     for (int i = 0; i < cap->photoProfilesSize; ++i) {
         Camera_Profile *profile = cap->photoProfiles[i];
         //_INFO("photo profile %d %dx%d", profile->format, profile->size.width, profile->size.height);
-        m_photo_profiles.push_back(CamProfile(*profile));
+        m_photo_profiles.emplace_back(*profile);
     }
     for (int i = 0; i < cap->videoProfilesSize; ++i) {
         Camera_VideoProfile *profile = cap->videoProfiles[i];
         //_INFO("video profile %d %dx%d", profile->format, profile->size.width, profile->size.height);
-        m_video_profiles.push_back(CamProfile(*profile));
+        m_video_profiles.emplace_back(*profile);
     }
     if (cap->supportedMetadataObjectTypes) {
         for (int i = 0; i < cap->metadataProfilesSize; ++i) {
@@ -64,7 +64,7 @@ CamOutputCapability::CamOutputCapability(const Camera_OutputCapability *cap) {
         }
     } else {
         _WARN_IF(cap->metadataProfilesSize, 
-            "Error metadataProfilesSize(%d) supportedMetadataObjectTypes == nullptr", cap->metadataProfilesSize);
+            "Error metadataProfilesSize(%d) supportedMetadataObjectTypes == nullptr", cap->metadataProfilesSize)
     }
 }
 
@@ -81,7 +81,7 @@ const CamProfile *CamOutputCapability::findVideoProfile(int expectWidth, int exp
 }
 
 bool CamOutputCapability::isMetadataSupported(Camera_MetadataObjectType type) {
-    for (auto &t : m_metadata_types) {
+    for (auto &t : m_metadata_types) { // NOLINT(*-use-anyofallof)
         if (t == type) {
             return true;
         }
@@ -130,7 +130,7 @@ CamDevice::CamDevice()
 
 CamDevice::CamDevice(const Camera_Device *d)
     : cam_position(d->cameraPosition), cam_type(d->cameraType), cam_connection_type(d->connectionType) {
-    int size = strlen(d->cameraId);
+    auto size = strlen(d->cameraId);
     cam_id = new char[size + 1];
     strcpy(cam_id, d->cameraId);
 }
@@ -146,23 +146,26 @@ CamDevice::~CamDevice() {
     cam_id = nullptr;
 }
 
-CamDevice& CamDevice::operator=(const Camera_Device *d) { 
+CamDevice& CamDevice::operator=(const Camera_Device *d) {
     cam_position = d->cameraPosition;
     cam_type = d->cameraType;
     cam_connection_type = d->connectionType;
     delete[] cam_id;
-    int size = strlen(d->cameraId);
+    auto size = strlen(d->cameraId);
     cam_id = new char[size + 1];
     strcpy(cam_id, d->cameraId);
     return *this;
 }
 
 CamDevice& CamDevice::operator=(const CamDevice &d) {
+    if (this == &d) {
+        return *this;
+    }
     cam_position = d.cam_position;
     cam_type = d.cam_type;
     cam_connection_type = d.cam_connection_type;
     delete[] cam_id;
-    int size = strlen(d.cam_id);
+    auto size = strlen(d.cam_id);
     cam_id = new char[size + 1];
     strcpy(cam_id, d.cam_id);
     return *this;

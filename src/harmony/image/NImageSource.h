@@ -18,13 +18,13 @@ class NImageSource;
 
 class NImageInfo : Object {
 public:
-    NImageInfo(OH_ImageSourceNative *source, int index = 0) {
+    explicit NImageInfo(OH_ImageSourceNative *source, int index = 0) {
         Image_ErrorCode code = OH_ImageSourceInfo_Create(&m_info);
         _ERROR_IF(code != IMAGE_SUCCESS, "create image source info failed: %s", ImageUtils::errorString(code));
         code = OH_ImageSourceNative_GetImageInfo(source, index, m_info);
         _ERROR_IF(code != IMAGE_SUCCESS, "get image source info failed: %s", ImageUtils::errorString(code));
     }
-    NImageInfo(OH_ImageSource_Info *info) : m_info(info) {}
+    explicit NImageInfo(OH_ImageSource_Info *info) : m_info(info) {}
     
     NImageInfo(const NImageInfo &other) : m_info(other.m_info), Object(other) {};
 
@@ -75,7 +75,7 @@ public:
     }
 
 private:
-    OH_ImageSource_Info *m_info;
+    OH_ImageSource_Info *m_info = nullptr;
 };
 
 
@@ -214,12 +214,12 @@ class NImagePacker;
 class NImageSource : Object {
     friend class NImagePacker;
 public:
-    NImageSource(char *uri) {
+    explicit NImageSource(char *uri) {
         Image_ErrorCode code = OH_ImageSourceNative_CreateFromUri(uri, strlen(uri), &m_source);
         _ERROR_IF(code != IMAGE_SUCCESS, "create image source(%s) failed: %s", uri, ImageUtils::errorString(code));
     }
     
-    NImageSource(const std::string &filepath) {
+    explicit NImageSource(const std::string &filepath) {
         m_file = std::fopen(filepath.c_str(), "r");
         if (m_file == nullptr) {
             _ERROR("open file(%s) failed", filepath.c_str());
@@ -228,8 +228,8 @@ public:
         Image_ErrorCode code = OH_ImageSourceNative_CreateFromFd(fileno(m_file), &m_source);
         _ERROR_IF(code != IMAGE_SUCCESS, "create image source from file failed: %s", ImageUtils::errorString(code));
     }
-    
-    NImageSource(int32_t fd) {
+
+    explicit NImageSource(int32_t fd) {
         Image_ErrorCode code = OH_ImageSourceNative_CreateFromFd(fd, &m_source);
         _ERROR_IF(code != IMAGE_SUCCESS, "create image source from file descriptor failed: %s", ImageUtils::errorString(code));
     }
@@ -238,13 +238,13 @@ public:
         Image_ErrorCode code = OH_ImageSourceNative_CreateFromData(data, dataSize, &m_source);
         _ERROR_IF(code != IMAGE_SUCCESS, "create image source from memory failed: %s", ImageUtils::errorString(code));
     }
-    
-    NImageSource(RawFileDescriptor *rawFile) {
+
+    explicit NImageSource(RawFileDescriptor *rawFile) {
         Image_ErrorCode code = OH_ImageSourceNative_CreateFromRawFile(rawFile, &m_source);
         _ERROR_IF(code != IMAGE_SUCCESS, "create image source from raw file descriptor failed: %s", ImageUtils::errorString(code));
     }
-    
-    NImageSource(OH_ImageSourceNative *native) : m_source(native) {}
+
+    explicit NImageSource(OH_ImageSourceNative *native) : m_source(native) {}
     
     NImageSource(const NImageSource &other) : m_source(other.m_source), Object(other) {}
     
@@ -278,7 +278,7 @@ public:
         Image_ErrorCode code = OH_ImageSourceNative_GetImageProperty(m_source, &key, &value);
         _ERROR_RETURN_IF(code != IMAGE_SUCCESS, "", "get image source property failed: %s", ImageUtils::errorString(code));
         
-        return std::string(value.data, value.size);
+        return {value.data, value.size};
     }
     
     bool setProperty(const std::string &name, const std::string &value) {
@@ -324,14 +324,14 @@ public:
         std::vector<NPixelmap> result;
         _ERROR_RETURN_IF(!m_source, result, "Image source invalid!");
         
-        int fcount = frameCount();
-        OH_PixelmapNative **resVecPixMap = new OH_PixelmapNative*[fcount];
+        auto fcount = frameCount();
+        auto **resVecPixMap = new OH_PixelmapNative*[fcount];
         size_t outSize = fcount;
         Image_ErrorCode code = OH_ImageSourceNative_CreatePixelmapList(m_source, options.m_options, resVecPixMap, outSize);
         _ERROR_RETURN_IF(code != IMAGE_SUCCESS, result, "get frame list failed: %s", ImageUtils::errorString(code));
         
         for (size_t i = 0; i < outSize; i++) {
-            result.push_back(NPixelmap(resVecPixMap[i]));
+            result.emplace_back(resVecPixMap[i]);
         }
         return result;
     }
@@ -340,7 +340,7 @@ public:
         std::vector<int32_t> result;
         _ERROR_RETURN_IF(!m_source, result, "Image source invalid!");
         size_t size = frameCount();
-        int32_t *list = new int32_t[size];
+        auto *list = new int32_t[size];
         Image_ErrorCode code = OH_ImageSourceNative_GetDelayTimeList(m_source, list, size);
         if (code == IMAGE_SUCCESS) {
             for (size_t i = 0; i < size; i++) {
@@ -356,7 +356,7 @@ public:
     std::string toString() const {
         _ERROR_RETURN_IF(!m_source, "", "Image source invalid!");
         std::stringstream ss;
-        int fcount = frameCount();
+        auto fcount = frameCount();
         ss << "{frameCount: " << fcount << "\n";
         for (int i = 0; i < fcount; i++) {
             NImageInfo imgInfo = info(i);

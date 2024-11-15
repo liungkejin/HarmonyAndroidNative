@@ -33,7 +33,7 @@ typedef std::function<CamErrorCode(CaptureSession &session)> ConfigRunnable;
 // 封装 Camera_CaptureSession
 class CaptureSession {
 public:
-    CaptureSession(Camera_CaptureSession *session);
+    explicit CaptureSession(Camera_CaptureSession *session);
     ~CaptureSession();
 
 public:

@@ -25,7 +25,7 @@ static void onCameraStatusChange(Camera_Manager *mgr, Camera_StatusInfo *info) {
     }
     
     const std::string devInfo = dev.toString();
-    const char *statusStr = CamUtils::statusStr(status.m_status);
+    std::string statusStr = CamUtils::statusStr(status.m_status);
     _INFO("CamMgr: on camera(%s) status changed: %s, in using cameras: %d", devInfo.c_str(), statusStr, g_in_using_cameras.size());
     
     std::lock_guard<std::mutex> lock(g_list_mutex);
@@ -105,7 +105,7 @@ CamOutputCapability* CamManager::getCameraOutputCapability(const CamDevice &d) {
     CamErrorCode error = OH_CameraManager_GetSupportedCameraOutputCapability(getCamMgr(), &dev, &cap);
     _ERROR_RETURN_IF(error || !cap, nullptr, "Failed to get camera output capability, error: %ds", CamUtils::errString(error))
 
-    CamOutputCapability *camCap = new CamOutputCapability(cap);
+    auto *camCap = new CamOutputCapability(cap);
     // release
     error = OH_CameraManager_DeleteSupportedCameraOutputCapability(getCamMgr(), cap);
     _WARN_IF(error, "Failed to delete camera output capability, error: %s", CamUtils::errString(error));
@@ -197,7 +197,7 @@ VideoOutput *CamManager::createVideoOutput(const CamProfile *profile, const char
     return new VideoOutput(output, profile);
 }
 
-MetadataOutput *CamManager::createMetadataOutput(const Camera_MetadataObjectType type) {
+MetadataOutput *CamManager::createMetadataOutput(Camera_MetadataObjectType type) {
     Camera_MetadataOutput *output = nullptr;
     CamErrorCode error = OH_CameraManager_CreateMetadataOutput(getCamMgr(), &type, &output);
     _ERROR_RETURN_IF(error || !output, nullptr, "Failed to create metadata output, error: %s", CamUtils::errString(error))

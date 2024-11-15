@@ -19,7 +19,7 @@ typedef enum Camera_Status CamStatus;
 
 class CamStatusInfo {
 public:
-    CamStatusInfo(Camera_StatusInfo *info) : m_device(info->camera), m_status(info->status){};
+    explicit CamStatusInfo(Camera_StatusInfo *info) : m_device(info->camera), m_status(info->status){};
 
 public:
     CamDevice m_device;
@@ -100,7 +100,7 @@ public:
     /**
      * 创建一个 Metadata 输出
      */
-    static MetadataOutput *createMetadataOutput(const Camera_MetadataObjectType type);
+    static MetadataOutput *createMetadataOutput(Camera_MetadataObjectType type);
 
     /**
      * 释放 Camera_Manager
