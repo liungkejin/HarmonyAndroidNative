@@ -39,7 +39,7 @@ void AppContext::initialize(napi_env env, napi_value jsResMgr,
     g_context.cache_dir = dirCache;
 }
 
-NativeResourceManager *rawAssetsManager() {
+NativeResourceManager *AppContext::rawAssetsManager() {
     return g_context.raw_native_mgr;
 }
 
