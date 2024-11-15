@@ -7,7 +7,6 @@
 #pragma once
 
 #include "GLUtil.h"
-#include "common/utils/BaseUtils.h"
 #include "common/utils/Array.h"
 
 NAMESPACE_DEFAULT

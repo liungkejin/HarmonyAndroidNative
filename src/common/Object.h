@@ -16,7 +16,7 @@ class Object {
 public:
     inline bool no_reference() { return m_ref_ptr.use_count() <= 1; }
     
-    inline int reference_count() { return m_ref_ptr.use_count(); }
+    inline long reference_count() { return m_ref_ptr.use_count(); }
     
 private:
     std::shared_ptr<int> m_ref_ptr = std::make_shared<int>();

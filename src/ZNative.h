@@ -6,18 +6,7 @@
 
 #pragma once
 
-#include "common/utils/BaseUtils.h"
-#include "common/utils/YuvUtils.h"
-#include "common/utils/Array.h"
-#include "common/utils/TimeUtils.h"
-#include "common/utils/AssetsMgr.h"
-#include "common/utils/EventppWrap.h"
-#include "common/utils/EventThread.h"
-#include "common/utils/FileUtils.h"
-#include "common/utils/Log.h"
-
-#include "common/Object.h"
-#include "common/AppContext.h"
+#include "common/Common.h"
 
 #include "common/gles/GLUtil.h"
 #include "common/gles/GLEngine.h"

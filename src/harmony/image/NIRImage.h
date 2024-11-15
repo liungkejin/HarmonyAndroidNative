@@ -6,8 +6,7 @@
 
 #pragma once
 
-#include "common/Object.h"
-#include "common/utils/BaseUtils.h"
+#include "common/Common.h"
 #include "NNativeBuffer.h"
 #include <multimedia/image_framework/image/image_native.h>
 

@@ -6,9 +6,8 @@
 
 
 #pragma once
-#include "Namespace.h"
-#include "common/Object.h"
-#include "common/utils/BaseUtils.h"
+
+#include "common/Common.h"
 #include "CamDevice.h"
 #include "harmony/image/NIRImage.h"
 #include "harmony/masset/MediaAsset.h"

@@ -18,7 +18,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM "android")
     set(TARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
     # Android 的宏定义在 toolchain.cmake 中就定义了为 __ANDROID__
-    message(STATUS "android api: ${ANDROID_NATIVE_API_LEVEL}")
+    # message(STATUS "android api: ${ANDROID_NATIVE_API_LEVEL}")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM "harmony")
     set(TARGET_ARCH ${OHOS_ARCH})
@@ -32,6 +32,8 @@ message(STATUS "Build status: platform: ${PLATFORM}, arch: ${TARGET_ARCH}, build
 
 set(COM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/common)
 set(PLATFORM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/${PLATFORM})
+
+# message(STATUS "Platform libs path: ${PLATFORM_LIBS_PATH}")
 
 # tinyformat
 include_directories(${COM_LIBS_PATH}/tinyformat)
@@ -59,7 +61,7 @@ if (${OPENCV_ENABLE})
 endif ()
 
 # libyuv
-if (${USE_LIBYUV})
+if (${LIBYUV_ENABLE})
     message(STATUS "Use libyuv")
 
     set(libyuv_path ${PLATFORM_LIBS_PATH}/libyuv)
@@ -95,6 +97,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM_SOURCES
+            src/harmony/Harmony.cpp
             src/harmony/AppContext.cpp
             src/harmony/utils/NapiUtils.cpp
             src/harmony/xcomp/XComponent.cpp
@@ -111,6 +114,9 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             src/harmony/image/MDKImageReader.cpp
             src/harmony/image/NativeImageReader.cpp
             src/harmony/masset/MediaAssetMgr.cpp
+            src/harmony/media/audio/read/AudioReader.cpp
+            src/harmony/media/audio/AudioEncoder.cpp
+            src/harmony/media/video/VideoEncoder.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so

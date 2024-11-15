@@ -9,7 +9,7 @@
 #include "Namespace.h"
 #include "common/Object.h"
 #include "common/utils/Array.h"
-#include "common/utils/BaseUtils.h"
+#include "common/utils/Base.h"
 #include "common/utils/RawData.h"
 #include <cstddef>
 #include <cstdint>
