@@ -8,6 +8,7 @@
 #pragma once
 
 #include "Namespace.h"
+#include "common/Log.h"
 #include <ohaudio/native_audiostream_base.h>
 
 NAMESPACE_DEFAULT

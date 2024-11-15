@@ -9,6 +9,8 @@
 
 #include "Namespace.h"
 #include "common/Object.h"
+#include "common/Log.h"
+
 #include <cstdint>
 
 NAMESPACE_DEFAULT

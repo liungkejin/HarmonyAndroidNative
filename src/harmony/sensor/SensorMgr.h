@@ -9,6 +9,7 @@
 
 #include "Namespace.h"
 #include "common/Object.h"
+#include "common/Log.h"
 #include <cstdint>
 #include <sensors/oh_sensor.h>
 #include <sensors/oh_sensor_type.h>

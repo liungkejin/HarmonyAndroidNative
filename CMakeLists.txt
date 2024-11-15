@@ -73,7 +73,7 @@ endif ()
 include_directories(src)
 set(COMMON_SOURCES
         src/ZNative.cpp
-        src/common/utils/Log.cpp
+        src/common/Log.cpp
         src/common/utils/YuvUtils.cpp
         src/common/gles/GLUtil.cpp
         src/common/gles/EGLCtx.cpp

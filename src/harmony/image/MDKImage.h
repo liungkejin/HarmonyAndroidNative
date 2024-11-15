@@ -8,6 +8,7 @@
 
 #include <Namespace.h>
 #include <common/Object.h>
+#include <common/Log.h>
 #include <multimedia/image_framework/image_mdk.h>
 
 NAMESPACE_DEFAULT

@@ -6,6 +6,7 @@
 
 #include "CamInput.h"
 #include "common/utils/CallbackMgr.h"
+#include "common/Log.h"
 
 NAMESPACE_DEFAULT
 

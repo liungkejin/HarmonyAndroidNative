@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Namespace.h"
+#include "common/Log.h"
 #include <ohcamera/camera.h>
 
 NAMESPACE_DEFAULT

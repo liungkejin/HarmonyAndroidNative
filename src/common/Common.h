@@ -6,8 +6,8 @@
 
 #include "Namespace.h"
 #include "common/Object.h"
+#include "common/Log.h"
 
-#include "common/utils/Log.h"
 #include "common/utils/Base.h"
 #include "common/utils/YuvUtils.h"
 #include "common/utils/Array.h"

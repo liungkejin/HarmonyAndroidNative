@@ -11,6 +11,7 @@
 #include <uv.h>
 #include <napi/native_api.h>
 #include "Namespace.h"
+#include "common/Log.h"
 
 
 #define NAPI_RETVAL_NOTHING

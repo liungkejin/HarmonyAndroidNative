@@ -8,6 +8,7 @@
 #pragma once
 #include "Namespace.h"
 #include "common/Object.h"
+#include "common/Log.h"
 #include "harmony/media/AVUtils.h"
 #include <cstdint>
 #include <multimedia/player_framework/native_avcodec_videoencoder.h>

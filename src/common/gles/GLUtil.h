@@ -6,8 +6,9 @@
 
 #pragma once
 
-#include <common/Object.h>
-#include <common/utils/Base.h>
+#include "common/Object.h"
+#include "common/utils/Base.h"
+#include "common/Log.h"
 
 #ifdef __ANDROID__
 #include <GLES3/gl3.h>

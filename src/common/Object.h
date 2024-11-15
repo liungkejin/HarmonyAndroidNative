@@ -7,6 +7,8 @@
 #pragma once
 
 #include "Namespace.h"
+#include <cstdio>
+#include <iostream>
 
 NAMESPACE_DEFAULT
 

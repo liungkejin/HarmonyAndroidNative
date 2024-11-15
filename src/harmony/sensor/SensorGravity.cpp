@@ -5,6 +5,7 @@
 // please include "napi/native_api.h".
 
 #include "SensorGravity.h"
+#include "common/Log.h"
 
 NAMESPACE_DEFAULT
 

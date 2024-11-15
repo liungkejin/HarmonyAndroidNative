@@ -7,6 +7,7 @@
 
 #pragma once
 #include "Namespace.h"
+#include "common/Log.h"
 #include <cstdint>
 #include <multimedia/media_library/media_asset_base_capi.h>
 
