@@ -10,6 +10,7 @@
 #include <jni.h>
 #elif defined(__HARMONY_OS__)
 #include "harmony/utils/NapiUtils.h"
+#include <rawfile/raw_file_manager.h>
 #endif
 
 NAMESPACE_DEFAULT
@@ -26,6 +27,8 @@ public:
 #elif defined(__HARMONY_OS__)
     static void initialize(napi_env env, napi_value jsResMgr,
                            std::string& dirFiles, std::string& dirCache);
+
+    static NativeResourceManager *rawAssetsManager();
 
     static std::string appId();
 

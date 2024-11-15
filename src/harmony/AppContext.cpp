@@ -13,6 +13,7 @@ NAMESPACE_DEFAULT
 
 struct HarmonyContext {
     napi_ref native_resource_mgr = nullptr;
+    NativeResourceManager *raw_native_mgr = nullptr;
     AssetsMgrHarmony *assets_mgr = nullptr;
     std::string files_dir;
     std::string cache_dir;
@@ -29,13 +30,17 @@ void AppContext::initialize(napi_env env, napi_value jsResMgr,
     NapiEnv napiEnv(env);
     g_context.native_resource_mgr = napiEnv.createRef(jsResMgr);
 
-    NativeResourceManager *resMgr = OH_ResourceManager_InitNativeResourceManager(
+    g_context.raw_native_mgr = OH_ResourceManager_InitNativeResourceManager(
             env, napiEnv.getRefValue(g_context.native_resource_mgr));
-    _FATAL_IF(resMgr == nullptr, "OH_ResourceManager_InitNativeResourceManager failed")
-    g_context.assets_mgr = new AssetsMgrHarmony(resMgr);
+    _FATAL_IF(g_context.raw_native_mgr == nullptr, "OH_ResourceManager_InitNativeResourceManager failed")
+    g_context.assets_mgr = new AssetsMgrHarmony(g_context.raw_native_mgr);
 
     g_context.files_dir = dirFiles;
     g_context.cache_dir = dirCache;
+}
+
+NativeResourceManager *rawAssetsManager() {
+    return g_context.raw_native_mgr;
 }
 
 AssetsMgr* AppContext::assetsManager() {
