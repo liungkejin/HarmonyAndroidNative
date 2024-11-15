@@ -22,7 +22,7 @@ static bool initialized() {
     return g_context.native_resource_mgr != nullptr;
 }
 
-void AppContext::initialize(napi_env &env, napi_value& jsResMgr,
+void AppContext::initialize(napi_env env, napi_value jsResMgr,
                             std::string& dirFiles, std::string& dirCache) {
     _WARN_RETURN_IF(initialized(), void(), "AppContext already initialized")
 

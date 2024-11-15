@@ -24,7 +24,7 @@ public:
     static std::string externalFilesDir();
 
 #elif defined(__HARMONY_OS__)
-    static void initialize(napi_env &env, napi_value& jsResMgr,
+    static void initialize(napi_env env, napi_value jsResMgr,
                            std::string& dirFiles, std::string& dirCache);
 
     static std::string appId();
