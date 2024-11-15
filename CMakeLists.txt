@@ -117,6 +117,8 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             src/harmony/media/audio/read/AudioReader.cpp
             src/harmony/media/audio/AudioEncoder.cpp
             src/harmony/media/video/VideoEncoder.cpp
+            src/harmony/sensor/SensorGravity.cpp
+            src/harmony/sensor/SensorMgr.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so
@@ -156,6 +158,8 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             librawfile.z.so
             libohresmgr.so
             libbundle_ndk.z.so
+            libohsensor.so
+            libpixelmap_ndk.z.so
 
             ace_ndk.z
             uv
