@@ -23,12 +23,12 @@ class Demuxer {
 public:
     static Demuxer * open(const std::string& filepath, int64_t offset = 0, int64_t size = -1) {
         AVSource *source = AVSource::createWithFile(filepath, offset, size);
-        _ERROR_RETURN_IF(source == nullptr, nullptr, "Open source failed");
+        _ERROR_RETURN_IF(source == nullptr, nullptr, "Open source failed: %s", filepath);
         
         OH_AVDemuxer *demuxer = OH_AVDemuxer_CreateWithSource(source->value());
         if (demuxer == nullptr) {
             DELETE_TO_NULL(source);
-            _ERROR("Create demuxer failed! source: %s", filepath.c_str());
+            _ERROR("Create demuxer failed! source: %s", filepath);
             return nullptr;
         }
         return new Demuxer(demuxer, source);

@@ -26,7 +26,7 @@ public:
 
     static AVSource *createWithFile(const std::string &filepath, int64_t offset = 0, int64_t size = -1) {
         FILE *file = fopen(filepath.c_str(), "r");
-        _ERROR_RETURN_IF(!file, nullptr, "open file(%s) failed", filepath.c_str());
+        _WARN_RETURN_IF(!file, nullptr, "open file(%s) failed", filepath.c_str());
 
         int fd = fileno(file);
         if (size <= 0) {
@@ -35,11 +35,25 @@ public:
         OH_AVSource *source = OH_AVSource_CreateWithFD(fd, offset, size);
         if (source == nullptr) {
             fclose(file);
-            _ERROR("create AVSource failed with file(%s)", filepath);
+            _WARN("create AVSource failed with file(%s)", filepath);
             return nullptr;
         }
 
         return new AVSource(filepath, source, file);
+    }
+    
+    static int64_t getVideoDurUs(const std::string &filepath, bool checkValid) {
+        AVSource * source = createWithFile(filepath);
+        if (source == nullptr) {
+            return 0;
+        }
+        bool valid = source->hasAudioTrack() && source->hasVideoTrack();
+        int64_t durUs = source->durationUs();
+        if (checkValid && !valid) {
+            durUs = 0;
+        }
+        delete source;
+        return durUs;
     }
 
 public:
