@@ -184,3 +184,11 @@ engine.postRender([](int width, int height) {
 
 engine.destroy();
 ```
+
+## TODO LIST
+
+* [ ] 实现 Android 的 Camera 封装
+* [ ] 实现 Android 的 MediaCodec 封装
+* [ ] 实现 Android 的 AudioRecord 封装
+* [ ] 实现 Android 的 Sensor 封装
+* [ ] 实现双端的 Sample App
