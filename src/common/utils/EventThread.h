@@ -10,6 +10,7 @@
 #include "eventpp/eventqueue.h"
 #include "eventpp/callbacklist.h"
 #include "Namespace.h"
+#include "common/Log.h"
 #include <thread>
 
 NAMESPACE_DEFAULT

@@ -67,8 +67,10 @@ public:
 };
 
 static std::unordered_map<int64_t, SubscribedBox> g_subscription_map;
+static std::mutex g_mutex;
 
 int64_t SensorMgr::subscribe(Sensor_Type type, int64_t samplingInterval, Sensor_EventCallback callback) {
+    std::lock_guard<std::mutex> lock(g_mutex);
     auto info = findSensor(type);
     if (info == nullptr) {
         _ERROR("Not find sensor type of %d", type);
@@ -88,17 +90,18 @@ int64_t SensorMgr::subscribe(Sensor_Type type, int64_t samplingInterval, Sensor_
     SensorSubscriber subscriber;
     subscriber.setCallback(callback);
     auto error = OH_Sensor_Subscribe(id.m_id, attr.m_id, subscriber.m_id);
-    _ERROR_RETURN_IF(error, false, "OH_Sensor_Subscribe() failed, error: %d", error);
+    _WARN_RETURN_IF(error, 0, "OH_Sensor_Subscribe() failed, error: %d", error);
 
     auto subId = (int64_t) subscriber.m_id;
     g_subscription_map.insert(std::make_pair(subId, SubscribedBox(id, attr, subscriber)));
-//    g_subscription_map[subId] = SubscribedBox(id, subscriber);
     _INFO("SensorMgr subscribe sensor type: %d, sampling interval: %lld, subscription id: %lld", type, samplingInterval,
           subId);
     return subId;
 }
 
 void SensorMgr::unsubscribe(int64_t subId) {
+    std::lock_guard<std::mutex> lock(g_mutex);
+    
     auto it = g_subscription_map.find(subId);
     if (it != g_subscription_map.end()) {
         auto &box = it->second;
