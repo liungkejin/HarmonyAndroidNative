@@ -19,7 +19,28 @@ HarmonyAndroidNative 是一个对 HarmonyOS 和 Android Native API 的封装，
 再配置 CMake 的 profile，分别配置 HarmonyOS 和 Android 的 profile。
 
 <img src="./docs/screenshots/android-cmake-profile.png">
+
+CMake 选项：
+```text
+-G Ninja
+-DCMAKE_TOOLCHAIN_FILE=/Users/ikejin/Workspace/Android/sdk/ndk/22.1.7171670/build/cmake/android.toolchain.cmake
+-DANDROID_ABI=arm64-v8a
+-DANDROID_NDK=/Users/ikejin/Workspace/Android/sdk/ndk/22.1.7171670
+-DANDROID_NATIVE_API_LEVEL=android-21
+-DANDROID_TOOLCHAIN=clang
+-DANDROID_STL=c++_shared
+```
+
 <img src="./docs/screenshots/harmonyos-cmake-profile.png">
+
+CMake 选项：
+```text
+-G Ninja
+-DCMAKE_TOOLCHAIN_FILE=/Applications/DevEco-Studio.app/Contents/sdk/default/openharmony/native/build/cmake/ohos.toolchain.cmake
+-DOHOS_STL=c++_shared
+-DOHOS_PLATFORM=OHOS
+-DOHOS_ARCH=arm64-v8a
+```
 
 ### 项目结构
 
