@@ -269,7 +269,7 @@ class NapiUtils {
 public:
     static bool setCallback(const char *name, napi_env env, napi_value callback);
 
-    static bool callback(const char *name, int code);
+    static bool callback(const char *name, int code, bool delAfterCb=true);
 
     static void deleteCallback(const char *name);
 };

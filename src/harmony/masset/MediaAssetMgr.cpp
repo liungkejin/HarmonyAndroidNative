@@ -9,7 +9,13 @@
 
 NAMESPACE_DEFAULT
 
-MediaAssetMgr MediaAssetMgr::g_instance;
+static MediaAssetMgr *g_instance = nullptr;
+MediaAssetMgr& MediaAssetMgr::getInstance() {
+    if (g_instance == nullptr) {
+        g_instance = new MediaAssetMgr();
+    }
+    return *g_instance;
+}
 
 static std::mutex g_data_prepared_mutex;
 static std::unordered_map<std::string, ML_DataPreparedCallback> g_data_prepared_callbacks;
@@ -54,7 +60,7 @@ std::string MediaAssetMgr::requestPath(ML_MediaType mediaType, const char *uri, 
 }
 
 struct ImageRequest {
-    int callback_count;
+    ML_DeliveryMode mode;
     ML_ImageDataPreparedCallback callback;
 };
 static std::mutex g_image_data_prepared_mutex;
@@ -78,6 +84,7 @@ static void onImageDataPrepared(MediaLibrary_ErrorCode result, MediaLibrary_Requ
 
     std::string key(requestId.requestId);
     auto cb = g_image_data_prepared_callbacks.find(key);
+    // 如果回调还没有被注册那先保存起来, 只保存最新的一个
     if (cb == g_image_data_prepared_callbacks.end()) {
         ImageResult imageResult = {
             .result = result,
@@ -89,49 +96,51 @@ static void onImageDataPrepared(MediaLibrary_ErrorCode result, MediaLibrary_Requ
         return;
     }
     
-    cb->second.callback_count -= 1;
-    if (cb->second.callback_count < 1) {
+    // 如果已经注册了
+    auto & request = cb->second;
+    if (request.mode == MEDIA_LIBRARY_BALANCED_MODE && mediaQuality != MEDIA_LIBRARY_QUALITY_FULL) {
+        // 如果是分段拍摄，且没有请求到全质量图，那就表示还没结束
+    } else {
+        // 其他情况表示这个请求已经结束, 删除这个请求
         g_image_data_prepared_callbacks.erase(cb);
     }
     NImageSource source(imageSourceNative);
-    cb->second.callback(result, key, mediaQuality, type, source);
+    request.callback(result, key, mediaQuality, type, source);
 }
 
 std::string MediaAssetMgr::requestImage(OH_MediaAsset *asset, ML_DeliveryMode deliveryMode,
                                         ML_ImageDataPreparedCallback callback) {
-
-    MediaLibrary_RequestOptions options = {.deliveryMode = deliveryMode};
-
     MediaLibrary_RequestId requestId;
+    MediaLibrary_RequestOptions options = {.deliveryMode = deliveryMode};
     ML_ErrorCode error = OH_MediaAssetManager_RequestImage(getMgr(), asset, options, &requestId, onImageDataPrepared);
     _ERROR_RETURN_IF(error, "", "requestImage failed: %s", MAssetUtils::errString(error));
 
-    
-    ImageRequest request = {.callback_count = 1, .callback = callback};
-    if (deliveryMode == ML_DeliveryMode::MEDIA_LIBRARY_BALANCED_MODE) {
-        request.callback_count = 2;
-    }
-
     std::lock_guard<std::mutex> locker(g_image_data_prepared_mutex);
     std::string id(requestId.requestId);
-    if (g_image_data_prepared_callbacks.find(id) == g_image_data_prepared_callbacks.end()) {
-        g_image_data_prepared_callbacks.insert(std::make_pair(id, request));
-    }
+
+    // 检查是否已经有数据回调回来了
     auto imageData = g_image_data_map.find(id);
     if (imageData != g_image_data_map.end()) {
         // 数据先返回了
-        auto cb = g_image_data_prepared_callbacks.find(id);
-        cb->second.callback_count -= 1;
-        if (cb->second.callback_count < 1) {
-            g_image_data_prepared_callbacks.erase(cb);
-        }
         auto &imgResult = imageData->second;
         NImageSource source(imgResult.image_source_native);
-        cb->second.callback(imgResult.result, id, imgResult.media_quality, imgResult.type, source);
-        
+        callback(imgResult.result, id, imgResult.media_quality, imgResult.type, source);
         g_image_data_map.erase(imageData);
+
+        // 在判断是否已经结束
+        if (deliveryMode == MEDIA_LIBRARY_BALANCED_MODE && imgResult.media_quality != MEDIA_LIBRARY_QUALITY_FULL) {
+            // 如果是分段拍摄，且没有请求到全质量图，那就表示还没结束
+            ImageRequest request = {.mode = deliveryMode, .callback = callback};
+            g_image_data_prepared_callbacks.insert(std::make_pair(id, request));
+        } else {
+            // 其他情况表示这个请求已经结束, 则需要再 insert 这个请求
+        }
+    } else {
+        ImageRequest request = {.mode = deliveryMode, .callback = callback};
+        g_image_data_prepared_callbacks.insert(std::make_pair(id, request));
     }
 
+    _INFO("request id: %s", requestId.requestId);
     return id;
 }
 
@@ -147,7 +156,43 @@ bool MediaAssetMgr::cancelRequest(const std::string &id) {
 
     MediaLibrary_RequestId requestId;
     strcpy(requestId.requestId, id.c_str());
-    return OH_MediaAssetManager_CancelRequest(getMgr(), requestId);
+    auto result = OH_MediaAssetManager_CancelRequest(getMgr(), requestId);
+    _INFO("cancel req(%s) result: %d", id, result);
+    return result;
+}
+
+void MediaAssetMgr::cleanIdleRequests() {
+    _INFO("all idle image data requests: %d, data request: %d", g_image_data_prepared_callbacks.size(),
+          g_data_prepared_callbacks.size());
+    {
+        std::lock_guard<std::mutex> locker(g_data_prepared_mutex);
+        std::vector<std::string> ids;
+        for (auto &p : g_data_prepared_callbacks) {
+            ids.push_back(p.first);
+        }
+        for (auto &id : ids) {
+            g_data_prepared_callbacks.erase(id);
+            MediaLibrary_RequestId requestId;
+            strcpy(requestId.requestId, id.c_str());
+            auto result = OH_MediaAssetManager_CancelRequest(getMgr(), requestId);
+            _INFO("cancel idle data req(%s) result: %d", id, result);
+        }
+    }
+
+    {
+        std::lock_guard<std::mutex> locker(g_image_data_prepared_mutex);
+        std::vector<std::string> ids;
+        for (auto &p : g_image_data_prepared_callbacks) {
+            ids.push_back(p.first);
+        }
+        for (auto &id : ids) {
+            g_image_data_prepared_callbacks.erase(id);
+            MediaLibrary_RequestId requestId;
+            strcpy(requestId.requestId, id.c_str());
+            auto result = OH_MediaAssetManager_CancelRequest(getMgr(), requestId);
+            _INFO("cancel idle image data req(%s) result: %d", id, result);
+        }
+    }
 }
 
 NAMESPACE_END

@@ -354,6 +354,9 @@ CamErrorCode CaptureSession::removeMetadataOutput(const MetadataOutput *output) 
 
 CamErrorCode CaptureSession::start() {
     _FATAL_IF(m_session == nullptr, "CaptureSession::start failed: m_session == nullptr")
+    if (m_started) {
+        return CAMERA_OK;
+    }
 
     CamErrorCode error = OH_CaptureSession_Start(m_session);
     _ERROR_RETURN_IF(error, error, "capture session start failed: %s", CamUtils::errString(error))
@@ -365,6 +368,9 @@ CamErrorCode CaptureSession::start() {
 
 CamErrorCode CaptureSession::stop() {
     _FATAL_IF(m_session == nullptr, "CaptureSession::stop failed: m_session == nullptr")
+    if (!m_started) {
+        return CAMERA_OK;
+    }
 
     CamErrorCode error = OH_CaptureSession_Stop(m_session);
     _ERROR_RETURN_IF(error, error, "capture session stop failed: %s", CamUtils::errString(error))

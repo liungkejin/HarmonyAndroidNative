@@ -57,19 +57,22 @@ bool NapiUtils::setCallback(const char *name, napi_env env, napi_value callback)
     return true;
 }
 
-bool NapiUtils::callback(const char *name, int code) {
+bool NapiUtils::callback(const char *name, int code, bool delAfterCb) {
     std::lock_guard<std::mutex> lock(_g_map_mutex);
     auto it = _g_callback_map.find(name);
     if (it == _g_callback_map.end()) {
-        _ERROR("callback(%s) not found", name);
+        _WARN("callback(%s) not found", name);
         return false;
     }
-    _g_callback_map.erase(it);
+    if (delAfterCb) {
+        _g_callback_map.erase(it);
+    }
 
     CallbackContext *tx = it->second;
     tx->setResult(code);
     tx->m_env.queueWork((void *)tx, [](uv_work_t *work) {},
                         [](uv_work_t *res, int status) {
+                            std::lock_guard<std::mutex> lock(_g_map_mutex);
                             CallbackContext *tx = static_cast<CallbackContext *>(res->data);
                             tx->callback();
                             delete tx;

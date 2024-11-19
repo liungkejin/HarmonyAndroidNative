@@ -5,7 +5,6 @@
 // please include "napi/native_api.h".
 
 #include "PreviewOutput.h"
-#include <map>
 
 NAMESPACE_DEFAULT
 
@@ -56,14 +55,14 @@ CamErrorCode PreviewOutput::setCallback(PreviewCallback *callback) {
         }
         // register callback
         CamErrorCode code = OH_PreviewOutput_RegisterCallback(m_output, &g_preview_ouput_callback);
-        _ERROR_RETURN_IF(code != CAMERA_OK, code, "Camera_PreviewOutput_RegisterCallback failed: %d", code);
+        _ERROR_RETURN_IF(code != CAMERA_OK, code, "Camera_PreviewOutput_RegisterCallback failed: %s", CamUtils::errString(code));
     } else {
         g_callback_mgr.clearCallback(m_output);
         if (callback != nullptr) {
             g_callback_mgr.addCallback(m_output, *this, callback);
         } else {
             auto err = OH_PreviewOutput_UnregisterCallback(m_output, &g_preview_ouput_callback);
-            _ERROR_RETURN_IF(err, err, "OH_PreviewOutput_UnregisterCallback failed: %d", err);
+            _ERROR_RETURN_IF(err, err, "OH_PreviewOutput_UnregisterCallback failed: %s", CamUtils::errString(err));
         }
     }
     if (callback) {
@@ -93,9 +92,12 @@ CamErrorCode PreviewOutput::setCallback(PreviewCallback *callback) {
 
 CamErrorCode PreviewOutput::start() {
     _FATAL_IF(m_output == nullptr, "Camera_PreviewOutput is null while start()")
+    if (m_started) {
+        return CAMERA_OK;
+    }
 
     CamErrorCode error = OH_PreviewOutput_Start(m_output);
-    _ERROR_RETURN_IF(error, error, "OH_PreviewOutput_Start failed: %d", error)
+    _ERROR_RETURN_IF(error, error, "OH_PreviewOutput_Start failed: %s", CamUtils::errString(error))
 
     m_started = true;
     _INFO("preview output start success.");
@@ -104,9 +106,12 @@ CamErrorCode PreviewOutput::start() {
 
 CamErrorCode PreviewOutput::stop() {
     _FATAL_IF(m_output == nullptr, "Camera_PreviewOutput is null while stop()")
+    if (!m_started) {
+        return CAMERA_OK;
+    }
 
     CamErrorCode error = OH_PreviewOutput_Stop(m_output);
-    _ERROR_RETURN_IF(error, error, "OH_PreviewOutput_Stop failed: %d", error)
+    _ERROR_RETURN_IF(error, error, "OH_PreviewOutput_Stop failed: %s", CamUtils::errString(error))
 
     m_started = false;
     _INFO("preview output stop success.");
@@ -122,7 +127,7 @@ CamErrorCode PreviewOutput::release() {
 
     CamErrorCode error = OH_PreviewOutput_Release(m_output);
     m_output = nullptr;
-    _WARN_RETURN_IF(error, error, "OH_PreviewOutput_Release failed: %d", error)
+    _WARN_RETURN_IF(error, error, "OH_PreviewOutput_Release failed: %s", CamUtils::errString(error))
     _INFO("preview output release successfully.");
     return CAMERA_OK;
 }

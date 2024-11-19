@@ -13,7 +13,7 @@
 
 NAMESPACE_DEFAULT
 
-#define MEDIA_ASSET_MGR (MediaAssetMgr::g_instance)
+#define MEDIA_ASSET_MGR (MediaAssetMgr::getInstance())
 
 typedef std::function<void(int result, std::string requestId)> ML_DataPreparedCallback;
 typedef std::function<void(ML_ErrorCode result, std::string requestId, ML_MediaQuality quality,
@@ -22,7 +22,7 @@ typedef std::function<void(ML_ErrorCode result, std::string requestId, ML_MediaQ
 
 class MediaAssetMgr {
 public:
-    static MediaAssetMgr g_instance;
+    static MediaAssetMgr& getInstance();
 
 private:
     MediaAssetMgr() = default;
@@ -43,6 +43,10 @@ public:
 
     std::string requestImage(OH_MediaAsset *asset, ML_DeliveryMode deliveryMode, ML_ImageDataPreparedCallback);
 
+    /**
+     * 清除所有无效的请求
+     */
+    void cleanIdleRequests();
 private:
     OH_MediaAssetManager *m_manager = nullptr;
 };
