@@ -67,16 +67,21 @@ float SensorGravity::getCurDegree() {
 }
 
 void SensorGravity::stopListen() {
+    if (g_stop_flag) {
+        return;
+    }
     std::lock_guard<std::mutex> lock(g_mutex);
     g_stop_flag = true;
-    g_listen_thread->sync([]() {
-        if (g_subscription_id != 0) {
-            SensorMgr::unsubscribe(g_subscription_id);
-            g_subscription_id = 0;
-            _INFO("SensorGravity stop listen");
-        }
-        g_cur_degree = 0;
-    });
-    DELETE_TO_NULL(g_listen_thread);
+    if (g_listen_thread) {
+        g_listen_thread->sync([]() {
+            if (g_subscription_id != 0) {
+                SensorMgr::unsubscribe(g_subscription_id);
+                g_subscription_id = 0;
+                _INFO("SensorGravity stop listen");
+            }
+            g_cur_degree = 0;
+        });
+        DELETE_TO_NULL(g_listen_thread);
+    }
 }
 NAMESPACE_END
