@@ -7,6 +7,9 @@
 
 #pragma once
 #include "Namespace.h"
+#include <cstdint>
+#include <chrono>
+#include <thread>
 
 NAMESPACE_DEFAULT
 
@@ -22,6 +25,10 @@ public:
         return std::chrono::duration_cast<std::chrono::microseconds>(
                    std::chrono::high_resolution_clock::now().time_since_epoch())
             .count();
+    }
+    
+    static void sleepMs(int ms) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     }
 };
 
