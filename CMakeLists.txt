@@ -85,6 +85,12 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             src/android/AppContext.cpp
             src/android/utils/JNIUtils.cpp
             src/android/surface/NativeWindow.cpp
+            src/android/cam/CamManager.cpp
+            src/android/cam/CamUtils.cpp
+            src/android/cam/CamCharacteristics.cpp
+            src/android/cam/CamDevice.cpp
+            src/android/cam/CaptureSession.cpp
+            src/android/cam/CaptureRequest.cpp
     )
     set(PLATFORM_LIBS
             android
