@@ -14,6 +14,8 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     add_definitions(-D__DEBUG__)
 endif()
 
+add_definitions(-DSTRICT_MODE=false)
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM "android")
     set(TARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
@@ -91,6 +93,7 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             src/android/cam/CamDevice.cpp
             src/android/cam/CaptureSession.cpp
             src/android/cam/CaptureRequest.cpp
+            src/android/image/ImageReader.cpp
     )
     set(PLATFORM_LIBS
             android

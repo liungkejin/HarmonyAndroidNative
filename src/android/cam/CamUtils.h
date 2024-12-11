@@ -5,12 +5,14 @@
 #pragma once
 
 #include <camera/NdkCameraError.h>
+#include <camera/NdkCameraDevice.h>
 #include "Namespace.h"
 #include "common/Object.h"
 
 NAMESPACE_DEFAULT
 
 typedef camera_status_t CamStatus;
+typedef ACameraDevice_request_template CamTemplate;
 
 class CamUtils {
 public:

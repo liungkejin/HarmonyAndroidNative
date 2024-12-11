@@ -4,6 +4,7 @@
 
 #pragma once
 
+#include <unordered_map>
 #include <camera/NdkCameraDevice.h>
 #include "Namespace.h"
 #include "common/Object.h"
@@ -15,8 +16,13 @@ typedef ACameraDevice_request_template CamTemplate;
 
 class CamOutputTarget : Object {
 public:
-    explicit CamOutputTarget(ACameraOutputTarget *target) : m_target(target) {}
+    explicit CamOutputTarget(ACameraWindowType *window) {
+        auto status = ACameraOutputTarget_create(window, &m_target);
+        _FATAL_IF(status, "ACameraOutputTarget_create failed: %s", CamUtils::errString(status));
+    }
+
     CamOutputTarget(const CamOutputTarget &o) : m_target(o.m_target), Object(o) {}
+
     ~CamOutputTarget() {
         if (no_reference() && m_target) {
             ACameraOutputTarget_free(m_target);
@@ -33,7 +39,7 @@ private:
     ACameraOutputTarget *m_target = nullptr;
 };
 
-class CaptureRequest : Object{
+class CaptureRequest : Object {
 public:
     static CamMetadataEntry getConstEntry(const ACaptureRequest *request, uint32_t tag) {
         auto *entry = new ACameraMetadata_const_entry();
@@ -48,28 +54,46 @@ public:
 
 public:
     explicit CaptureRequest(ACaptureRequest *request) : m_request(request) {}
+
     CaptureRequest(const CaptureRequest &o) : m_request(o.m_request), Object(o) {}
+
     ~CaptureRequest() {
         if (no_reference() && m_request) {
+            for (auto &i: m_targets) {
+                ACaptureRequest_removeTarget(m_request, i.second.value());
+            }
+            m_targets.clear();
             ACaptureRequest_free(m_request);
             m_request = nullptr;
         }
     }
+
 public:
+    bool valid() const {
+        return m_request != nullptr;
+    }
+
     ACaptureRequest *value() {
         return m_request;
     }
 
-    bool addTarget(const CamOutputTarget &target) {
+    CamStatus addTarget(ACameraWindowType *window) {
+        CamOutputTarget target(window);
         auto status = ACaptureRequest_addTarget(m_request, target.value());
-        _ERROR_IF(status, "ACaptureRequest_addTarget failed: %s", CamUtils::errString(status));
-        return status == ACAMERA_OK;
+        _ERROR_RETURN_IF(status, status, "ACaptureRequest_addTarget failed: %s", CamUtils::errString(status));
+        this->m_targets.insert(std::make_pair(window, target));
+        return status;
     }
 
-    bool removeTarget(const CamOutputTarget &target) {
-        auto status = ACaptureRequest_removeTarget(m_request, target.value());
-        _ERROR_IF(status, "ACaptureRequest_removeTarget failed: %s", CamUtils::errString(status));
-        return status == ACAMERA_OK;
+    CamStatus removeTarget(ACameraWindowType *window) {
+        auto target = m_targets.find(window);
+        if (target == m_targets.end()) {
+            return ACAMERA_ERROR_INVALID_PARAMETER;
+        }
+        m_targets.erase(target);
+        auto status = ACaptureRequest_removeTarget(m_request, target->second.value());
+        _ERROR_RETURN_IF(status, status, "ACaptureRequest_removeTarget failed: %s", CamUtils::errString(status));
+        return status;
     }
 
 public:
@@ -133,6 +157,8 @@ public:
 
 private:
     ACaptureRequest *m_request;
+
+    std::unordered_map<ACameraWindowType *, CamOutputTarget> m_targets;
 };
 
 NAMESPACE_END

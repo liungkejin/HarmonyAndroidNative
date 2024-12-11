@@ -73,7 +73,7 @@ static ACameraCaptureSession_captureCallbacks gCaptureCallbacks = {
         .onCaptureBufferLost = gOnCaptureBufferLost,
 };
 
-CamStatus CaptureSession::capture(std::vector<CaptureRequest> requests, znative::SessionCaptureListener *listener) {
+CamStatus CaptureSession::capture(std::vector<CaptureRequest> requests, SessionCaptureListener *listener) {
     ACaptureRequest *array[requests.size()];
     for (size_t i = 0; i < requests.size(); ++i) {
         array[i] = requests[i].value();
@@ -111,7 +111,7 @@ static ACameraCaptureSession_captureCallbacks gRepeatingCallbacks = {
         .onCaptureBufferLost = gOnCaptureBufferLost,
 };
 
-CamStatus CaptureSession::setRepeatingRequest(std::vector<CaptureRequest> requests, znative::SessionCaptureListener *listener) {
+CamStatus CaptureSession::setRepeatingRequest(std::vector<CaptureRequest> requests, SessionCaptureListener *listener) {
     ACaptureRequest *array[requests.size()];
     for (size_t i = 0; i < requests.size(); ++i) {
         array[i] = requests[i].value();

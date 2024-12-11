@@ -118,22 +118,24 @@ public:
         return getConstEntry(m_metadata, tag);
     }
 
-    std::vector<uint32_t> getAllTags() const {
+    const std::vector<uint32_t>& getAllTags() {
+        if (!m_all_tags.empty()) {
+            return m_all_tags;
+        }
         int32_t count = 0;
         uint32_t *tags = nullptr;
         auto error = ACameraMetadata_getAllTags(m_metadata, &count, (const uint32_t **) &tags);
         if (error) {
             _ERROR("ACameraMetadata_getAllTags failed: %s", CamUtils::errString(error));
-            return {};
+            return m_all_tags;
         }
-        std::vector<uint32_t> result;
-        result.reserve(count);
         for (int i = 0; i < count; ++i) {
-            result.push_back(tags[i]);
+            m_all_tags.push_back(tags[i]);
         }
-        return result;
+        return m_all_tags;
     }
 
+    /** api 29+
     bool isLogicalMultiCam() const {
         auto isLogicalMultiCam = ACameraMetadata_isLogicalMultiCamera(
                 m_metadata, nullptr, nullptr);
@@ -152,11 +154,15 @@ public:
         }
         return result;
     }
-
+    */
 public:
+    void dump();
 
 private:
+    std::string m_id;
     ACameraMetadata *m_metadata;
+
+    std::vector<uint32_t> m_all_tags;
 };
 
 NAMESPACE_END
