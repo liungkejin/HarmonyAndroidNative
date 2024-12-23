@@ -317,8 +317,10 @@ public:
                 return "ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE_OFF";
             case ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE_ON:
                 return "ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE_ON";
+#if __ANDROID_API__ >= __ANDROID_API_Q__
             case ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION:
                 return "ACAMERA_CONTROL_VIDEO_STABILIZATION_MODE_PREVIEW_STABILIZATION";
+#endif
             default:
                 return std::string("UNKNOWN(") + std::to_string(mode) + ")";
         }
@@ -548,8 +550,10 @@ public:
                 return "ACAMERA_LENS_POSE_REFERENCE_GYROSCOPE";
             case ACAMERA_LENS_POSE_REFERENCE_UNDEFINED:
                 return "ACAMERA_LENS_POSE_REFERENCE_UNDEFINED";
+#if __ANDROID_API__ >= __ANDROID_API_Q__
             case ACAMERA_LENS_POSE_REFERENCE_AUTOMOTIVE:
                 return "ACAMERA_LENS_POSE_REFERENCE_AUTOMOTIVE";
+#endif
             default:
                 return std::string("UNKNOWN(") + std::to_string(reference) + ")";
         }
@@ -613,8 +617,10 @@ public:
                 return "ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_SYSTEM_CAMERA";
             case ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR:
                 return "ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_ULTRA_HIGH_RESOLUTION_SENSOR";
+#if __ANDROID_API__ >= __ANDROID_API_Q__
             case ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE:
                 return "ACAMERA_REQUEST_AVAILABLE_CAPABILITIES_STREAM_USE_CASE";
+#endif
             default:
                 return std::string("UNKNOWN(") + std::to_string(capabilities) + ")";
         }
@@ -622,6 +628,7 @@ public:
 
     static std::string requestAvailableDynamicRangeProfilesMapString(int32_t profiles) {
         switch (profiles) {
+#if __ANDROID_API__ >= __ANDROID_API_Q__
             case ACAMERA_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD:
                 return "ACAMERA_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_STANDARD";
             case ACAMERA_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_HLG10:
@@ -648,6 +655,7 @@ public:
                 return "ACAMERA_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_DOLBY_VISION_8B_HDR_OEM_PO";
             case ACAMERA_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_MAX:
                 return "ACAMERA_REQUEST_AVAILABLE_DYNAMIC_RANGE_PROFILES_MAP_MAX";
+#endif
             default:
                 return std::string("UNKNOWN(") + std::to_string(profiles) + ")";
         }
@@ -693,10 +701,12 @@ public:
                 return "ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_LOW_LATENCY_SNAPSHOT";
             case ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END:
                 return "ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END";
+#if __ANDROID_API__ >= __ANDROID_API_Q__
             case ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_10BIT_OUTPUT:
                 return "ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_10BIT_OUTPUT";
             case ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END_3_8:
                 return "ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_PUBLIC_END_3_8";
+#endif
             case ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_VENDOR_START:
                 return "ACAMERA_SCALER_AVAILABLE_RECOMMENDED_STREAM_CONFIGURATIONS_VENDOR_START";
             default:
@@ -732,6 +742,7 @@ public:
 
     static std::string scalerAvailableStreamUseCaseString(int32_t useCase) {
         switch (useCase) {
+#if __ANDROID_API__ >= __ANDROID_API_Q__
             case ACAMERA_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT:
                 return "ACAMERA_SCALER_AVAILABLE_STREAM_USE_CASES_DEFAULT";
             case ACAMERA_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW:
@@ -744,6 +755,8 @@ public:
                 return "ACAMERA_SCALER_AVAILABLE_STREAM_USE_CASES_PREVIEW_VIDEO_STILL";
             case ACAMERA_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL:
                 return "ACAMERA_SCALER_AVAILABLE_STREAM_USE_CASES_VIDEO_CALL";
+#endif
+
             default:
                 return std::string("UNKNOWN(") + std::to_string(useCase) + ")";
         }

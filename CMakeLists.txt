@@ -103,6 +103,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             GLESv2
             GLESv3
             EGL
+            camera2ndk
+            mediandk
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM_SOURCES

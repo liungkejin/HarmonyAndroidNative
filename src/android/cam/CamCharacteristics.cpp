@@ -10,7 +10,7 @@ void CamCharacteristics::dump() {
     _INFO("dump camera characteristics");
     auto tags = getAllTags();
     for (auto tag : tags) {
-        _INFO("tag: %s", CamUtils::tagString(tag))
+        _INFO("tag: %s", CamUtils::tagString(tag));
     }
 }
 
