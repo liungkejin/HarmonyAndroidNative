@@ -23,7 +23,7 @@ HarmonyAndroidNative 是一个对 HarmonyOS 和 Android Native API 的封装，
 CMake 选项：
 ```text
 -G Ninja
--DCMAKE_TOOLCHAIN_FILE=/Users/ikejin/Workspace/Android/sdk/ndk/22.1.7171670/build/cmake/android.toolchain.cmake
+-DCMAKE_TOOLCHAIN_FILE=/Users/ikejin/Library/Android/sdk/ndk/24.0.8215888/build/cmake/android.toolchain.cmake
 -DANDROID_ABI=arm64-v8a
 -DANDROID_NDK=/Users/ikejin/Library/Android/sdk/ndk/24.0.8215888
 -DANDROID_TOOLCHAIN=clang
