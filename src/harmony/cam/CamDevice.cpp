@@ -12,12 +12,20 @@
 NAMESPACE_DEFAULT
 
 static const CamProfile *findExpectProfile(const std::vector<CamProfile> &profiles,
-                                           int expectWidth, int expectHeight, int expectFormat = -1) {
+                                           int expectWidth, int expectHeight, int minSize = -1, int maxSize = -1, int expectFormat = -1) {
     const CamProfile *result = nullptr;
     long delta = LONG_MAX;
     for (auto &p : profiles) {
         int width = (int) p.width;
         int height = (int) p.height;
+        if (minSize > 0 && std::min(width, height) < minSize) {
+            continue;
+        }
+            
+        if (maxSize > 0 && std::max(width, height) > maxSize) {
+            continue;
+        }
+        
         // 目前format没有用，所有的都是 JPEG 格式，但是内部又都是 NV21 格式
         if (width * expectHeight != height * expectWidth) {
             continue;
@@ -68,16 +76,16 @@ CamOutputCapability::CamOutputCapability(const Camera_OutputCapability *cap) {
     }
 }
 
-const CamProfile *CamOutputCapability::findPreviewProfile(int expectWidth, int expectHeight, int format) {
-    return findExpectProfile(m_preview_profiles, expectWidth, expectHeight, format);
+const CamProfile *CamOutputCapability::findPreviewProfile(int expectWidth, int expectHeight, int minSize, int maxSize, int format) {
+    return findExpectProfile(m_preview_profiles, expectWidth, expectHeight, minSize, maxSize, format);
 }
 
-const CamProfile *CamOutputCapability::findPhotoProfile(int expectWidth, int expectHeight, int format) {
-    return findExpectProfile(m_photo_profiles, expectWidth, expectHeight, format);
+const CamProfile *CamOutputCapability::findPhotoProfile(int expectWidth, int expectHeight, int minSize, int maxSize, int format) {
+    return findExpectProfile(m_photo_profiles, expectWidth, expectHeight, minSize, maxSize, format);
 }
 
-const CamProfile *CamOutputCapability::findVideoProfile(int expectWidth, int expectHeight, int format) {
-    return findExpectProfile(m_video_profiles, expectWidth, expectHeight, format);
+const CamProfile *CamOutputCapability::findVideoProfile(int expectWidth, int expectHeight, int minSize, int maxSize, int format) {
+    return findExpectProfile(m_video_profiles, expectWidth, expectHeight, minSize, maxSize, format);
 }
 
 bool CamOutputCapability::isMetadataSupported(Camera_MetadataObjectType type) {

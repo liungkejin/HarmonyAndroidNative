@@ -7,6 +7,8 @@
 
 #pragma once
 #include "Namespace.h"
+#include "common/Log.h"
+#include <string>
 #include <multimedia/image_framework/image/image_common.h>
 #include <multimedia/image_framework/image/pixelmap_native.h>
 

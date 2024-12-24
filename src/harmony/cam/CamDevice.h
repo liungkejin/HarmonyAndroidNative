@@ -79,17 +79,17 @@ public:
     /**
      * 找到最接近 expectWidth,expectHeight的同比例的预览分辨率
      */
-    const CamProfile *findPreviewProfile(int expectWidth, int expectHeight, int format = -1);
+    const CamProfile *findPreviewProfile(int expectWidth, int expectHeight, int minSize, int maxSize, int format = -1);
 
     /**
      * 找到最接近的拍照分辨率
      */
-    const CamProfile *findPhotoProfile(int expectWidth, int expectHeight, int format = -1);
+    const CamProfile *findPhotoProfile(int expectWidth, int expectHeight, int minSize, int maxSize, int format = -1);
 
     /**
      * 找到最接近的视频录制分辨率
      */
-    const CamProfile *findVideoProfile(int expectWidth, int expectHeight, int format = -1);
+    const CamProfile *findVideoProfile(int expectWidth, int expectHeight, int minSize, int maxSize, int format = -1);
 
     // 判定是否支持metadata
     bool isMetadataSupported(Camera_MetadataObjectType type);
