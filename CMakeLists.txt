@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18.1)
 
 set(PROJ_NAME "znative")
-project(${PROJ_NAME})
+project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -14,11 +14,11 @@ if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     add_definitions(-D__DEBUG__)
 endif()
 
+add_definitions(-DSTRICT_MODE=false)
+
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM "android")
     set(TARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
-    # Android 的宏定义在 toolchain.cmake 中就定义了为 __ANDROID__
-    # message(STATUS "android api: ${ANDROID_NATIVE_API_LEVEL}")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM "harmony")
     set(TARGET_ARCH ${OHOS_ARCH})
@@ -28,7 +28,7 @@ else ()
     message(FATAL_ERROR "Unsupported system: ${CMAKE_SYSTEM_NAME}")
 endif ()
 
-message(STATUS "Build status: platform: ${PLATFORM}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}")
+message(STATUS "Build status: platform: ${PLATFORM}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
 set(COM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/common)
 set(PLATFORM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/${PLATFORM})
@@ -85,6 +85,13 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             src/android/AppContext.cpp
             src/android/utils/JNIUtils.cpp
             src/android/surface/NativeWindow.cpp
+            src/android/cam/CamManager.cpp
+            src/android/cam/CamUtils.cpp
+            src/android/cam/CamCharacteristics.cpp
+            src/android/cam/CamDevice.cpp
+            src/android/cam/CaptureSession.cpp
+            src/android/cam/CaptureRequest.cpp
+            src/android/image/ImageReader.cpp
     )
     set(PLATFORM_LIBS
             android
@@ -94,6 +101,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             GLESv2
             GLESv3
             EGL
+            camera2ndk
+            mediandk
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM_SOURCES

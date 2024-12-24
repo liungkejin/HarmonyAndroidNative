@@ -6,7 +6,6 @@
 
 #include "Namespace.h"
 #include "common/Object.h"
-#include "common/utils/Array.h"
 #include "common/utils/AssetsMgr.h"
 #include <android/asset_manager.h>
 #include <vector>

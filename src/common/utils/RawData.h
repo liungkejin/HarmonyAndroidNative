@@ -13,14 +13,16 @@ class RawData : Object {
 public:
     RawData() = default;
 
-    explicit RawData(size_t size) : m_size(size) {
+    explicit RawData(size_t size) : m_size(size), m_owned(true) {
         m_data = new uint8_t[size];
     }
 
-    RawData(const RawData& o) : m_size(o.m_size), m_data(o.m_data), Object(o) {}
+    RawData(uint8_t *data, size_t size, bool owned = false) : m_data(data), m_size(size), m_owned(owned) {}
+
+    RawData(const RawData& o) : m_size(o.m_size), m_data(o.m_data), m_owned(o.m_owned), Object(o) {}
 
     ~RawData() {
-        if (no_reference() && m_data) {
+        if (m_owned && no_reference() && m_data) {
             DELETE_ARR_TO_NULL(m_data)
         }
     }
@@ -37,6 +39,7 @@ public:
 private:
     uint8_t * m_data = nullptr;
     size_t m_size = 0;
+    bool m_owned = true;
 };
 
 NAMESPACE_END
