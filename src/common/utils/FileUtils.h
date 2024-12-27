@@ -121,8 +121,8 @@ public:
             return 0;
         }
         if (offset > 0) {
-        std::fseek(file, offset, SEEK_SET);
-            }
+            std::fseek(file, offset, SEEK_SET);
+        }
         int readCount = std::fread(out, 1, size, file);
         std::fclose(file);
         return readCount;

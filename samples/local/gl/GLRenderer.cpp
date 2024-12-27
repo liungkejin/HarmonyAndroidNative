@@ -72,6 +72,6 @@ void GLRenderer::onPostRender(int width, int height) {
 }
 
 void GLRenderer::onExit() {
-//    filter.release();
-//    texture2D.release();
+    filter.release();
+    texture2D.release();
 }

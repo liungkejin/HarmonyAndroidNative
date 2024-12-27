@@ -11,7 +11,7 @@
 
 class GLRenderer {
 public:
-    static int run(int width=1280, int height=720, const char *title="MyCppOpenGL");
+    static int run(int width=1280, int height=720, const char *title="ZNativeSample");
 
 private:
     // 在 Imgui::render() 之前
