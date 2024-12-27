@@ -29,9 +29,12 @@ public:
         m_event_queue.appendListener(NORM_EVENT, [&](const Runnable &func) { func(); });
         m_thread = std::thread(&EventThread::threadLoop, this);
         m_thread.detach();
+        _INFO("create event thread: %s", name);
     }
 
-    ~EventThread() { quit(); }
+    ~EventThread() {
+        _ERROR_IF(isRunning(), "event thread(%s) not quit before delete!", m_name)
+    }
 
     ListenerID listenEvent(int event, const EventHandler &handler) {
         auto handle = m_handlers.appendListener(event, handler);
@@ -90,14 +93,17 @@ public:
 
     bool isRunning() const { return m_running_flag; }
 
-    void quit() {
+    void quit(bool clearPending = false, int timeoutMs = -1) {
         if (!m_running_flag) {
             return;
         }
         _INFO("thread(%s) start quit!", m_name.c_str());
-        m_running_flag = false;
-        m_event_queue.emptyQueue();
-        m_event_queue.enqueue(EXIT_EVENT, []() {});
+        if (clearPending) {
+            m_event_queue.emptyQueue();
+        }
+        sync([this]() {
+            m_running_flag = false;
+        }, timeoutMs);
     }
 
 private:
@@ -122,7 +128,6 @@ private:
     std::condition_variable m_syncer;
 
     const int NORM_EVENT = 0;
-    const int EXIT_EVENT = -1;
 
     int m_handle_id = 0;
     std::mutex m_handle_mutex;

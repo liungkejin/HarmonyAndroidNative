@@ -73,7 +73,7 @@ void SensorGravity::stopListen() {
     std::lock_guard<std::mutex> lock(g_mutex);
     g_stop_flag = true;
     if (g_listen_thread) {
-        g_listen_thread->sync([]() {
+        g_listen_thread->post([]() {
             if (g_subscription_id != 0) {
                 SensorMgr::unsubscribe(g_subscription_id);
                 g_subscription_id = 0;
@@ -81,6 +81,7 @@ void SensorGravity::stopListen() {
             }
             g_cur_degree = 0;
         });
+        g_listen_thread->quit();
         DELETE_TO_NULL(g_listen_thread);
     }
 }
