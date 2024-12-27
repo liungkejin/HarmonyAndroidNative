@@ -19,6 +19,7 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #else
+#include <OpenGL/gl.h>
 #include <OpenGL/gl3.h>
 #endif
 
