@@ -7,6 +7,7 @@
 #include "GLUtil.h"
 #include "filter/TextureFilter.h"
 #include "filter/NV21Filter.h"
+#include "filter/SharpenFilter.h"
 #include "Framebuffer.h"
 #include "FramebufferPool.h"
 #include "ShareFramebuffer.h"
