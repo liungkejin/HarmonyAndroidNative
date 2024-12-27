@@ -47,6 +47,9 @@ include_directories(${COM_LIBS_PATH}/tinyformat)
 # eventpp
 add_subdirectory(${COM_LIBS_PATH}/eventpp-0.1.3)
 
+# json
+include_directories(${COM_LIBS_PATH}/json)
+
 # glm
 # add_subdirectory(${COM_LIBS_PATH}/glm)
 
