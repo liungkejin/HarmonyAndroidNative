@@ -71,6 +71,7 @@ public:
         } else {
             std::unique_lock<std::mutex> lock(m_sync_mutex);
             Runnable proxy = [this, func]() {
+                std::unique_lock<std::mutex> threadLock(m_sync_mutex);
                 func();
                 m_syncer.notify_all();
             };
