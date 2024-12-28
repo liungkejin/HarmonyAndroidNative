@@ -165,6 +165,23 @@ public:
         int err = mkdir(str, mode);
         _WARN_IF(err, "mkdir(%s) failed: %s", str, std::strerror(err));
     }
+
+    static void remove(const char *dirOrFile) {
+        if (isDirectory(dirOrFile)) {
+            Directory dir(dirOrFile);
+            auto files = dir.listFiles();
+            for (auto &file : files) {
+                std::string path = dirOrFile;
+                path += "/";
+                path += file;
+                remove(path.c_str());
+            }
+            int err = rmdir(dirOrFile);
+            _WARN_IF(err, "delete dir(%s) failed: %s", dirOrFile, std::strerror(err));
+        } else {
+            deleteFile(dirOrFile);
+        }
+    }
     
     static bool exist(const char *path) {
         return access(path, 0) == 0;
