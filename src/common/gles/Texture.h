@@ -28,25 +28,25 @@ struct TexParams {
 
 class Texture {
 public:
-    Texture(GLuint id, GLuint width, GLuint height) : m_id(id), m_width(width), m_height(height) {}
+    Texture(GLuint id, GLint width, GLint height) : m_id(id), m_width(width), m_height(height) {}
     Texture(const Texture &other) : m_id(other.m_id), m_width(other.m_width), m_height(other.m_height) {}
 
     inline GLuint id() const { return m_id; }
-    inline GLuint width() const { return m_width; }
-    inline GLuint height() const { return m_height; }
+    inline GLint width() const { return m_width; }
+    inline GLint height() const { return m_height; }
 
     inline bool valid() const { return m_id != INVALID_GL_ID && m_width > 0 && m_height > 0; }
 
 protected:
     GLuint m_id = 0;
-    const GLuint m_width;
-    const GLuint m_height;
+    const GLint m_width;
+    const GLint m_height;
 };
 
 class Texture2D : public Texture {
 public:
-    Texture2D(GLuint width, GLuint height) : Texture(INVALID_GL_ID, width, height) {}
-    Texture2D(GLuint width, GLuint height, const TexParams &params)
+    Texture2D(GLint width, GLint height) : Texture(INVALID_GL_ID, width, height) {}
+    Texture2D(GLint width, GLint height, const TexParams &params)
         : Texture(INVALID_GL_ID, width, height), m_params(params) {}
     Texture2D(const Texture2D &o) : Texture(o), m_params(o.m_params) {}
 
@@ -72,7 +72,7 @@ public:
     }
 
 public:
-    static Texture2D create(GLuint width, GLuint height, GLenum format = GL_RGBA) {
+    static Texture2D create(GLint width, GLint height, GLenum format = GL_RGBA) {
         TexParams param = {
             .format = format
         };
@@ -81,13 +81,13 @@ public:
         return tex;
     }
 
-    static void updateTexture2D(GLuint id, GLuint width, GLuint height, const TexParams &params, const void *pixels) {
+    static void updateTexture2D(GLuint id, GLint width, GLint height, const TexParams &params, const void *pixels) {
         glBindTexture(GL_TEXTURE_2D, id);
         glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, params.format, params.type, pixels);
         glBindTexture(GL_TEXTURE_2D, 0);
     }
 
-    static GLuint genTexture2D(GLuint width, GLuint height, const TexParams &params, const void *pixels) {
+    static GLuint genTexture2D(GLint width, GLint height, const TexParams &params, const void *pixels) {
         GLuint texture;
         glGenTextures(1, &texture);
         glBindTexture(GL_TEXTURE_2D, texture);
@@ -146,7 +146,7 @@ public:
         m_tex_need_update = true;
     }
 
-    bool valid() {
+    bool valid() const {
         return m_width > 0 && m_height > 0;
     }
 

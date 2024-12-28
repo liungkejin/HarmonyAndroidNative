@@ -84,6 +84,7 @@ public:
         }
 
         if (output) {
+            output->ref();
             output->bind();
         }
 
@@ -99,6 +100,7 @@ public:
 
         if (output) {
             output->unbind();
+            output->unref();
         }
 
         onPostRender(output);
