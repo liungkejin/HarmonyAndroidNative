@@ -17,6 +17,8 @@ struct GuiVars {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool show_demo_window = false;
     float alpha_percent = 1.0f;
+    bool enable_sharpen = true;
+    float sharpen_strength = 0.0f;
 };
 static GuiVars guiVars;
 
@@ -28,7 +30,7 @@ FramebufferPool framebufferPool;
 ImageTexture imageTexture;
 GLRect vertexRect;
 
-void GLRenderer::onRender(int width, int height) {
+void GLRenderer::onRender(int viewWidth, int viewHeight) {
     auto &ccolor = guiVars.clear_color;
     GLUtil::clearColor(ccolor.x, ccolor.y, ccolor.z, ccolor.w);
 
@@ -43,10 +45,30 @@ void GLRenderer::onRender(int width, int height) {
 
     Texture2D &tex = imageTexture.textureNonnull();
 
-    vertexRect = GLRect::fitCenter((float) tex.width(), (float) tex.height(), (float) width, (float) height);
-    texFilter.setVertexCoord(vertexRect, (float) width, (float) height);
-    texFilter.setTextureCoord(0, false, true);
-    texFilter.inputTexture(tex);
+    FramebufferRef outputFb;
+    if (guiVars.enable_sharpen) {
+        auto sharpenFb= framebufferPool.obtain(tex.width(), tex.height());
+        // sharpen filter
+        sharpenFilter.setFullVertexCoord().setFullTextureCoord();
+        sharpenFilter.viewport()
+                .set(sharpenFb->texWidth(), sharpenFb->texHeight())
+                .enableClearColor(1, 0, 0, 1);
+        sharpenFilter.inputTexture(tex);
+        sharpenFilter.setStrength(guiVars.sharpen_strength);
+        sharpenFilter.setResolution((float) tex.width()/2.f, (float) tex.height()/2.f);
+        sharpenFilter.render(sharpenFb.get());
+
+        outputFb = sharpenFb;
+    }
+
+    const Texture2D &finalTex = outputFb.get() == nullptr ? tex : outputFb->textureNonnull();
+    // 最后渲染到屏幕
+    vertexRect = GLRect::fitCenter((float) finalTex.width(), (float) finalTex.height(),
+                                   (float) viewWidth, (float) viewHeight);
+    texFilter.setViewport(viewWidth, viewHeight)
+            .setVertexCoord(vertexRect, (float) viewWidth, (float) viewHeight)
+            .setTextureCoord(0, false, true);
+    texFilter.inputTexture(finalTex);
     texFilter.alpha(guiVars.alpha_percent);
     texFilter.blend(true);
     texFilter.render();
@@ -58,18 +80,22 @@ void GLRenderer::onRenderImgui(int width, int height, ImGuiIO &io) {
     }
 
     {
+        // 创建一个名叫"ShaderToy"的窗口，ImGui::End()之前的所有ImGui控件都会在这个窗口中显示
         ImGui::Begin("ShaderToy");
 
         // Edit bools storing our window open/close state
         ImGui::Checkbox("Demo Window", &guiVars.show_demo_window);
+        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-        // Edit 1 float using a slider from 0.0f to 1.0f
-        ImGui::SliderFloat("percent", &guiVars.alpha_percent, 0.0f, 1.0f);
+        ImGui::Checkbox("enable sharpen", &guiVars.enable_sharpen);
+        if (guiVars.enable_sharpen) {
+            ImGui::SliderFloat("sharpen strength", &guiVars.sharpen_strength, 0.0f, 1.0f);
+        }
+
+        ImGui::SliderFloat("alpha percent", &guiVars.alpha_percent, 0.0f, 1.0f);
         ImGui::ColorEdit3("clear color", (float *) &guiVars.clear_color); // Edit 3 floats representing a color
 
-        ImGui::SameLine();
-
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+//        ImGui::SameLine();
         ImGui::End();
     }
 }
@@ -82,4 +108,5 @@ void GLRenderer::onExit() {
     imageTexture.release();
     texFilter.release();
     sharpenFilter.release();
+    framebufferPool.release();
 }
