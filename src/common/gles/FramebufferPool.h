@@ -60,7 +60,7 @@ public:
                 it++;
             }
         }
-        return false;
+        return trimmed;
     }
 
     int memSizeMb() { return m_width * m_height * 4 * m_fb_list.size() / 1024 / 1024; }
@@ -80,7 +80,7 @@ private:
 
 class FramebufferPool {
 public:
-    FramebufferPool(int maxCacheMb = 50) : m_max_mem_cache_mb(maxCacheMb) {}
+    explicit FramebufferPool(int maxCacheMb = 50) : m_max_mem_cache_mb(maxCacheMb) {}
     
     Framebuffer *obtain(int w, int h) {
         std::string key = std::to_string(w) + "x" + std::to_string(h);
