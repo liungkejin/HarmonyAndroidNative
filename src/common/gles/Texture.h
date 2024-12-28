@@ -108,7 +108,9 @@ private:
 class ImageTexture {
 public:
     ~ImageTexture() {
-        DELETE_TO_NULL(m_tex);
+        if (valid()) {
+            _ERROR("ImageTexture not released before destroyed!");
+        }
     }
 
     void set(const uint8_t * data, int width, int height, GLenum format = GL_RGBA) {
@@ -144,6 +146,10 @@ public:
         m_tex_need_update = true;
     }
 
+    bool valid() {
+        return m_width > 0 && m_height > 0;
+    }
+
     Texture2D& textureNonnull() {
         Texture2D * tex = texture();
         _FATAL_IF(!tex, "texture is nullptr!!")
@@ -171,6 +177,13 @@ public:
         }
 
         return m_tex;
+    }
+
+    void release() {
+        std::lock_guard<std::mutex> lock(m_update_mutex);
+        DELETE_TO_NULL(m_tex);
+        m_width = 0;
+        m_height = 0;
     }
 
 private:
