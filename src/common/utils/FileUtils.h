@@ -161,9 +161,13 @@ public:
         return err == 0;
     }
 
-    static void mkDir(const char *str, uint32_t mode = 777) {
+    static bool mkDir(const char *str, uint32_t mode = 777) {
+        if (isDirectory(str)) {
+            return true;
+        }
         int err = mkdir(str, mode);
         _WARN_IF(err, "mkdir(%s) failed: %s", str, std::strerror(err));
+        return err == 0;
     }
 
     static void remove(const char *dirOrFile) {
