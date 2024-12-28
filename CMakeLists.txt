@@ -5,9 +5,9 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 14)
 
-option(BUILD_SHARED_LIB "Build shared library" ON)
-option(OPENCV_ENABLE "Use OpenCV" OFF)
-option(LIBYUV_ENABLE "Use libyuv" ON)
+set(BUILD_SHARED_LIB ON) # Build shared library
+set(OPENCV_ENABLE ON) # use opencv library
+set(LIBYUV_ENABLE ON) # use libyuv
 
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -187,6 +187,9 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             uv
     )
 else ()
+    set(PLATFORM_SOURCES
+            src/local/AppContext.cpp
+    )
     find_package(OpenGL REQUIRED)
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
 endif ()
