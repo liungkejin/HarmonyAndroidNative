@@ -8,6 +8,7 @@
 #include "filter/TextureFilter.h"
 #include "filter/NV21Filter.h"
 #include "filter/SharpenFilter.h"
+#include "filter/ColorAdjustFilter.h"
 #include "Framebuffer.h"
 #include "FramebufferPool.h"
 #ifndef __LOCAL_OS__

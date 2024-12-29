@@ -19,51 +19,28 @@ public:
         defUniform("alpha", DataType::FLOAT)->set(1.0f);
     }
 
-    const char *vertexShader() override {
-#ifndef GLAPI
-        return R"(
-        attribute vec4 position;
-        attribute vec2 inputTextureCoordinate;
-        varying highp vec2 textureCoordinate;
-        void main() {
-            gl_Position = position;
-            textureCoordinate = inputTextureCoordinate;
-        })";
-#else
-        return R"(
-        #version 330 core
-        in vec4 position;
-        in vec2 inputTextureCoordinate;
-        out highp vec2 textureCoordinate;
-        void main() {
-            textureCoordinate = inputTextureCoordinate;
-            gl_Position = position;
-        })";
-#endif
+    std::string vertexShader() override {
+        std::string vs = R"(
+attribute vec4 position;
+attribute vec2 inputTextureCoordinate;
+varying highp vec2 textureCoordinate;
+void main() {
+    gl_Position = position;
+    textureCoordinate = inputTextureCoordinate;
+})";
+        return CORRECT_VERTEX_SHADER(vs);
     }
 
-    const char *fragmentShader() override {
-#ifndef GLAPI
-        return R"(
-        varying highp vec2 textureCoordinate;
-        uniform sampler2D inputImageTexture;
-        uniform mediump float alpha;
-        void main() {
-            highp vec4 c = texture2D(inputImageTexture, textureCoordinate);
-            gl_FragColor = vec4(c.rgb, c.a*alpha);
-        })";
-#else
-        return R"(
-        #version 330 core
-        in highp vec2 textureCoordinate;
-        uniform sampler2D inputImageTexture;
-        uniform mediump float alpha;
-        out vec4 fragColor;
-        void main() {
-            vec4 c = texture(inputImageTexture, textureCoordinate);
-            fragColor = vec4(c.rgb, c.a*alpha);
-        })";
-#endif
+    std::string fragmentShader() override {
+        std::string fs = R"(
+varying highp vec2 textureCoordinate;
+uniform sampler2D inputImageTexture;
+uniform mediump float alpha;
+void main() {
+    highp vec4 c = texture2D(inputImageTexture, textureCoordinate);
+    gl_FragColor = vec4(c.rgb, c.a*alpha);
+})";
+        return CORRECT_FRAGMENT_SHADER(fs);
     }
 
     TextureFilter &inputTexture(int id) {

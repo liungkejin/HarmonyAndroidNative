@@ -9,6 +9,7 @@
 #include "common/gles/filter/SharpenFilter.h"
 #include "common/gles/FramebufferPool.h"
 #include "common/AppContext.h"
+#include "common/gles/filter/ColorAdjustFilter.h"
 #include <opencv2/opencv.hpp>
 
 using namespace znative;
@@ -17,18 +18,35 @@ struct GuiVars {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
     bool show_demo_window = false;
     float alpha_percent = 1.0f;
-    bool enable_sharpen = true;
+    bool enable_sharpen = false;
     float sharpen_strength = 0.0f;
+
+    bool enable_color_adjust = true;
+    float brightness_strength = 0.0f;
+    float contrast_strength = 0.0f;
+    float saturation_strength = 0.0f;
+    float wb_temperature_strength = 0.0f;
+    float wb_tint_strength = 0.0f;
+    float exposure_strength = 0.0f;
+    float highlights_strength = 0.0f;
+    float shadows_strength = 0.0f;
+    float film_grain_strength = 0.0f;
 };
 static GuiVars guiVars;
 
 TextureFilter texFilter;
 SharpenFilter sharpenFilter;
+ColorAdjustFilter colorAdjustFilter;
 
 FramebufferPool framebufferPool;
 
 ImageTexture imageTexture;
 GLRect vertexRect;
+
+void GLRenderer::onInit(int width, int height) {
+    std::string version = GLUtil::glVersion();
+    _INFO("onInit, window size(%dx%d), GL version: %s", width, height, version);
+}
 
 void GLRenderer::onRender(int viewWidth, int viewHeight) {
     auto &ccolor = guiVars.clear_color;
@@ -51,14 +69,36 @@ void GLRenderer::onRender(int viewWidth, int viewHeight) {
         // sharpen filter
         sharpenFilter.setFullVertexCoord().setFullTextureCoord();
         sharpenFilter.viewport()
-                .set(sharpenFb->texWidth(), sharpenFb->texHeight())
-                .enableClearColor(1, 0, 0, 1);
+                .set(sharpenFb->texWidth(), sharpenFb->texHeight());
         sharpenFilter.inputTexture(tex);
         sharpenFilter.setStrength(guiVars.sharpen_strength);
         sharpenFilter.setResolution((float) tex.width()/2.f, (float) tex.height()/2.f);
         sharpenFilter.render(sharpenFb.get());
 
         outputFb = sharpenFb;
+    }
+
+    if (guiVars.enable_color_adjust) {
+        const Texture2D &inTex = outputFb.get() == nullptr ? tex : outputFb->textureNonnull();
+
+        auto colorFb = framebufferPool.obtain(inTex.width(), inTex.height());
+        // color adjust filter
+        colorAdjustFilter.setFullVertexCoord().setFullTextureCoord();
+        colorAdjustFilter.viewport()
+                .set(colorFb->texWidth(), colorFb->texHeight());
+        colorAdjustFilter.inputTexture((int)inTex.id());
+        colorAdjustFilter.setBrightness(guiVars.brightness_strength);
+        colorAdjustFilter.setContrast(guiVars.contrast_strength);
+        colorAdjustFilter.setSaturation(guiVars.saturation_strength);
+        colorAdjustFilter.setWhiteBalanceTemperature(guiVars.wb_temperature_strength);
+        colorAdjustFilter.setWhiteBalanceTint(guiVars.wb_tint_strength);
+        colorAdjustFilter.setExposure(guiVars.exposure_strength);
+        colorAdjustFilter.setHighlights(guiVars.highlights_strength);
+        colorAdjustFilter.setShadows(guiVars.shadows_strength);
+        colorAdjustFilter.setFilmGrain(guiVars.film_grain_strength);
+        colorAdjustFilter.render(colorFb.get());
+
+        outputFb = colorFb;
     }
 
     const Texture2D &finalTex = outputFb.get() == nullptr ? tex : outputFb->textureNonnull();
@@ -87,13 +127,38 @@ void GLRenderer::onRenderImgui(int width, int height, ImGuiIO &io) {
         ImGui::Checkbox("Demo Window", &guiVars.show_demo_window);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
+        ImGui::SliderFloat("alpha percent", &guiVars.alpha_percent, 0.0f, 1.0f);
+        ImGui::ColorEdit3("clear color", (float *) &guiVars.clear_color); // Edit 3 floats representing a color
+
         ImGui::Checkbox("enable sharpen", &guiVars.enable_sharpen);
         if (guiVars.enable_sharpen) {
             ImGui::SliderFloat("sharpen strength", &guiVars.sharpen_strength, 0.0f, 1.0f);
         }
 
-        ImGui::SliderFloat("alpha percent", &guiVars.alpha_percent, 0.0f, 1.0f);
-        ImGui::ColorEdit3("clear color", (float *) &guiVars.clear_color); // Edit 3 floats representing a color
+        ImGui::Checkbox("enable color adjust", &guiVars.enable_color_adjust);
+        if (guiVars.enable_color_adjust) {
+            if (ImGui::Button("reset color adjust")) {
+                // reset all color adjust params
+                guiVars.brightness_strength = 0.0f;
+                guiVars.contrast_strength = 0.0f;
+                guiVars.saturation_strength = 0.0f;
+                guiVars.wb_temperature_strength = 0.0f;
+                guiVars.wb_tint_strength = 0.0f;
+                guiVars.exposure_strength = 0.0f;
+                guiVars.highlights_strength = 0.0f;
+                guiVars.shadows_strength = 0.0f;
+                guiVars.film_grain_strength = 0.0f;
+            }
+            ImGui::SliderFloat("brightness", &guiVars.brightness_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("contrast", &guiVars.contrast_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("saturation", &guiVars.saturation_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("wb_temperature", &guiVars.wb_temperature_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("wb_tint", &guiVars.wb_tint_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("exposure", &guiVars.exposure_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("highlights", &guiVars.highlights_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("shadows", &guiVars.shadows_strength, -1.0f, 1.0f);
+            ImGui::SliderFloat("film grain", &guiVars.film_grain_strength, 0.0f, 1.0f);
+        }
 
 //        ImGui::SameLine();
         ImGui::End();
@@ -108,5 +173,6 @@ void GLRenderer::onExit() {
     imageTexture.release();
     texFilter.release();
     sharpenFilter.release();
+    colorAdjustFilter.release();
     framebufferPool.release();
 }

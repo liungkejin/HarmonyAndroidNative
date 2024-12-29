@@ -29,8 +29,74 @@ NAMESPACE_DEFAULT
 
 #define CHECK_GL_ERROR { GLenum en = glGetError(); if (en != GL_NO_ERROR) { _ERROR("find gl error: %d", en); }}
 
+#ifdef GLAPI
+
+#ifndef GL_CORE_VERSION
+#define GL_CORE_VERSION 330
+#endif
+
+#define CORRECT_VERTEX_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, true)
+#define CORRECT_FRAGMENT_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, false)
+#else
+#define CORRECT_VERTEX_SHADER(shader) shader
+#define CORRECT_FRAGMENT_SHADER(shader) shader
+#endif
+
 class GLUtil {
 public:
+    /**
+     * 简单的转换，将 attribute 替换为 in，将 varying 替换为 out, 将 gl_FragColor 替换为 fragColor
+     */
+    static std::string simpleConvertGLESShaderToGL(std::string glesShader,
+                                                   bool vertexOrFragment,
+                                                   const std::string& glCoreVersion = "330") {
+        std::size_t index = 0;
+        while ((index = glesShader.find("attribute", index)) != std::string::npos) {
+            glesShader.replace(index, 9, "in");
+            index += 2;
+        }
+        index = 0;
+        while ((index = glesShader.find("varying", index)) != std::string::npos) {
+            if (vertexOrFragment) {
+                glesShader.replace(index, 7, "out");
+            } else {
+                glesShader.replace(index, 7, "in");
+            }
+            index += 2;
+        }
+
+        // texture2D -> texture
+        index = 0;
+        while ((index = glesShader.find("texture2D", index)) != std::string::npos) {
+            glesShader.replace(index, 9, "texture");
+            index += 7;
+        }
+
+        if ((index = glesShader.find("gl_FragColor")) != std::string::npos) {
+            glesShader.replace(index, 12, "fragColor");
+            glesShader = "out vec4 fragColor;\n" + glesShader;
+        }
+
+        glesShader = "#version " + std::to_string(GL_CORE_VERSION) + " core\n" + glesShader;
+        return glesShader;
+    }
+
+    static int glMajorVersion() {
+        int majorVersion;
+        glGetIntegerv(GL_MAJOR_VERSION, &majorVersion);
+        return majorVersion;
+    }
+
+    static int glMinorVersion() {
+        int minorVersion;
+        glGetIntegerv(GL_MINOR_VERSION, &minorVersion);
+        return minorVersion;
+    }
+
+    static std::string glVersion() {
+        return (const char *)glGetString(GL_VERSION);
+    }
+
     static GLuint loadShader(const char *str, int type) {
         GLuint shader = glCreateShader(type);
         _ERROR_RETURN_IF(shader == INVALID_GL_ID, INVALID_GL_ID, "GLUtil::loadShader create shader failed!");

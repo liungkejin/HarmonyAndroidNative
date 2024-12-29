@@ -77,7 +77,9 @@ public:
 
     void render(Framebuffer *output = nullptr) {
         if (!m_program.valid()) {
-            if (!m_program.create(vertexShader(), fragmentShader())) {
+            std::string vs = vertexShader();
+            std::string fs = fragmentShader();
+            if (!m_program.create(vs.c_str(), fs.c_str())) {
                 return;
             }
             onProgramCreated();
@@ -110,9 +112,9 @@ public:
     virtual void release() { m_program.release(); }
 
 protected:
-    virtual const char *vertexShader() = 0;
+    virtual std::string vertexShader() = 0;
 
-    virtual const char *fragmentShader() = 0;
+    virtual std::string fragmentShader() = 0;
 
     Program& program() { return m_program; }
 

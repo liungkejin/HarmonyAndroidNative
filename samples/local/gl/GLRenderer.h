@@ -14,6 +14,9 @@ public:
     static int run(int width=1280, int height=720, const char *title="ZNativeSample");
 
 private:
+    // 初始化, 只调用一次
+    static void onInit(int width, int height);
+
     // 在 Imgui::render() 之前
     static void onRender(int width, int height);
 
