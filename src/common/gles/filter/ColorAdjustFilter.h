@@ -6,6 +6,7 @@
 
 #include "Namespace.h"
 #include "common/Object.h"
+#include "BaseFilter.h"
 
 NAMESPACE_DEFAULT
 
@@ -172,6 +173,7 @@ void main() {
 
     std::string fragmentShader() override {
         std::string fs = R"(
+precision highp float;
 varying highp vec2 textureCoordinate;
 uniform sampler2D inputImageTexture;
 
@@ -259,7 +261,7 @@ vec4 apply_film_grain(vec4 input_color, float grain) {
 }
 
 void main() {
-    lowp vec4 textureColor = texture(inputImageTexture, textureCoordinate);
+    lowp vec4 textureColor = texture2D(inputImageTexture, textureCoordinate);
     vec4 result_color = convert_to_linear(textureColor);
 
     if (abs(wb_temperature_strength) > 0.00001 || abs(wb_tint_strength) > 0.00001) {
