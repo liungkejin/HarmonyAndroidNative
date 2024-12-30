@@ -40,9 +40,8 @@ public:
     explicit VBO(GLenum usage = GL_STREAM_DRAW) : m_usage(usage) {}
     ~VBO() {
         if (m_size != -1) {
-            glDeleteBuffers(1, &m_vbo);
-            _INFO("delete vbo: %d", m_vbo);
-            m_size = -1;
+            _ERROR("VBO(%d) not released before delete!", m_vbo);
+            this->release();
         }
     }
 
@@ -70,6 +69,14 @@ public:
         glBindVertexArray(0);
     }
 
+    void release() {
+        if (m_size != -1) {
+            glDeleteBuffers(1, &m_vbo);
+            _INFO("delete vbo: %d", m_vbo);
+            m_size = -1;
+        }
+    }
+
 private:
     GLenum m_usage;
     unsigned int m_vbo = 0;
@@ -79,7 +86,10 @@ private:
 class VAO {
 public:
     ~VAO() {
-        release();
+        if (m_vao != -1) {
+            _ERROR("VAO(%d) not released before delete!", m_vao);
+            this->release();
+        }
     }
 
     void bind() const {
@@ -344,6 +354,10 @@ public:
         }
     }
 
+    void release() {
+        m_vbo.release();
+    }
+
 private:
     // 这里的size不是数组的长度，而是 glVertexAttriPointer 的第二个参数，是 vecX 的维度
     int m_vec_size = 2;
@@ -358,7 +372,12 @@ public:
     Program() {}
     Program(const char *vs, const char *fs) : m_vertex_shader(vs), m_fragment_shader(fs) {}
 
-    ~Program() { release(); }
+    ~Program() {
+        if (m_id != INVALID_GL_ID) {
+            _ERROR("GL program(%d) not released before delete!", m_id);
+            this->release();
+        }
+    }
 
     bool create() { return create(m_vertex_shader.c_str(), m_fragment_shader.c_str()); }
 
@@ -473,6 +492,7 @@ public:
 
         // 释放 m_attr_map 中的指针内存
         for (auto &pair : m_attr_map) {
+            pair.second->release();
             delete pair.second;
         }
         m_attr_map.clear();

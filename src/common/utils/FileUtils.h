@@ -121,8 +121,8 @@ public:
             return 0;
         }
         if (offset > 0) {
-        std::fseek(file, offset, SEEK_SET);
-            }
+            std::fseek(file, offset, SEEK_SET);
+        }
         int readCount = std::fread(out, 1, size, file);
         std::fclose(file);
         return readCount;
@@ -161,9 +161,30 @@ public:
         return err == 0;
     }
 
-    static void mkDir(const char *str, uint32_t mode = 777) {
+    static bool mkDir(const char *str, uint32_t mode = 777) {
+        if (isDirectory(str)) {
+            return true;
+        }
         int err = mkdir(str, mode);
         _WARN_IF(err, "mkdir(%s) failed: %s", str, std::strerror(err));
+        return err == 0;
+    }
+
+    static void remove(const char *dirOrFile) {
+        if (isDirectory(dirOrFile)) {
+            Directory dir(dirOrFile);
+            auto files = dir.listFiles();
+            for (auto &file : files) {
+                std::string path = dirOrFile;
+                path += "/";
+                path += file;
+                remove(path.c_str());
+            }
+            int err = rmdir(dirOrFile);
+            _WARN_IF(err, "delete dir(%s) failed: %s", dirOrFile, std::strerror(err));
+        } else {
+            deleteFile(dirOrFile);
+        }
     }
     
     static bool exist(const char *path) {

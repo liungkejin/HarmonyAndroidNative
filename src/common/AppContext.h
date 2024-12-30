@@ -24,24 +24,32 @@ public:
 
     static std::string externalFilesDir();
 
+    /**
+     * Assets manager
+     * @return 不为空
+     */
+    static AssetsMgr* assetsManager();
+
 #elif defined(__HARMONY_OS__)
     static void initialize(napi_env env, napi_value jsResMgr,
                            std::string& dirFiles, std::string& dirCache);
 
     static NativeResourceManager *rawAssetsManager();
 
-    static std::string appId();
-
-    static std::string identifier();
-
-    static std::string fingerprint();
-#endif
-
     /**
      * Assets manager
      * @return 不为空
      */
     static AssetsMgr* assetsManager();
+
+    static std::string appId();
+
+    static std::string identifier();
+
+    static std::string fingerprint();
+#else
+    static void initialize(std::string& dirFiles, std::string& dirCache);
+#endif
 
     // android's package name
     static std::string bundleName();

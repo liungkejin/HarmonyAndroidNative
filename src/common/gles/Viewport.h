@@ -72,6 +72,8 @@ public:
             glScissor(m_x, m_y, m_width, m_height);
         } else if (m_width > 0 && m_height > 0) {
             glViewport(m_x, m_y, m_width, m_height);
+        } else {
+            _WARN("Viewport::apply() viewport not configure!");
         }
         
         if (m_clear_color[0] >= 0 && m_clear_color[0] <= 1) {

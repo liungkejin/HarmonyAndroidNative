@@ -13,10 +13,10 @@ NAMESPACE_DEFAULT
 
 class Framebuffer {
 public:
-    void create(GLuint width, GLuint height) {
+    void create(GLint width, GLint height) {
         if (m_texture == nullptr || m_texture->width() != width || m_texture->height() != height) {
             _INFO("Framebuffer::create(%d, %d)", width, height);
-            Texture2D *ntex = new Texture2D(width, height);
+            auto *ntex = new Texture2D(width, height);
             ntex->update(nullptr);
             attachColorTexture(ntex, true);
         }
@@ -44,11 +44,11 @@ public:
 
     inline GLuint texID() const { return m_texture == nullptr ? INVALID_GL_ID : m_texture->id(); }
 
-    inline GLuint texWidth() const { return m_texture == nullptr ? 0 : m_texture->width(); }
+    inline GLint texWidth() const { return m_texture == nullptr ? 0 : m_texture->width(); }
 
-    inline GLuint texHeight() const { return m_texture == nullptr ? 0 : m_texture->height(); }
+    inline GLint texHeight() const { return m_texture == nullptr ? 0 : m_texture->height(); }
 
-    bool bind() {
+    bool bind() const {
         if (valid()) {
             glBindFramebuffer(GL_FRAMEBUFFER, m_fb_id);
             return true;
@@ -60,9 +60,9 @@ public:
 
     uint8_t *readPixels() {
         if (bind()) {
-            GLuint width = m_texture->width();
-            GLuint height = m_texture->height();
-            uint8_t *pixels = new uint8_t[width * height * 4];
+            GLint width = m_texture->width();
+            GLint height = m_texture->height();
+            auto *pixels = new uint8_t[width * height * 4];
             glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
             unbind();
 

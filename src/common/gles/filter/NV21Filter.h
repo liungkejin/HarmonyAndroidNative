@@ -22,39 +22,41 @@ public:
         defUniform("uvTexture", DataType::SAMPLER_2D);
     }
 
-    const char *vertexShader() override {
-        return R"(
-        attribute vec4 position;
-        attribute vec2 inputTextureCoordinate;
-        varying highp vec2 textureCoordinate;
-        
-        void main() {
-            gl_Position = position;
-            textureCoordinate = inputTextureCoordinate;
-        }
+    std::string vertexShader() override {
+        std::string vs = R"(
+attribute vec4 position;
+attribute vec2 inputTextureCoordinate;
+varying highp vec2 textureCoordinate;
+
+void main() {
+    gl_Position = position;
+    textureCoordinate = inputTextureCoordinate;
+}
         )";
+        return CORRECT_VERTEX_SHADER(vs);
     }
 
-    const char *fragmentShader() override {
-        return R"(
-        precision highp float;
-        varying highp vec2 textureCoordinate;
-        uniform sampler2D yTexture;
-        uniform sampler2D uvTexture;
-        
-        void main() {
-            vec4 uv = texture2D(uvTexture, textureCoordinate);
-            float y = texture2D(yTexture, textureCoordinate).r;
-            float u = uv.a - 0.5;
-            float v = uv.r - 0.5;
-            
-            float r = y + 1.370705 * v;
-            float g = y - 0.337633 * u - 0.698001 * v;
-            float b = y + 1.732446 * u;
-            
-            gl_FragColor = vec4(r, g, b, 1.0);
-        }
+    std::string fragmentShader() override {
+        std::string fs = R"(
+precision highp float;
+varying highp vec2 textureCoordinate;
+uniform sampler2D yTexture;
+uniform sampler2D uvTexture;
+
+void main() {
+    vec4 uv = texture2D(uvTexture, textureCoordinate);
+    float y = texture2D(yTexture, textureCoordinate).r;
+    float u = uv.a - 0.5;
+    float v = uv.r - 0.5;
+
+    float r = y + 1.370705 * v;
+    float g = y - 0.337633 * u - 0.698001 * v;
+    float b = y + 1.732446 * u;
+
+    gl_FragColor = vec4(r, g, b, 1.0);
+}
         )";
+        return CORRECT_FRAGMENT_SHADER(fs);
     }
 
     void setOrientation(int orientation, bool mirror) {

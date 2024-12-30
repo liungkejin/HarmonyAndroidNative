@@ -5,9 +5,9 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 14)
 
-option(BUILD_SHARED_LIB "Build shared library" ON)
-option(OPENCV_ENABLE "Use OpenCV" OFF)
-option(LIBYUV_ENABLE "Use libyuv" ON)
+set(BUILD_SHARED_LIB ON) # Build shared library
+set(OPENCV_ENABLE ON) # use opencv library
+set(LIBYUV_ENABLE ON) # use libyuv
 
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -25,12 +25,18 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     # 增加宏定义 __HARMONY_OS__
     add_definitions(-D__HARMONY_OS__)
 else ()
-    message(FATAL_ERROR "Unsupported system: ${CMAKE_SYSTEM_NAME}")
+    set(PLATFORM "local")
+    add_definitions(-D__LOCAL_OS__)
+    if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+        EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET_ARCH)
+    endif ()
 endif ()
 
-message(STATUS "Build status: platform: ${PLATFORM}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
+# 公共第三方库路径
 set(COM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/common)
+# 平台相关第三方库路径
 set(PLATFORM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/${PLATFORM})
 
 # message(STATUS "Platform libs path: ${PLATFORM_LIBS_PATH}")
@@ -40,6 +46,9 @@ include_directories(${COM_LIBS_PATH}/tinyformat)
 
 # eventpp
 add_subdirectory(${COM_LIBS_PATH}/eventpp-0.1.3)
+
+# json
+include_directories(${COM_LIBS_PATH}/json)
 
 # glm
 # add_subdirectory(${COM_LIBS_PATH}/glm)
@@ -52,7 +61,7 @@ if (${OPENCV_ENABLE})
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
         set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.3.0/sdk/native/jni)
-    else ()
+    elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
         set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.9.0/${OHOS_ARCH}/lib/cmake/opencv4)
     endif ()
     find_package(OpenCV REQUIRED)
@@ -64,24 +73,25 @@ endif ()
 if (${LIBYUV_ENABLE})
     message(STATUS "Use libyuv")
 
-    set(libyuv_path ${PLATFORM_LIBS_PATH}/libyuv)
+    set(libyuv_path ${COM_LIBS_PATH}/libyuv-stable)
     include_directories(${libyuv_path}/include)
-    link_directories(${libyuv_path}/lib/${TARGET_ARCH})
-    set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} yuv)
+    FILE(GLOB_RECURSE LIBYUV_SRCS ${libyuv_path}/source/*.cc)
 endif ()
 
 include_directories(src)
 set(COMMON_SOURCES
+        ${LIBYUV_SRCS}
         src/ZNative.cpp
         src/common/Log.cpp
         src/common/utils/YuvUtils.cpp
         src/common/gles/GLUtil.cpp
-        src/common/gles/EGLCtx.cpp
-        src/common/gles/GLEngine.cpp
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM_SOURCES
+            # 对于 local 平台不需要
+            src/common/gles/EGLCtx.cpp
+            src/common/gles/GLEngine.cpp
             src/android/AppContext.cpp
             src/android/utils/JNIUtils.cpp
             src/android/surface/NativeWindow.cpp
@@ -106,6 +116,9 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM_SOURCES
+            # 对于 local 平台不需要
+            src/common/gles/EGLCtx.cpp
+            src/common/gles/GLEngine.cpp
             src/harmony/Harmony.cpp
             src/harmony/AppContext.cpp
             src/harmony/utils/NapiUtils.cpp
@@ -173,6 +186,12 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             ace_ndk.z
             uv
     )
+else ()
+    set(PLATFORM_SOURCES
+            src/local/AppContext.cpp
+    )
+    find_package(OpenGL REQUIRED)
+    set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
 endif ()
 
 # install
@@ -191,7 +210,6 @@ else ()
             ${COMMON_SOURCES}
             ${PLATFORM_SOURCES}
     )
-    # TODO 静态库还需要安装依赖库
 endif ()
 
 install(TARGETS ${PROJ_NAME} DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
@@ -200,3 +218,36 @@ target_link_libraries(${PROJ_NAME} PUBLIC
         ${PLATFORM_LIBS}
         ${THIRD_PARTY_LIBS}
 )
+
+if (${PLATFORM} STREQUAL "local")
+    include_directories(
+            ${PLATFORM_LIBS_PATH}/glfw-3.4/include
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends
+    )
+
+    set(GLFW_INSTALL OFF)
+    set(GLFW_BUILD_DOCS OFF)
+    add_subdirectory(${PLATFORM_LIBS_PATH}/glfw-3.4)
+
+    set(IMGUI_SRC
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui.cpp
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_demo.cpp
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_draw.cpp
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_tables.cpp
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_widgets.cpp
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends/imgui_impl_glfw.cpp
+            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends/imgui_impl_opengl3.cpp
+    )
+
+    add_executable(local-sample
+            ${IMGUI_SRC}
+            samples/local/main.cpp
+            samples/local/gl/GLMain.cpp
+            samples/local/gl/GLRenderer.cpp
+    )
+    target_link_libraries(local-sample PUBLIC
+            glfw
+            ${PROJ_NAME}
+    )
+endif ()
