@@ -23,7 +23,7 @@ public:
     static std::string errString(CamErrorCode e);
     static std::string statusStr(Camera_Status s);
     static std::string positionStr(Camera_Position p);
-    static std::string typeStr(Camera_Type t);
+    static std::string typeStr(int t);
     static std::string connectionStr(Camera_Connection c);
     static std::string formatStr(Camera_Format f);
     static std::string flashModeStr(Camera_FlashMode f);
