@@ -42,6 +42,10 @@ CMake 选项：
 -DOHOS_ARCH=arm64-v8a
 ```
 
+#### 配置运行本地sample
+
+<img src="./docs/screenshots/local-debug.png">
+
 ### 项目结构
 
 ```
@@ -78,6 +82,37 @@ samples/                 # 示例代码目录
     |_ harmony/          # HarmonyOS 示例代码目录
     |_ local/            # 本地示例代码目录
 CMakeLists.txt           # 项目 CMakeLists.txt
+```
+
+### 运行 local sample
+
+本地运行sample，基于 `imgui` 实现，可以非常方便的测试非平台相关的代码，相关代码在 `samples/local` 目录下，可以直接运行。
+
+##### GLRenderer
+
+用于测试 OpenGL shader
+
+```cpp
+class GLRenderer {
+public:
+    static int run(int width=1280, int height=720, const char *title="ZNativeSample");
+
+private:
+    // 初始化, 只调用一次
+    static void onInit(int width, int height);
+
+    // 在 Imgui::render() 之前
+    static void onRender(int width, int height);
+
+    // 画 imgui
+    static void onRenderImgui(int width, int height, ImGuiIO& io);
+
+    // 在 Imgui::render() 之后
+    static void onPostRender(int width, int height);
+
+    // 窗口关闭
+    static void onExit();
+};
 ```
 
 ### 通用代码
@@ -187,53 +222,6 @@ public:
         defUniform("alpha", DataType::FLOAT)->set(1.0f);
     }
 
-    const char *vertexShader() override {
-#ifndef GLAPI
-        return R"(
-        attribute vec4 position;
-        attribute vec2 inputTextureCoordinate;
-        varying highp vec2 textureCoordinate;
-        void main() {
-            gl_Position = position;
-            textureCoordinate = inputTextureCoordinate;
-        })";
-#else
-        return R"(
-        #version 330 core
-        in vec4 position;
-        in vec2 inputTextureCoordinate;
-        out highp vec2 textureCoordinate;
-        void main() {
-            textureCoordinate = inputTextureCoordinate;
-            gl_Position = position;
-        })";
-#endif
-    }
-
-    const char *fragmentShader() override {
-#ifndef GLAPI
-        return R"(
-        varying highp vec2 textureCoordinate;
-        uniform sampler2D inputImageTexture;
-        uniform mediump float alpha;
-        void main() {
-            highp vec4 c = texture2D(inputImageTexture, textureCoordinate);
-            gl_FragColor = vec4(c.rgb, c.a*alpha);
-        })";
-#else
-        return R"(
-        #version 330 core
-        in highp vec2 textureCoordinate;
-        uniform sampler2D inputImageTexture;
-        uniform mediump float alpha;
-        out vec4 fragColor;
-        void main() {
-            vec4 c = texture(inputImageTexture, textureCoordinate);
-            fragColor = vec4(c.rgb, c.a*alpha);
-        })";
-#endif
-    }
-
     TextureFilter &inputTexture(int id) {
         uniform("inputImageTexture")->set(id);
         return *this;
@@ -271,9 +259,35 @@ public:
         }
     }
 
+protected:
+    std::string vertexShader() override {
+        std::string vs = R"(
+attribute vec4 position;
+attribute vec2 inputTextureCoordinate;
+varying highp vec2 textureCoordinate;
+void main() {
+    gl_Position = position;
+    textureCoordinate = inputTextureCoordinate;
+})";
+        return CORRECT_VERTEX_SHADER(vs);
+    }
+
+    std::string fragmentShader() override {
+        std::string fs = R"(
+varying highp vec2 textureCoordinate;
+uniform sampler2D inputImageTexture;
+uniform mediump float alpha;
+void main() {
+    highp vec4 c = texture2D(inputImageTexture, textureCoordinate);
+    gl_FragColor = vec4(c.rgb, c.a*alpha);
+})";
+        return CORRECT_FRAGMENT_SHADER(fs);
+    }
+
 private:
     bool m_blend = false;
 };
+
 ```
 
 ### 移动端（ANDROID & HarmonyOS）代码
@@ -346,30 +360,6 @@ engine.postRender([](int width, int height) {
 });
 
 engine.destroy();
-```
-
-### 运行 local sample
-
-本地运行的相关代码在 `samples/local` 目录下，可以直接运行。
-
-```cpp
-class GLRenderer {
-public:
-    static int run(int width=1280, int height=720, const char *title="ZNativeSample");
-
-private:
-    // 在 Imgui::render() 之前
-    static void onRender(int width, int height);
-
-    // 画 imgui
-    static void onRenderImgui(int width, int height, ImGuiIO& io);
-
-    // 在 Imgui::render() 之后
-    static void onPostRender(int width, int height);
-
-    // 窗口关闭
-    static void onExit();
-};
 ```
 
 ## TODO LIST

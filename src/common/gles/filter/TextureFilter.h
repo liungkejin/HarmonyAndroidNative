@@ -19,30 +19,6 @@ public:
         defUniform("alpha", DataType::FLOAT)->set(1.0f);
     }
 
-    std::string vertexShader() override {
-        std::string vs = R"(
-attribute vec4 position;
-attribute vec2 inputTextureCoordinate;
-varying highp vec2 textureCoordinate;
-void main() {
-    gl_Position = position;
-    textureCoordinate = inputTextureCoordinate;
-})";
-        return CORRECT_VERTEX_SHADER(vs);
-    }
-
-    std::string fragmentShader() override {
-        std::string fs = R"(
-varying highp vec2 textureCoordinate;
-uniform sampler2D inputImageTexture;
-uniform mediump float alpha;
-void main() {
-    highp vec4 c = texture2D(inputImageTexture, textureCoordinate);
-    gl_FragColor = vec4(c.rgb, c.a*alpha);
-})";
-        return CORRECT_FRAGMENT_SHADER(fs);
-    }
-
     TextureFilter &inputTexture(int id) {
         uniform("inputImageTexture")->set(id);
         return *this;
@@ -113,6 +89,31 @@ void main() {
         if (m_blend) {
             glDisable(GL_BLEND);
         }
+    }
+
+protected:
+    std::string vertexShader() override {
+        std::string vs = R"(
+attribute vec4 position;
+attribute vec2 inputTextureCoordinate;
+varying highp vec2 textureCoordinate;
+void main() {
+    gl_Position = position;
+    textureCoordinate = inputTextureCoordinate;
+})";
+        return CORRECT_VERTEX_SHADER(vs);
+    }
+
+    std::string fragmentShader() override {
+        std::string fs = R"(
+varying highp vec2 textureCoordinate;
+uniform sampler2D inputImageTexture;
+uniform mediump float alpha;
+void main() {
+    highp vec4 c = texture2D(inputImageTexture, textureCoordinate);
+    gl_FragColor = vec4(c.rgb, c.a*alpha);
+})";
+        return CORRECT_FRAGMENT_SHADER(fs);
     }
 
 private:

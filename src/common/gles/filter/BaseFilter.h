@@ -15,6 +15,8 @@ NAMESPACE_DEFAULT
 
 class BaseFilter {
 public:
+    virtual ~BaseFilter() = default;
+
     explicit BaseFilter(const char *name) : m_name(name) {}
 
     Attribute *attribute(const char *name) { return m_program.attribute(name); }
