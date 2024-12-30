@@ -29,12 +29,11 @@ NAMESPACE_DEFAULT
 
 #define CHECK_GL_ERROR { GLenum en = glGetError(); if (en != GL_NO_ERROR) { _ERROR("find gl error: %d", en); }}
 
-#ifdef GLAPI
-
 #ifndef GL_CORE_VERSION
 #define GL_CORE_VERSION 330
 #endif
 
+#ifdef GLAPI
 #define CORRECT_VERTEX_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, true)
 #define CORRECT_FRAGMENT_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, false)
 #else
