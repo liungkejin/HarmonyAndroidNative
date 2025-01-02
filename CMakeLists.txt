@@ -141,6 +141,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             src/harmony/media/video/VideoEncoder.cpp
             src/harmony/sensor/SensorGravity.cpp
             src/harmony/sensor/SensorMgr.cpp
+            src/harmony/mslite/MindSporeLite.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so
@@ -182,6 +183,8 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             libbundle_ndk.z.so
             libohsensor.so
             libpixelmap_ndk.z.so
+
+            mindspore_lite_ndk
 
             ace_ndk.z
             uv
