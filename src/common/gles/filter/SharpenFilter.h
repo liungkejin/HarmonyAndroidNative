@@ -59,6 +59,7 @@ void main() {
 
     std::string fragmentShader() override {
         std::string fs = R"(
+precision highp float;
 lowp vec4 blend(lowp vec4 src, lowp vec4 append) {
     return vec4(src.rgb * (1.0 - append.a) + append.rgb,
                 1.0 - (1.0 - src.a) * (1.0 - append.a));

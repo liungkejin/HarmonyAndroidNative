@@ -192,9 +192,18 @@ public:
         return findCamera(CAMERA_POSITION_FRONT, type);
     }
 
-    const CamDevice *findCamera(Camera_Position pos, Camera_Type type) {
+    /**
+     * 找到指定的相机设备
+     * @param pos 指定相机的位置，前置，还是后置
+     * @param type 相机类型, 对应 Camera_Type, 如果为 -1 则表示不指定类型，有什么用什么
+     * @return 可用的相机设备
+     */
+    const CamDevice *findCamera(Camera_Position pos, int type) {
         for (const auto &device: m_list) {
-            if (device.position() == pos && device.type() == type) {
+            if (device.position() == pos) {
+                if (type != -1 && type != device.type()) {
+                    continue;
+                }
                 return &device;
             }
         }

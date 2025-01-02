@@ -65,7 +65,7 @@ std::string CamUtils::positionStr(Camera_Position p) {
     return std::string("CAMERA_POSITION(") + std::to_string(p) + ")";
 }
 
-std::string CamUtils::typeStr(Camera_Type t) {
+std::string CamUtils::typeStr(int t) {
     switch (t) {
         case CAMERA_TYPE_DEFAULT :
             return "CAMERA_TYPE_DEFAULT";
@@ -77,6 +77,8 @@ std::string CamUtils::typeStr(Camera_Type t) {
             return "CAMERA_TYPE_TELEPHOTO";
         case CAMERA_TYPE_TRUE_DEPTH :
             return "CAMERA_TYPE_TRUE_DEPTH";
+        case -1:
+            return "ANY_CAMERA_TYPE";
     }
     return std::string("CAMERA_TYPE(") + std::to_string(t) + ")";
 }
