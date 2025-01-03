@@ -15,13 +15,11 @@ NAMESPACE_DEFAULT
 
 class MindSporeLite {
 public:
-    explicit MindSporeLite() {}
+    explicit MindSporeLite(OH_AI_DeviceType type = OH_AI_DEVICETYPE_CPU) : m_dev_info(type) {}
 
 public:
-    void setDeviceInfo(OH_AI_DeviceType type = OH_AI_DEVICETYPE_CPU, bool enableFP16 = false) {
-        auto deviceInfo = AIDeviceInfo(type);
-        deviceInfo.setF16Enable(enableFP16);
-        m_context.addDeviceInfo(deviceInfo);
+    AIDeviceInfo &deviceInfo() {
+        return m_dev_info;
     }
 
     AIContext &context() {
@@ -41,7 +39,8 @@ public:
             _ERROR("read model file failed: %s", path);
             return false;
         }
-
+        
+        m_context.addDeviceInfo(m_dev_info);
         return m_model.build(data.data(), data.size(), type, m_context.value()) == OH_AI_STATUS_SUCCESS;
     }
 
@@ -58,6 +57,7 @@ public:
 private:
 
     AIModel m_model;
+    AIDeviceInfo m_dev_info;
     AIContext m_context;
 };
 

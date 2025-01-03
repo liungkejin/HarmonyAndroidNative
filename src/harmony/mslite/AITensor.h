@@ -9,6 +9,7 @@
 
 #include "common/Common.h"
 #include "common/Object.h"
+#include "AIUtils.h"
 #include <cstddef>
 #include <cstdint>
 #include <mindspore/format.h>
@@ -93,7 +94,7 @@ public:
 
     OH_AI_Status setUserData(void *data, size_t size) {
         auto status = OH_AI_TensorSetUserData(m_handle, data, size);
-        _ERROR_IF(status, "OH_AI_TensorSetUserData failed: %d", status);
+        _ERROR_IF(status, "OH_AI_TensorSetUserData failed: %s", AIUtils::statusStr(status));
         return status;
     }
 

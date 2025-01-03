@@ -7,6 +7,7 @@
 #include "Namespace.h"
 #include "common/Object.h"
 #include "AITensor.h"
+#include "harmony/mslite/AIUtils.h"
 #include <vector>
 
 NAMESPACE_DEFAULT
@@ -43,7 +44,7 @@ class AIModel : Object {
 public:
     AIModel() {
         m_handle = OH_AI_ModelCreate();
-        _FATAL_IF(m_handle, "OH_AI_ModelCreate failed");
+        _FATAL_IF(!m_handle, "OH_AI_ModelCreate failed");
     }
 
     AIModel(const AIModel &o) : m_handle(o.m_handle), Object(o) {}
@@ -56,15 +57,17 @@ public:
     }
 
 public:
+    OH_AI_ModelHandle &value() { return m_handle; }
+    
     OH_AI_Status build(const void *data, size_t dataSize, OH_AI_ModelType type, const OH_AI_ContextHandle ctx) {
         auto status = OH_AI_ModelBuild(m_handle, data, dataSize, type, ctx);
-        _ERROR_IF(status, "OH_AI_ModelBuild error: %d", status);
+        _ERROR_IF(status, "OH_AI_ModelBuild error: %s", AIUtils::statusStr(status));
         return status;
     }
 
     OH_AI_Status buildFromFile(const char *path, OH_AI_ModelType type, const OH_AI_ContextHandle ctx) {
         auto status = OH_AI_ModelBuildFromFile(m_handle, path, type, ctx);
-        _ERROR_IF(status, "OH_AI_ModelBuild error: %d", status);
+        _ERROR_IF(status, "OH_AI_ModelBuild error: %s", AIUtils::statusStr(status));
         return status;
     }
 
@@ -77,7 +80,7 @@ public:
             handleList[i] = tensors[i].value();
         }
         auto status = OH_AI_ModelResize(m_handle, inputs, shape_infos, shape_info_num);
-        _ERROR_IF(status, "OH_AI_ModelResize error: %d", status);
+        _ERROR_IF(status, "OH_AI_ModelResize error: %s", AIUtils::statusStr(status));
         return status;
     }
 
@@ -94,7 +97,7 @@ public:
     AITensorArray predict(AITensorArray& inputs, const OH_AI_KernelCallBack before, const OH_AI_KernelCallBack after) {
         OH_AI_TensorHandleArray outputArray;
         auto status = OH_AI_ModelPredict(m_handle, inputs.value(), &outputArray, before, after);
-        _ERROR_IF(status, "OH_AI_ModelPredict error: %d", status);
+        _ERROR_IF(status, "OH_AI_ModelPredict error: %s", AIUtils::statusStr(status));
         return AITensorArray(outputArray);
     }
 
