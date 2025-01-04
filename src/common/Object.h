@@ -21,7 +21,7 @@ public:
     inline long reference_count() const { return m_ref_ptr.use_count(); }
 
 protected:
-    void reset_reference() { m_ref_ptr.reset(); }
+    void reset_reference() { m_ref_ptr = std::make_shared<int>(); }
 
     std::shared_ptr<int> m_ref_ptr = std::make_shared<int>();
 };

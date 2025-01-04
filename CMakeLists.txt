@@ -10,6 +10,7 @@ set(CMAKE_CXX_STANDARD 14)
 # ZNATIVE_INCLUDES  所有的include目录
 # ZNATIVE_SOURCES   所有的源文件
 # ZNATIVE_DEP_LIBS  所有的依赖库
+# ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 #
 
 option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ON) # Build shared library
@@ -65,6 +66,7 @@ set(THIRD_PARTY_LIBS eventpp)
 # OpenCV
 if (${ZNATIVE_OPENCV_ENABLE})
     message(STATUS "Use OpenCV")
+    add_definitions(-D__OPENCV__)
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
         set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.3.0/sdk/native/jni)
@@ -92,6 +94,7 @@ set(COMMON_SOURCES
         src/common/Log.cpp
         src/common/utils/YuvUtils.cpp
         src/common/gles/GLUtil.cpp
+        src/common/media/ZMedia.cpp
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
