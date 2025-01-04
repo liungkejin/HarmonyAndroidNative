@@ -15,7 +15,7 @@ NAMESPACE_DEFAULT
 
 class MindSporeLite {
 public:
-    explicit MindSporeLite(OH_AI_DeviceType type = OH_AI_DEVICETYPE_CPU) : m_dev_info(type) {}
+    explicit MindSporeLite() {}
 
 public:
     AIDeviceInfo &deviceInfo() {
@@ -26,7 +26,7 @@ public:
         return m_context;
     }
 
-    bool buildModel(const char *path, OH_AI_ModelType type) {
+    bool buildModel(const char *path) {
         RawData data;
         if (strncmp(path, "assets://", 9) == 0) {
             path += 9;
@@ -41,7 +41,7 @@ public:
         }
         
         m_context.addDeviceInfo(m_dev_info);
-        return m_model.build(data.data(), data.size(), type, m_context.value()) == OH_AI_STATUS_SUCCESS;
+        return m_model.build(data.data(), data.size(), m_context.value()) == OH_AI_STATUS_SUCCESS;
     }
 
     AITensorArray getInputs() {

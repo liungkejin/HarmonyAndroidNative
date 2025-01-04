@@ -8,6 +8,7 @@
 #pragma once
 #include "common/Common.h"
 #include <mindspore/status.h>
+#include <mindspore/types.h>
 
 NAMESPACE_DEFAULT
 
@@ -71,6 +72,60 @@ public:
             return "OH_AI_STATUS_LITE_INPUT_PARAM_INVALID";
         }
         return "Unknown: " + std::to_string(status);
+    }
+
+    static std::string deviceTypeStr(OH_AI_DeviceType type) {
+        switch (type) {
+        case OH_AI_DEVICETYPE_CPU :
+            return "OH_AI_DEVICETYPE_CPU";
+        case OH_AI_DEVICETYPE_GPU :
+            return "OH_AI_DEVICETYPE_GPU";
+        case OH_AI_DEVICETYPE_KIRIN_NPU :
+            return "OH_AI_DEVICETYPE_KIRIN_NPU";
+        case OH_AI_DEVICETYPE_NNRT :
+            return "OH_AI_DEVICETYPE_NNRT";
+        case OH_AI_DEVICETYPE_INVALID :
+        default :
+            return "OH_AI_DEVICETYPE_INVALID";
+        }
+    }
+
+    static std::string performanceModeStr(OH_AI_PerformanceMode mode) {
+        switch (mode) {
+        /** No performance mode preference */
+        case OH_AI_PERFORMANCE_NONE :
+            return "OH_AI_PERFORMANCE_NONE";
+        /** Low power consumption mode*/
+        case OH_AI_PERFORMANCE_LOW :
+            return "OH_AI_PERFORMANCE_LOW";
+        /** Medium performance mode */
+        case OH_AI_PERFORMANCE_MEDIUM :
+            return "OH_AI_PERFORMANCE_MEDIUM";
+        /** High performance mode */
+        case OH_AI_PERFORMANCE_HIGH :
+            return "OH_AI_PERFORMANCE_HIGH";
+        /** Ultimate performance mode */
+        case OH_AI_PERFORMANCE_EXTREME :
+            return "OH_AI_PERFORMANCE_EXTREME";
+        }
+        return "UNKNOWN_PERFORMANCE_MODE: " + std::to_string(mode);
+    }
+
+    static std::string priorityStr(OH_AI_Priority priority) {
+        switch (priority) {
+        /** No priority preference */
+        case OH_AI_PRIORITY_NONE :
+            return "OH_AI_PRIORITY_NONE";
+        /** Low priority */
+        case OH_AI_PRIORITY_LOW :
+            return "OH_AI_PRIORITY_LOW";
+        /** Medium priority */
+        case OH_AI_PRIORITY_MEDIUM :
+            return "OH_AI_PRIORITY_MEDIUM";
+        /** High priority */
+        case OH_AI_PRIORITY_HIGH :
+            return "OH_AI_PRIORITY_HIGH";
+        }
     }
 };
 

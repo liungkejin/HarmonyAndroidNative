@@ -59,13 +59,15 @@ public:
 public:
     OH_AI_ModelHandle &value() { return m_handle; }
     
-    OH_AI_Status build(const void *data, size_t dataSize, OH_AI_ModelType type, const OH_AI_ContextHandle ctx) {
+    OH_AI_Status build(const void *data, size_t dataSize, 
+        const OH_AI_ContextHandle ctx, OH_AI_ModelType type = OH_AI_MODELTYPE_MINDIR) {
         auto status = OH_AI_ModelBuild(m_handle, data, dataSize, type, ctx);
         _ERROR_IF(status, "OH_AI_ModelBuild error: %s", AIUtils::statusStr(status));
         return status;
     }
 
-    OH_AI_Status buildFromFile(const char *path, OH_AI_ModelType type, const OH_AI_ContextHandle ctx) {
+    OH_AI_Status buildFromFile(const char *path, 
+        const OH_AI_ContextHandle ctx, OH_AI_ModelType type = OH_AI_MODELTYPE_MINDIR) {
         auto status = OH_AI_ModelBuildFromFile(m_handle, path, type, ctx);
         _ERROR_IF(status, "OH_AI_ModelBuild error: %s", AIUtils::statusStr(status));
         return status;
