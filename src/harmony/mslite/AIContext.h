@@ -11,17 +11,11 @@
 
 #include <cstddef>
 #include <mindspore/types.h>
-#include <mindspore/model.h>
 #include <mindspore/context.h>
 #include <mindspore/status.h>
-#include <mindspore/tensor.h>
-
-#include "Namespace.h"
-#include "common/Object.h"
 
 NAMESPACE_DEFAULT
-
-class AIDeviceInfo {
+    class AIDeviceInfo {
 public:
     static NNRTDeviceDesc *getAllNNRTDeviceDescs(size_t &outNum) { return OH_AI_GetAllNNRTDeviceDescs(&outNum); }
 
@@ -39,6 +33,10 @@ public:
     }
 
 public:
+    bool valid() {
+        return m_handle != nullptr;
+    }
+
     OH_AI_DeviceInfoHandle value() const {
         return m_handle;
     }

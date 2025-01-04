@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "common/Common.h"
+
 #include <mindspore/status.h>
 #include <mindspore/types.h>
 

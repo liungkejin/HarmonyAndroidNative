@@ -9,6 +9,8 @@
 #include "AITensor.h"
 #include "harmony/mslite/AIUtils.h"
 #include <vector>
+#include <mindspore/tensor.h>
+#include <mindspore/model.h>
 
 NAMESPACE_DEFAULT
 
@@ -29,6 +31,12 @@ public:
             return AITensor();
         }
         return AITensor(m_array.handle_list[index], false);
+    }
+
+    AITensorArray& operator=(const AITensorArray &o) {
+        m_array.handle_num = o.m_array.handle_num;
+        m_array.handle_list = o.m_array.handle_list;
+        return *this;
     }
 
     OH_AI_TensorHandleArray& value() {
