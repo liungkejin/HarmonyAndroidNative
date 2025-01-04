@@ -16,6 +16,13 @@ class YuvUtils {
 public:
     static void rgbaToNV21(const uint8_t *src, int width, int height, uint8_t *dst);
 
+    static void rgbToNV21(const uint8_t *src, int width, int height, uint8_t *dst);
+
+    static void bgraToNV21(const uint8_t *src, int width, int height, uint8_t *dst);
+
+    static void bgrToNV21(const uint8_t *src, int width, int height, uint8_t *dst);
+
+
     // 缩放 nv21 数据
     // @param tempMem 是临时内存，用来存储临时的uv, 大小至少为 width*height/2 + dstWidth*dstHeight/2
     // @param filterType FilterMode::kFilterNone = 0, kFilterLinear = 1, kFilterBilinear = 2, kFilterBox = 3

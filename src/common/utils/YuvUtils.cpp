@@ -11,6 +11,18 @@ void YuvUtils::rgbaToNV21(const uint8_t *src, int width, int height, uint8_t *ds
     libyuv::ARGBToNV21(src, width*4, dst, width, dst+width*height, width, width, height);
 }
 
+void YuvUtils::rgbToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {
+    libyuv::RGBToNV21(src, width*3, dst, width, dst+width*height, width, width, height);
+}
+
+void YuvUtils::bgraToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {
+    libyuv::ABGRToNV21(src, width*4, dst, width, dst+width*height, width, width, height);
+}
+
+void YuvUtils::bgrToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {
+    libyuv::BGRToNV21(src, width*3, dst, width, dst+width*height, width, width, height);
+}
+
 // 缩放 nv21 数据
 // @param tempMem 是临时内存，用来存储临时的uv, 大小至少为 width*height/2 + dstWidth*dstHeight/2
 // @param filterType FilterMode::kFilterNone = 0, kFilterLinear = 1, kFilterBilinear = 2, kFilterBox = 3

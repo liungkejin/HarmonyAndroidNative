@@ -309,6 +309,28 @@ int ABGRToNV21(const uint8_t* src_abgr,
                int width,
                int height);
 
+// Convert BGR To NV21.
+LIBYUV_API
+int BGRToNV21(const uint8_t* src_bgr,
+               int src_stride_bgr,
+               uint8_t* dst_y,
+               int dst_stride_y,
+               uint8_t* dst_vu,
+               int dst_stride_vu,
+               int width,
+               int height);
+
+// Convert RGB To NV21.
+LIBYUV_API
+int RGBToNV21(const uint8_t* src_rgb,
+               int src_stride_rgb,
+               uint8_t* dst_y,
+               int dst_stride_y,
+               uint8_t* dst_vu,
+               int dst_stride_vu,
+               int width,
+               int height);
+
 // Convert ARGB To YUY2.
 LIBYUV_API
 int ARGBToYUY2(const uint8_t* src_argb,
