@@ -14,7 +14,7 @@ public:
     RawData() = default;
 
     explicit RawData(size_t size) : m_size(size), m_owned(true) {
-        m_data = new uint8_t[size];
+        m_data = size > 0 ? new uint8_t[size] : nullptr;
     }
 
     RawData(uint8_t *data, size_t size, bool owned = false) : m_data(data), m_size(size), m_owned(owned) {}
@@ -26,6 +26,21 @@ public:
             DELETE_ARR_TO_NULL(m_data)
         }
     }
+
+    RawData & operator=(const RawData& o) {
+        if (this != &o) {
+            if (m_owned && no_reference() && m_data) {
+                DELETE_ARR_TO_NULL(m_data)
+            }
+            m_size = o.m_size;
+            m_data = o.m_data;
+            m_owned = o.m_owned;
+            m_ref_ptr = o.m_ref_ptr;
+        }
+        return *this;
+    }
+
+public:
 
     inline const uint8_t *data() const { return m_data; }
 

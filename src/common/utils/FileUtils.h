@@ -88,7 +88,7 @@ private:
 
 class FileUtils {
 public:
-    static size_t write(const char *filepath, void *data, size_t len) {
+    static size_t write(const char *filepath, const void *data, size_t len) {
         std::FILE *file = std::fopen(filepath, "w+");
         if (file) {
             size_t written = fwrite(data, len, 1, file);

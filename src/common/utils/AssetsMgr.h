@@ -190,6 +190,30 @@ public:
         }
         return file->readText();
     }
+    
+    /**
+     * 拷贝文件到目标路径
+     * @param path 源文件
+     * @param dstPath 目标文件
+     * @return 文件的长度，如果失败返回 -1
+     */
+    int64_t copyFileTo(const char *path, const char *dstPath) {
+        auto file = openFile(path);
+        if (file == nullptr) {
+            return -1;
+        }
+        auto *dstFile = fopen(dstPath, "w+");
+        if (dstFile == nullptr) {
+            return -1;
+        }
+        uint8_t buf[1024*64];
+        int bufLength = 1024*64;
+        int64_t readLen = 0, sumWrite = 0;
+        while ((readLen = file->read(buf, bufLength)) > 0) {
+            sumWrite += fwrite(buf, readLen, 1, dstFile);
+        }
+        return sumWrite;
+    }
 
     /**
      * 打开目录

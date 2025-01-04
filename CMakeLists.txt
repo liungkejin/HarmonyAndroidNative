@@ -5,9 +5,16 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(BUILD_SHARED_LIB ON) # Build shared library
-set(OPENCV_ENABLE ON) # use opencv library
-set(LIBYUV_ENABLE ON) # use libyuv
+#
+# 定义的几个 CACHE 变量
+# ZNATIVE_INCLUDES  所有的include目录
+# ZNATIVE_SOURCES   所有的源文件
+# ZNATIVE_DEP_LIBS  所有的依赖库
+#
+
+option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ON) # Build shared library
+option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
+option(ZNATIVE_LIBYUV_ENABLE "Enable libyuv" ON) # use libyuv
 
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
@@ -35,28 +42,28 @@ endif ()
 message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
 # 公共第三方库路径
-set(COM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/common)
+set(COM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/common)
 # 平台相关第三方库路径
-set(PLATFORM_LIBS_PATH ${CMAKE_SOURCE_DIR}/libs/${PLATFORM})
+set(PLATFORM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/${PLATFORM})
 
 # message(STATUS "Platform libs path: ${PLATFORM_LIBS_PATH}")
-
-# tinyformat
-include_directories(${COM_LIBS_PATH}/tinyformat)
+set(ALL_INCLUDES
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+    # tinyformat
+    ${COM_LIBS_PATH}/tinyformat
+    # json
+    ${COM_LIBS_PATH}/json
+    # eventpp
+    ${COM_LIBS_PATH}/eventpp-0.1.3/include
+)
 
 # eventpp
 add_subdirectory(${COM_LIBS_PATH}/eventpp-0.1.3)
 
-# json
-include_directories(${COM_LIBS_PATH}/json)
-
-# glm
-# add_subdirectory(${COM_LIBS_PATH}/glm)
-
 set(THIRD_PARTY_LIBS eventpp)
 
 # OpenCV
-if (${OPENCV_ENABLE})
+if (${ZNATIVE_OPENCV_ENABLE})
     message(STATUS "Use OpenCV")
 
     if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
@@ -66,19 +73,19 @@ if (${OPENCV_ENABLE})
     endif ()
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
+    set(ALL_INCLUDES ${ALL_INCLUDES} ${OpenCV_INCLUDE_DIRS})
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ${OpenCV_LIBS})
 endif ()
 
 # libyuv
-if (${LIBYUV_ENABLE})
+if (${ZNATIVE_LIBYUV_ENABLE})
     message(STATUS "Use libyuv")
 
     set(libyuv_path ${COM_LIBS_PATH}/libyuv-stable)
-    include_directories(${libyuv_path}/include)
+    set(ALL_INCLUDES ${ALL_INCLUDES} ${libyuv_path}/include)
     FILE(GLOB_RECURSE LIBYUV_SRCS ${libyuv_path}/source/*.cc)
 endif ()
 
-include_directories(src)
 set(COMMON_SOURCES
         ${LIBYUV_SRCS}
         src/ZNative.cpp
@@ -141,6 +148,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             src/harmony/media/video/VideoEncoder.cpp
             src/harmony/sensor/SensorGravity.cpp
             src/harmony/sensor/SensorMgr.cpp
+            src/harmony/mslite/MindSporeLite.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so
@@ -183,6 +191,8 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             libohsensor.so
             libpixelmap_ndk.z.so
 
+            mindspore_lite_ndk
+
             ace_ndk.z
             uv
     )
@@ -194,30 +204,28 @@ else ()
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
 endif ()
 
+include_directories(${ALL_INCLUDES})
+
 # install
 set(INSTALL_DIR ${CMAKE_SOURCE_DIR}/build/${PLATFORM}/install)
 install(FILES src/Namespace.h src/ZNative.h DESTINATION ${INSTALL_DIR}/include)
 install(DIRECTORY src/common DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY src/${PLATFORM} DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
 
-if (${BUILD_SHARED_LIB})
-    add_library(${PROJ_NAME} SHARED
-            ${COMMON_SOURCES}
-            ${PLATFORM_SOURCES}
-    )
+set(ZNATIVE_INCLUDES ${ALL_INCLUDES} CACHE STRING "all includes")
+set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
+set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS} CACHE STRING "all depend libs")
+set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
+
+if (${ZNATIVE_BUILD_SHARED_LIB})
+    add_library(${PROJ_NAME} SHARED ${ZNATIVE_SOURCES})
 else ()
-    add_library(${PROJ_NAME} STATIC
-            ${COMMON_SOURCES}
-            ${PLATFORM_SOURCES}
-    )
+    add_library(${PROJ_NAME} STATIC ${ZNATIVE_SOURCES})
 endif ()
 
 install(TARGETS ${PROJ_NAME} DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
 
-target_link_libraries(${PROJ_NAME} PUBLIC
-        ${PLATFORM_LIBS}
-        ${THIRD_PARTY_LIBS}
-)
+target_link_libraries(${PROJ_NAME} PUBLIC ${ZNATIVE_DEP_LIBS})
 
 if (${PLATFORM} STREQUAL "local")
     include_directories(
