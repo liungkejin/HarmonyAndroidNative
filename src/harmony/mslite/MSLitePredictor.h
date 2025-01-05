@@ -68,7 +68,7 @@ public:
             m_context.addDeviceInfo(m_dev_info);
         }
         auto status = m_model.build(data, size, m_context.value());
-        if (!status) {
+        if (status) {
             return false;
         }
 
