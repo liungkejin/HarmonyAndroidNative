@@ -12,6 +12,8 @@
 #include "common/gles/filter/ColorAdjustFilter.h"
 #include <opencv2/opencv.hpp>
 
+#include "../test/ZTest.h"
+
 using namespace znative;
 
 struct GuiVars {
@@ -158,6 +160,10 @@ void GLRenderer::onRenderImgui(int width, int height, ImGuiIO &io) {
             ImGui::SliderFloat("highlights", &guiVars.highlights_strength, -1.0f, 1.0f);
             ImGui::SliderFloat("shadows", &guiVars.shadows_strength, -1.0f, 1.0f);
             ImGui::SliderFloat("film grain", &guiVars.film_grain_strength, 0.0f, 1.0f);
+        }
+
+        if (ImGui::Button("test ZImage")) {
+            ZTest::test_ZImage();
         }
 
 //        ImGui::SameLine();

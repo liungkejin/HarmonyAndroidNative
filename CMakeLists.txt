@@ -256,6 +256,7 @@ if (${PLATFORM} STREQUAL "local")
             samples/local/main.cpp
             samples/local/gl/GLMain.cpp
             samples/local/gl/GLRenderer.cpp
+            samples/local/test/TestZImage.cpp
     )
     target_link_libraries(local-sample PUBLIC
             glfw

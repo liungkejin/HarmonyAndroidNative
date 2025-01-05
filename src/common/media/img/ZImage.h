@@ -27,6 +27,19 @@ enum ZImgFormat {
 
 class ZImage : public Object {
 public:
+    static std::string formatStr(int fmt) {
+        switch (fmt) {
+            case F_RGBA: return "F_RGBA";
+            case F_BGRA: return "F_BGRA";
+            case F_RGB: return "F_RGB";
+            case F_BGR: return "F_BGR";
+            case F_YUV_NV21: return "F_YUV_NV21";
+            case F_GRAY: return "F_GRAY";
+            default: return "Unknown Format: " + std::to_string(fmt);
+        }
+    }
+
+public:
     ZImage() {
     }
 
@@ -129,13 +142,13 @@ public:
             case F_GRAY:
                 return cv::Mat(m_height, m_width, CV_8UC1, m_data);
             default:
-                _FATAL("unknown format: %d", m_format);
+                _FATAL("unknown format: %s", formatStr(m_format));
         }
     }
 
-    cv::Mat resize(int w, int h) {
+    cv::Mat resizeToMat(int w, int h) {
         if (m_format == F_YUV_NV21) {
-            cv::Mat dst(h*3/2, w, CV_8UC1);
+            cv::Mat dst(h * 3 / 2, w, CV_8UC1);
             YuvUtils::scaleNV21(m_data, m_width, m_height, dst.data, w, h, nullptr, 1);
             return dst;
         }
@@ -145,7 +158,21 @@ public:
         return dst;
     }
 
-    cv::Mat convertTo(ZImgFormat dstFmt) {
+    ZImage resizeToImg(int w, int h) {
+        cv::Mat mat = this->resizeToMat(w, h);
+        ZImage img;
+        img.put(mat.data, w, h, m_format);
+        return img;
+    }
+
+    ZImage convertToImg(ZImgFormat format) {
+        cv::Mat mat = this->convertToMat(format);
+        ZImage img;
+        img.put(mat.data, m_width, m_height, format);
+        return img;
+    }
+
+    cv::Mat convertToMat(ZImgFormat dstFmt) {
         cv::Mat src = this->mat();
         cv::Mat dst;
         if (dstFmt == F_RGBA) {
@@ -169,7 +196,7 @@ public:
                     cv::cvtColor(src, dst, cv::COLOR_GRAY2RGBA);
                     break;
                 default:
-                    _FATAL("unknown format: %d", m_format);
+                    _FATAL("unknown source format: %s", formatStr(m_format));
             }
         } else if (dstFmt == F_BGRA) {
             switch (this->m_format) {
@@ -190,8 +217,9 @@ public:
                     break;
                 case F_GRAY:
                     cv::cvtColor(src, dst, cv::COLOR_GRAY2BGRA);
+                    break;
                 default:
-                    _FATAL("unknown format: %d", m_format);
+                    _FATAL("unknown source format: %s", formatStr(m_format));
             }
         } else if (dstFmt == F_BGR) {
             switch (this->m_format) {
@@ -199,7 +227,7 @@ public:
                     cv::cvtColor(src, dst, cv::COLOR_RGBA2BGR);
                     break;
                 case F_BGRA:
-                    cv::cvtColor(src, dst, cv::COLOR_RGBA2BGR);
+                    cv::cvtColor(src, dst, cv::COLOR_BGRA2BGR);
                     break;
                 case F_RGB:
                     cv::cvtColor(src, dst, cv::COLOR_RGB2BGR);
@@ -212,8 +240,9 @@ public:
                     break;
                 case F_GRAY:
                     cv::cvtColor(src, dst, cv::COLOR_GRAY2BGR);
+                    break;
                 default:
-                    _FATAL("unknown format: %d", m_format);
+                    _FATAL("unknown source format: %s", formatStr(m_format));
             }
         } else if (dstFmt == F_RGB) {
             switch (this->m_format) {
@@ -221,7 +250,7 @@ public:
                     cv::cvtColor(src, dst, cv::COLOR_RGBA2RGB);
                     break;
                 case F_BGRA:
-                    cv::cvtColor(src, dst, cv::COLOR_RGBA2RGB);
+                    cv::cvtColor(src, dst, cv::COLOR_BGRA2RGB);
                     break;
                 case F_RGB:
                     dst = src.clone();
@@ -234,8 +263,9 @@ public:
                     break;
                 case F_GRAY:
                     cv::cvtColor(src, dst, cv::COLOR_GRAY2RGB);
+                    break;
                 default:
-                    _FATAL("unknown format: %d", m_format);
+                    _FATAL("unknown source format: %s", formatStr(m_format));
             }
         } else if (dstFmt == F_YUV_NV21) {
             dst = cv::Mat(m_height * 3 / 2, m_width, CV_8UC1);
@@ -260,7 +290,7 @@ public:
                     memcpy(dst.data, m_data, m_width * m_height);
                     break;
                 default:
-                    _FATAL("unknown format: %d", m_format);
+                    _FATAL("unknown source format: %s", formatStr(m_format));
             }
         } else if (dstFmt == F_GRAY) {
             switch (this->m_format) {
@@ -284,10 +314,10 @@ public:
                     dst = src.clone();
                     break;
                 default:
-                    _FATAL("unknown format: %d", m_format);
+                    _FATAL("unknown source format: %s", formatStr(m_format));
             }
         } else {
-            _FATAL("unknown dst format: %d", dstFmt);
+            _FATAL("unknown dst format: %s", formatStr(m_format));
         }
         return dst;
     }

@@ -8,7 +8,7 @@
 NAMESPACE_DEFAULT
 
 void YuvUtils::rgbaToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {
-    libyuv::ARGBToNV21(src, width*4, dst, width, dst+width*height, width, width, height);
+    libyuv::ABGRToNV21(src, width*4, dst, width, dst+width*height, width, width, height);
 }
 
 void YuvUtils::rgbToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {
@@ -16,7 +16,7 @@ void YuvUtils::rgbToNV21(const uint8_t *src, int width, int height, uint8_t *dst
 }
 
 void YuvUtils::bgraToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {
-    libyuv::ABGRToNV21(src, width*4, dst, width, dst+width*height, width, width, height);
+    libyuv::ARGBToNV21(src, width*4, dst, width, dst+width*height, width, width, height);
 }
 
 void YuvUtils::bgrToNV21(const uint8_t *src, int width, int height, uint8_t *dst) {

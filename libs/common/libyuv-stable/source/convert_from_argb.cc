@@ -852,7 +852,7 @@ int ABGRToNV21(const uint8_t* src_abgr,
 
 // Same as NV12 but U and V swapped.
 LIBYUV_API
-int BGRToNV21(const uint8_t* src_abgr,
+int RGBToNV21(const uint8_t* src_abgr,
                int src_stride_abgr,
                uint8_t* dst_y,
                int dst_stride_y,
@@ -928,7 +928,7 @@ int BGRToNV21(const uint8_t* src_abgr,
 
 // Same as NV12 but U and V swapped.
 LIBYUV_API
-int RGBToNV21(const uint8_t* src_abgr,
+int BGRToNV21(const uint8_t* src_abgr,
                int src_stride_abgr,
                uint8_t* dst_y,
                int dst_stride_y,
