@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include <mindspore/data_type.h>
+#include <mindspore/format.h>
 #include <mindspore/status.h>
 #include <mindspore/types.h>
 
@@ -125,6 +127,87 @@ public:
         /** High priority */
         case OH_AI_PRIORITY_HIGH :
             return "OH_AI_PRIORITY_HIGH";
+        }
+        return "UNKNOWN_PRIORITY: " + std::to_string(priority);
+    }
+
+    static std::string dataTypeStr(OH_AI_DataType type) {
+        switch (type) {
+            case OH_AI_DATATYPE_OBJECTTYPE_STRING:
+                return "STRING";
+            case OH_AI_DATATYPE_OBJECTTYPE_LIST:
+                return "LIST";
+            case OH_AI_DATATYPE_OBJECTTYPE_TUPLE:
+                return "TUPLE";
+            case OH_AI_DATATYPE_OBJECTTYPE_TENSOR:
+                return "TENSOR";
+            case OH_AI_DATATYPE_NUMBERTYPE_BOOL:
+                return "BOOL";
+            case OH_AI_DATATYPE_NUMBERTYPE_INT8:
+                return "INT8";
+            case OH_AI_DATATYPE_NUMBERTYPE_INT16:
+                return "INT16";
+            case OH_AI_DATATYPE_NUMBERTYPE_INT32:
+                return "INT32";
+            case OH_AI_DATATYPE_NUMBERTYPE_INT64:
+                return "INT64";
+            case OH_AI_DATATYPE_NUMBERTYPE_UINT8:
+                return "UINT8";
+            case OH_AI_DATATYPE_NUMBERTYPE_UINT16:
+                return "UINT16";
+            case OH_AI_DATATYPE_NUMBERTYPE_UINT32:
+                return "UINT32";
+            case OH_AI_DATATYPE_NUMBERTYPE_UINT64:
+                return "UINT64";
+            case OH_AI_DATATYPE_NUMBERTYPE_FLOAT16:
+                return "FLOAT16";
+            case OH_AI_DATATYPE_NUMBERTYPE_FLOAT32:
+                return "FLOAT32";
+            case OH_AI_DATATYPE_NUMBERTYPE_FLOAT64:
+                return "FLOAT64";
+            default:
+                return "UNKNOWN_DATA_TYPE: " + std::to_string(type);
+        }
+    }
+
+    static std::string formatStr(OH_AI_Format format) {
+        switch (format) {
+            case OH_AI_FORMAT_NCHW:
+                return "NCHW";
+            case OH_AI_FORMAT_NHWC:
+                return "NHWC";
+            case OH_AI_FORMAT_NHWC4:
+                return "NHWC4";
+            case OH_AI_FORMAT_HWKC:
+                return "HWKC";
+            case OH_AI_FORMAT_HWCK:
+                return "HWCK";
+            case OH_AI_FORMAT_KCHW:
+                return "KCHW";
+            case OH_AI_FORMAT_CKHW:
+                return "CKHW";
+            case OH_AI_FORMAT_KHWC:
+                return "KHWC";
+            case OH_AI_FORMAT_CHWK:
+                return "CHWK";
+            case OH_AI_FORMAT_HW:
+                return "HW";
+            case OH_AI_FORMAT_HW4:
+                return "HW4";
+            case OH_AI_FORMAT_NC:
+                return "NC";
+            case OH_AI_FORMAT_NC4:
+                return "NC4";
+            case OH_AI_FORMAT_NC4HW4:
+                return "NC4HW4";
+            case OH_AI_FORMAT_NCDHW:
+                return "NCDHW";
+            case OH_AI_FORMAT_NWC:
+                return "NWC";
+            case OH_AI_FORMAT_NCW:
+                return "NCW";
+            default:
+                return "UNKNOWN_FORMAT: " + std::to_string(format);
         }
     }
 };

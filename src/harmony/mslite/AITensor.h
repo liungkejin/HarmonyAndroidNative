@@ -105,6 +105,26 @@ public:
         }
     }
 
+    std::string toString() {
+        std::stringstream ss;
+        ss << "AITensor(" << getName() << ") {\n";
+        ss << "data type: " << AIUtils::dataTypeStr(getDataType()) << ", \n";
+        ss << "shape: [";
+        size_t shapeNum;
+        const int64_t *shape = getShape(shapeNum);
+        for (size_t i = 0; i < shapeNum; i++) {
+            ss << shape[i];
+            if (i < shapeNum - 1) {
+                ss << ", ";
+            }
+        }
+        ss << "], \n";
+        ss << "format: " << AIUtils::formatStr(getFormat()) << ", \n";
+        ss << "data_size: " << getDataSize() << ", \n";
+        ss << "element_num: " << getElementNum() << "\n}";
+        return ss.str();
+    }
+
 private:
     bool m_owner;
     OH_AI_TensorHandle m_handle;
