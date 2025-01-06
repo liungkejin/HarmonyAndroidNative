@@ -125,6 +125,14 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
             mediandk
     )
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
+    # 拿到 CMAKE_TOOLCHAIN_FILE 的文件夹路径
+    get_filename_component(CMAKE_TOOLCHAIN_DIR ${CMAKE_TOOLCHAIN_FILE} DIRECTORY)
+    set(HMS_SDK_PATH ${CMAKE_TOOLCHAIN_DIR}/../../../../hms)
+    set(ALL_INCLUDES ${ALL_INCLUDES} ${HMS_SDK_PATH}/native/sysroot/usr/include)
+    list(APPEND CMAKE_FIND_ROOT_PATH ${HMS_SDK_PATH}/native/sysroot/usr)
+
+    find_library(hiai_foundation-lib hiai_foundation)
+    MESSAGE(STATUS "hiai_foundation-lib: ${hiai_foundation-lib} in ${HMS_SDK_PATH}/native/sysroot/usr/lib")
     set(PLATFORM_SOURCES
             # 对于 local 平台不需要
             src/common/gles/EGLCtx.cpp
@@ -152,6 +160,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             src/harmony/sensor/SensorGravity.cpp
             src/harmony/sensor/SensorMgr.cpp
             src/harmony/mslite/MSLitePredictor.cpp
+            src/harmony/hiai/HiAI.cpp
     )
     set(PLATFORM_LIBS
             libhilog_ndk.z.so
@@ -195,6 +204,8 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             libpixelmap_ndk.z.so
 
             mindspore_lite_ndk
+            libhiai_foundation.so
+            libneural_network_core.so
 
             ace_ndk.z
             uv
