@@ -132,7 +132,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     list(APPEND CMAKE_FIND_ROOT_PATH ${HMS_SDK_PATH}/native/sysroot/usr)
 
     find_library(hiai_foundation-lib hiai_foundation)
-    MESSAGE(STATUS "hiai_foundation-lib: ${hiai_foundation-lib} in ${HMS_SDK_PATH}/native/sysroot/usr/lib")
+#    MESSAGE(STATUS "hiai_foundation-lib: ${hiai_foundation-lib} in ${HMS_SDK_PATH}/native/sysroot/usr/lib")
     set(PLATFORM_SOURCES
             # 对于 local 平台不需要
             src/common/gles/EGLCtx.cpp
@@ -204,7 +204,7 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
             libpixelmap_ndk.z.so
 
             mindspore_lite_ndk
-            libhiai_foundation.so
+            ${hiai_foundation-lib}
             libneural_network_core.so
 
             ace_ndk.z
