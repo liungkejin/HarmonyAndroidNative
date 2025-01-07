@@ -13,12 +13,54 @@
 
 NAMESPACE_DEFAULT
 
-class HiAI {
+class NNShape : Object {
 public:
-    static void test() {
-        _INFO("HiAI test");
+    explicit NNShape(size_t length) {
+        if (length > 0) {
+            m_shape = new int32_t[length];
+            m_length = length;
+        }
     }
 
+    NNShape(const int32_t *shape, size_t length) {
+        m_shape = new int32_t[length];
+        memcpy(m_shape, shape, length * sizeof(int32_t));
+        m_length = length;
+    }
+
+    NNShape(const NNShape &o) : Object(o), m_shape(o.m_shape), m_length(o.m_length) {}
+
+    ~NNShape() {
+        if (m_shape && no_reference()) {
+            delete[] m_shape;
+            m_shape = nullptr;
+        }
+    }
+
+public:
+    const int32_t *shape() const { return m_shape; }
+
+    size_t length() const { return m_length; }
+
+    int32_t operator[](size_t index) const {
+        if (index >= m_length) {
+            _ERROR("index out of range: %d", index);
+            return 0;
+        }
+        return m_shape[index];
+    }
+
+    void set(int32_t value, size_t index) {
+        if (index >= m_length) {
+            _ERROR("index out of range: %d", index);
+            return;
+        }
+        m_shape[index] = value;
+    }
+
+private:
+    int32_t *m_shape = nullptr;
+    size_t m_length = 0;
 };
 
 class HiAIUtils {

@@ -6,6 +6,7 @@
 
 #include "common/Common.h"
 #include "HiAI.h"
+#include "NNTensor.h"
 #include <neural_network_runtime/neural_network_core.h>
 #include <vector>
 
@@ -44,6 +45,21 @@ public:
             return -1;
         }
         return type;
+    }
+
+    /**
+     * 查找第一个设备名是 HIAI_F 开头的设备 id
+     * @return
+     */
+    static size_t findHiAiDevice() {
+        auto ids = getAllDevicesID();
+        for (auto id : ids) {
+            auto name = deviceName(id);
+            if (name == "HIAI_F") {
+                return id;
+            }
+        }
+        return 0;
     }
 
     static void dumpAllDevices() {
@@ -153,18 +169,136 @@ public:
     bool create(NNCompilation &compilation) {
         this->release();
         m_handle = compilation.create();
-        return m_handle != nullptr;
+        if (m_handle == nullptr) {
+            return false;
+        }
+
+        m_device_id = NNDevice::findHiAiDevice();
+        m_input_num = getInputCount();
+        for (size_t i = 0; i < m_input_num; i++) {
+            auto *tensorDesc = createInputTensorDesc(i);
+            auto desc = NNTensorDesc(tensorDesc, true);
+            NNTensor tensor(desc, m_device_id);
+            m_input_tensors[i] = tensor.value();
+            m_inputs.push_back(tensor);
+        }
+
+        m_output_num = getOutputCount();
+        for (size_t i = 0; i < m_output_num; i++) {
+            auto *tensorDesc = createOutputTensorDesc(i);
+            auto desc = NNTensorDesc(tensorDesc, true);
+            NNTensor tensor(desc, m_device_id);
+            m_output_tensors[i] = tensor.value();
+            m_outputs.push_back(tensor);
+        }
+        return true;
+    }
+
+    bool setOnRunDone(NN_OnRunDone onRunDone) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        auto code = OH_NNExecutor_SetOnRunDone(m_handle, onRunDone);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNExecutor_SetOnRunDone failed, code: %s", HiAIUtils::errStr(code));
+        return true;
+    }
+
+    bool setOnServiceDied(NN_OnServiceDied onServiceDied) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        auto code = OH_NNExecutor_SetOnServiceDied(m_handle, onServiceDied);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNExecutor_SetOnServiceDied failed, code: %s", HiAIUtils::errStr(code));
+        return true;
+    }
+
+    size_t getOutputCount() {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        size_t output_num = 0;
+        auto code = OH_NNExecutor_GetOutputCount(m_handle, &output_num);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, 0, "OH_NNExecutor_GetOutputCount failed, code: %s", HiAIUtils::errStr(code));
+        return output_num;
+    }
+
+    NNShape getOutputShape(size_t index) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        int32_t *shape = nullptr;
+        uint32_t shape_length = 0;
+        auto code = OH_NNExecutor_GetOutputShape(m_handle, index, &shape, &shape_length);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, NNShape(0), "OH_NNExecutor_GetOutputShape failed, code: %s", HiAIUtils::errStr(code));
+        return {shape, shape_length};
+    }
+
+    size_t getInputCount() {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        size_t input_num = 0;
+        auto code = OH_NNExecutor_GetInputCount(m_handle, &input_num);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, 0, "OH_NNExecutor_GetInputCount failed, code: %s", HiAIUtils::errStr(code));
+        return input_num;
+    }
+
+    NNTensor& getInput(size_t index) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        _FATAL_IF(index >= m_input_num, "input index out of range: %d", index);
+        return m_inputs[index];
+    }
+
+    NNTensor& getOutput(size_t index) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        _FATAL_IF(index >= m_output_num, "output index out of range: %d", index);
+        return m_outputs[index];
+    }
+
+    bool runSync() {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        auto code = OH_NNExecutor_RunSync(m_handle, m_input_tensors, m_input_num, m_output_tensors, m_output_num);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNExecutor_RunSync failed, code: %s", HiAIUtils::errStr(code));
+        return true;
+    }
+
+    bool runAsync(int timeout, void *userDataa) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        auto code = OH_NNExecutor_RunAsync(m_handle, m_input_tensors, m_input_num, m_output_tensors, m_output_num, timeout, userDataa);
+        _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNExecutor_RunAsync failed, code: %s", HiAIUtils::errStr(code));
+        return true;
     }
 
     void release() {
         if (m_handle) {
+            m_input_num = 0;
+            memset(m_input_tensors, 0, sizeof(m_input_tensors));
+            m_inputs.clear();
+            m_output_num = 0;
+            memset(m_output_tensors, 0, sizeof(m_output_tensors));
+            m_outputs.clear();
+
             OH_NNExecutor_Destroy(&m_handle);
             m_handle = nullptr;
         }
     }
 
 private:
+    NN_TensorDesc * createInputTensorDesc(size_t index) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        NN_TensorDesc *desc = OH_NNExecutor_CreateInputTensorDesc(m_handle, index);
+        _ERROR_IF(!desc, "OH_NNExecutor_CreateInputTensorDesc failed");
+        return desc;
+    }
+
+    NN_TensorDesc * createOutputTensorDesc(size_t index) {
+        _FATAL_IF(!m_handle, "OH_NNExecutor not create!");
+        NN_TensorDesc *desc = OH_NNExecutor_CreateOutputTensorDesc(m_handle, index);
+        _ERROR_IF(!desc, "OH_NNExecutor_CreateOutputTensorDesc failed");
+        return desc;
+    }
+
+private:
     OH_NNExecutor *m_handle = nullptr;
+    size_t m_device_id = 0;
+
+    size_t m_input_num = 0;
+    NN_Tensor *m_input_tensors[256] = {nullptr};
+    std::vector<NNTensor> m_inputs;
+
+    size_t m_output_num = 0;
+    NN_Tensor *m_output_tensors[256] = {nullptr};
+    std::vector<NNTensor> m_outputs;
 };
 
 NAMESPACE_END
