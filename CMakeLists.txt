@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 14)
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 #
 
-option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ON) # Build shared library
+option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" OFF) # Build shared library
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
 option(ZNATIVE_LIBYUV_ENABLE "Enable libyuv" ON) # use libyuv
 
@@ -37,6 +37,25 @@ else ()
     add_definitions(-D__LOCAL_OS__)
     if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
         EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET_ARCH)
+    else ()
+        if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
+                ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD" OR
+                ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
+            if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
+                set(TARGET_ARCH "x64")
+            else ()
+                set(TARGET_ARCH "x86")
+            endif ()
+        elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+            if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
+                set(TARGET_ARCH "arm64")
+            else ()
+                set(TARGET_ARCH "armv7")
+            endif ()
+        else ()
+            message(WARNING "Unknown arch: ${CMAKE_SYSTEM_PROCESSOR}")
+            set(TARGET_ARCH ${CMAKE_SYSTEM_PROCESSOR})
+        endif ()
     endif ()
 endif ()
 
@@ -72,6 +91,10 @@ if (${ZNATIVE_OPENCV_ENABLE})
         set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.3.0/sdk/native/jni)
     elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
         set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.9.0/${OHOS_ARCH}/lib/cmake/opencv4)
+    endif ()
+    if (WIN32)
+        # 这里配置自己的路径, 注意 opencv 必须使用 mingw 编译的.a，而且不能带.a 文件版本后缀，不是 cmake-gui 编译出来的.lib
+        set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.9.0/x64/mingw/staticlib")
     endif ()
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
@@ -216,6 +239,13 @@ else ()
     )
     find_package(OpenGL REQUIRED)
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
+
+    if(WIN32)
+        set(GLEW_DIR "${PLATFORM_LIBS_PATH}/win32/glew-2.1.0")
+        add_subdirectory(${GLEW_DIR})
+        set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glew_s)
+        set(ALL_INCLUDES ${ALL_INCLUDES} ${GLEW_DIR}/include)
+    endif ()
 endif ()
 
 include_directories(${ALL_INCLUDES})
@@ -231,15 +261,20 @@ set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sour
 set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 
+message(STATUS "dep libs: ${ZNATIVE_DEP_LIBS}")
+
 if (${ZNATIVE_BUILD_SHARED_LIB})
+    message(STATUS "build shared library")
     add_library(${PROJ_NAME} SHARED ${ZNATIVE_SOURCES})
 else ()
+    message(STATUS "build static library")
     add_library(${PROJ_NAME} STATIC ${ZNATIVE_SOURCES})
 endif ()
 
 install(TARGETS ${PROJ_NAME} DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
 
 target_link_libraries(${PROJ_NAME} PUBLIC ${ZNATIVE_DEP_LIBS})
+target_compile_options(${PROJ_NAME} PRIVATE -Wterminate)
 
 if (${PLATFORM} STREQUAL "local")
     include_directories(
@@ -250,6 +285,7 @@ if (${PLATFORM} STREQUAL "local")
 
     set(GLFW_INSTALL OFF)
     set(GLFW_BUILD_DOCS OFF)
+    set(GLFW_BUILD_TESTS OFF)
     add_subdirectory(${PLATFORM_LIBS_PATH}/glfw-3.4)
 
     set(IMGUI_SRC
@@ -269,8 +305,9 @@ if (${PLATFORM} STREQUAL "local")
             samples/local/gl/GLRenderer.cpp
             samples/local/test/TestZImage.cpp
     )
-    target_link_libraries(local-sample PUBLIC
+    target_link_libraries(local-sample PRIVATE
             glfw
             ${PROJ_NAME}
+            ${ZNATIVE_DEP_LIBS}
     )
 endif ()

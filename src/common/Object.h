@@ -9,16 +9,16 @@
 #include "Namespace.h"
 #include <cstdio>
 #include <iostream>
+#include <memory>
 
 NAMESPACE_DEFAULT
-
-// 可以进行引用计数的对象
+    // 可以进行引用计数的对象
 
 class Object {
 public:
-    inline bool no_reference() { return m_ref_ptr.use_count() <= 1; }
+    bool no_reference() const { return m_ref_ptr.use_count() <= 1; }
     
-    inline long reference_count() const { return m_ref_ptr.use_count(); }
+    long reference_count() const { return m_ref_ptr.use_count(); }
 
 protected:
     void reset_reference() { m_ref_ptr = std::make_shared<int>(); }

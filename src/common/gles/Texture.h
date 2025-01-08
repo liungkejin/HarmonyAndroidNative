@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <mutex>
+
 #include "GLUtil.h"
 #include "common/utils/Array.h"
 
@@ -109,7 +111,7 @@ class ImageTexture {
 public:
     ~ImageTexture() {
         if (valid()) {
-            _ERROR("ImageTexture not released before destroyed!");
+            _WARN("ImageTexture not released before destroyed!");
         }
     }
 

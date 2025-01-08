@@ -8,6 +8,7 @@
 #pragma once
 #include "GLUtil.h"
 #include "common/utils/MathUtils.h"
+#include <mutex>
 
 NAMESPACE_DEFAULT
 
@@ -212,7 +213,7 @@ private:
 
 class GLCoord {
 public:
-    ~GLCoord() {
+    virtual ~GLCoord() {
         delete[] m_coords;
         m_coords = nullptr;
         m_size = 0;

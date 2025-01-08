@@ -10,6 +10,7 @@
 #include "GLUtil.h"
 #include "GLCoord.h"
 #include <map>
+#include <mutex>
 #include <string>
 
 NAMESPACE_DEFAULT
@@ -40,7 +41,7 @@ public:
     explicit VBO(GLenum usage = GL_STREAM_DRAW) : m_usage(usage) {}
     ~VBO() {
         if (m_size != -1) {
-            _ERROR("VBO(%d) not released before delete!", m_vbo);
+            _WARN("VBO(%d) not released before delete!", m_vbo);
             this->release();
         }
     }
@@ -87,7 +88,7 @@ class VAO {
 public:
     ~VAO() {
         if (m_vao != -1) {
-            _ERROR("VAO(%d) not released before delete!", m_vao);
+            _WARN("VAO(%d) not released before delete!", m_vao);
             this->release();
         }
     }
@@ -369,12 +370,12 @@ private:
 
 class Program {
 public:
-    Program() {}
+    Program() = default;
     Program(const char *vs, const char *fs) : m_vertex_shader(vs), m_fragment_shader(fs) {}
 
     ~Program() {
         if (m_id != INVALID_GL_ID) {
-            _ERROR("GL program(%d) not released before delete!", m_id);
+            _WARN("GL program(%d) not released before delete!", m_id);
             this->release();
         }
     }

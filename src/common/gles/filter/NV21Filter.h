@@ -10,6 +10,7 @@
 #include "BaseFilter.h"
 #include "common/gles/GLUtil.h"
 #include <cstdint>
+#include <mutex>
 
 NAMESPACE_DEFAULT
 

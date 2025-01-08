@@ -9,7 +9,6 @@
 #include "Namespace.h"
 #include "common/Object.h"
 #include "common/utils/Array.h"
-#include "common/utils/Base.h"
 #include "common/utils/RawData.h"
 #include <cstddef>
 #include <cstdint>
@@ -57,7 +56,12 @@ public:
 
     std::vector<std::string> listFilesAlphaSort() {
         struct dirent **pdir = nullptr;
+#ifdef _WIN32
+        _ERROR("Not implemented");
+        int n = 0;
+#else
         int n = scandir(m_path.c_str(), &pdir, nullptr, alphasort);
+#endif
         std::vector<std::string> files;
         for (int i = 0; i < n; ++i) {
             struct dirent *filename = pdir[i];
@@ -157,7 +161,7 @@ public:
 
     static bool deleteFile(const char *str) {
         int err = std::remove(str);
-        _WARN_IF(err, "delete file(%s) failed: %s", str, std::strerror(err));
+        _ERROR_IF(err, "delete file(%s) failed: %s", str, strerror(err));
         return err == 0;
     }
 
@@ -165,8 +169,12 @@ public:
         if (isDirectory(str)) {
             return true;
         }
+#ifdef _WIN32
+        int err = mkdir(str);
+#else
         int err = mkdir(str, mode);
-        _WARN_IF(err, "mkdir(%s) failed: %s", str, std::strerror(err));
+#endif
+        _ERROR_IF(err, "mkdir(%s) failed: %s", str, strerror(err));
         return err == 0;
     }
 
@@ -181,7 +189,7 @@ public:
                 remove(path.c_str());
             }
             int err = rmdir(dirOrFile);
-            _WARN_IF(err, "delete dir(%s) failed: %s", dirOrFile, std::strerror(err));
+            _ERROR_IF(err, "delete dir(%s) failed: %s", dirOrFile, strerror(err));
         } else {
             deleteFile(dirOrFile);
         }

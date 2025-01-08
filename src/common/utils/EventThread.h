@@ -33,7 +33,7 @@ public:
     }
 
     ~EventThread() {
-        _ERROR_IF(isRunning(), "event thread(%s) not quit before delete!", m_name)
+        _WARN_IF(isRunning(), "event thread(%s) not quit before delete!", m_name)
     }
 
     ListenerID listenEvent(int event, const EventHandler &handler) {

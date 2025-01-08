@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <cstring>
+
 #include "common/Object.h"
 #include "common/utils/Base.h"
 #include "common/Log.h"
@@ -19,8 +21,12 @@
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 #else
+#ifdef _WIN32
+#include <GL/glew.h>
+#else
 #include <OpenGL/gl.h>
 #include <OpenGL/gl3.h>
+#endif
 #endif
 
 NAMESPACE_DEFAULT

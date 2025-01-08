@@ -23,7 +23,7 @@ struct GuiVars {
     bool enable_sharpen = false;
     float sharpen_strength = 0.0f;
 
-    bool enable_color_adjust = true;
+    bool enable_color_adjust = false;
     float brightness_strength = 0.0f;
     float contrast_strength = 0.0f;
     float saturation_strength = 0.0f;
