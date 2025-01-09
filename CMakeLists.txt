@@ -13,7 +13,7 @@ set(CMAKE_CXX_STANDARD 14)
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 #
 
-option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" OFF) # Build shared library
+option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ON) # Build shared library
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
 option(ZNATIVE_LIBYUV_ENABLE "Enable libyuv" ON) # use libyuv
 
@@ -75,12 +75,19 @@ set(ALL_INCLUDES
     ${COM_LIBS_PATH}/json
     # eventpp
     ${COM_LIBS_PATH}/eventpp-0.1.3/include
+    # cppfs
+    ${COM_LIBS_PATH}/source/cppfs/include
 )
 
 # eventpp
 add_subdirectory(${COM_LIBS_PATH}/eventpp-0.1.3)
 
-set(THIRD_PARTY_LIBS eventpp)
+# cppfs
+set(BUILD_SHARED_LIBS OFF)
+set(OPTION_BUILD_TESTS OFF)
+add_subdirectory(${COM_LIBS_PATH}/cppfs-1.2.0)
+
+set(THIRD_PARTY_LIBS eventpp cppfs)
 
 # OpenCV
 if (${ZNATIVE_OPENCV_ENABLE})
@@ -256,25 +263,25 @@ install(FILES src/Namespace.h src/ZNative.h DESTINATION ${INSTALL_DIR}/include)
 install(DIRECTORY src/common DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
 install(DIRECTORY src/${PLATFORM} DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
 
+## 注意这些变量 cache string 一旦存储之后就不会改动了，所以不能依赖这个变量
 set(ZNATIVE_INCLUDES ${ALL_INCLUDES} CACHE STRING "all includes")
 set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
 set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 
-message(STATUS "dep libs: ${ZNATIVE_DEP_LIBS}")
+message(STATUS "dep libs: ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS}")
 
 if (${ZNATIVE_BUILD_SHARED_LIB})
     message(STATUS "build shared library")
-    add_library(${PROJ_NAME} SHARED ${ZNATIVE_SOURCES})
+    add_library(${PROJ_NAME} SHARED ${COMMON_SOURCES} ${PLATFORM_SOURCES})
 else ()
     message(STATUS "build static library")
-    add_library(${PROJ_NAME} STATIC ${ZNATIVE_SOURCES})
+    add_library(${PROJ_NAME} STATIC ${COMMON_SOURCES} ${PLATFORM_SOURCES})
 endif ()
 
 install(TARGETS ${PROJ_NAME} DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
 
-target_link_libraries(${PROJ_NAME} PUBLIC ${ZNATIVE_DEP_LIBS})
-target_compile_options(${PROJ_NAME} PRIVATE -Wterminate)
+target_link_libraries(${PROJ_NAME} PUBLIC ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS})
 
 if (${PLATFORM} STREQUAL "local")
     include_directories(
@@ -308,6 +315,6 @@ if (${PLATFORM} STREQUAL "local")
     target_link_libraries(local-sample PRIVATE
             glfw
             ${PROJ_NAME}
-            ${ZNATIVE_DEP_LIBS}
+            ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS}
     )
 endif ()
