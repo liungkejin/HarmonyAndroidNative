@@ -21,6 +21,8 @@
 #endif
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
+#include <common/AppContext.h>
+#include "../IconsFontAwesome6.h"
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
@@ -87,9 +89,30 @@ int GLRenderer::run(int width, int height, const char *title) {
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 
+    float baseFontSize = 13.0f;
+    std::string path = znative::AppContext::filesDir() + "/fonts/YaHeiMonacoHybrid.ttf";
+    ImFont* font = io.Fonts->AddFontFromFileTTF
+    (
+        path.c_str(),
+        baseFontSize,
+        nullptr,
+        io.Fonts->GetGlyphRangesChineseFull()
+    );
+    IM_ASSERT(font != nullptr);
+
+    // FontAwesome字体需要缩小2.0f/3.0f才能正确对齐
+    float iconFontSize = baseFontSize * 2.0f / 3.0f;
+    static constexpr ImWchar icons_ranges[] = { ICON_MIN_FA, ICON_MAX_16_FA, 0 };
+    ImFontConfig icons_config;
+    icons_config.MergeMode = true;
+    icons_config.PixelSnapH = true;
+    icons_config.GlyphMinAdvanceX = iconFontSize;
+    std::string iconsPath = znative::AppContext::filesDir() + "/fonts/fa-solid-900.ttf";
+    io.Fonts->AddFontFromFileTTF(iconsPath.c_str(), iconFontSize, &icons_config, icons_ranges);
+
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
-    //ImGui::StyleColorsLight();
+    // ImGui::StyleColorsClassic();
 
     // Setup Platform/Renderer backends
     ImGui_ImplGlfw_InitForOpenGL(window, true);

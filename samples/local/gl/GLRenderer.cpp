@@ -126,7 +126,7 @@ void GLRenderer::onRenderImgui(int width, int height, ImGuiIO &io) {
         ImGui::Begin("ShaderToy");
 
         // Edit bools storing our window open/close state
-        ImGui::Checkbox("Demo Window", &guiVars.show_demo_window);
+        ImGui::Checkbox("标题", &guiVars.show_demo_window);
         ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
         ImGui::SliderFloat("alpha percent", &guiVars.alpha_percent, 0.0f, 1.0f);
