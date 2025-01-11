@@ -13,10 +13,6 @@ set(CMAKE_CXX_STANDARD 14)
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 #
 
-option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ON) # Build shared library
-option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
-option(ZNATIVE_LIBYUV_ENABLE "Enable libyuv" ON) # use libyuv
-
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     add_definitions(-D__DEBUG__)
@@ -59,6 +55,16 @@ else ()
     endif ()
 endif ()
 
+# 实现在 PLATFORM 为 local 时，默认 ZNATIVE_BUILD_SHARED_LIB 为 ON， 其他平台默认为 OFF
+set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB OFF)
+if (${PLATFORM} STREQUAL "local")
+    set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB ON)
+endif ()
+option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ${DEFAULT_ZNATIVE_BUILD_SHARED_LIB})
+option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
+
+message(STATUS "ZNATIVE_BUILD_SHARED_LIB: ${ZNATIVE_BUILD_SHARED_LIB}")
+message(STATUS "ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
 message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
 # 公共第三方库路径
@@ -109,15 +115,9 @@ if (${ZNATIVE_OPENCV_ENABLE})
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ${OpenCV_LIBS})
 endif ()
 
-# libyuv
-if (${ZNATIVE_LIBYUV_ENABLE})
-    message(STATUS "Use libyuv")
-
-    set(libyuv_path ${COM_LIBS_PATH}/libyuv-stable)
-    set(ALL_INCLUDES ${ALL_INCLUDES} ${libyuv_path}/include)
-    FILE(GLOB_RECURSE LIBYUV_SRCS ${libyuv_path}/source/*.cc)
-endif ()
-
+set(libyuv_path ${COM_LIBS_PATH}/libyuv-stable)
+set(ALL_INCLUDES ${ALL_INCLUDES} ${libyuv_path}/include)
+FILE(GLOB_RECURSE LIBYUV_SRCS ${libyuv_path}/source/*.cc)
 set(COMMON_SOURCES
         ${LIBYUV_SRCS}
         src/ZNative.cpp
