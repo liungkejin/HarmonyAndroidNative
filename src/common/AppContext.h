@@ -8,7 +8,7 @@
 #include "common/utils/AssetsMgr.h"
 #ifdef __ANDROID__
 #include <jni.h>
-#elif defined(__HARMONY_OS__)
+#elif defined(__HARMONYOS__)
 #include "harmony/utils/NapiUtils.h"
 #include <rawfile/raw_file_manager.h>
 #endif
@@ -30,7 +30,7 @@ public:
      */
     static AssetsMgr* assetsManager();
 
-#elif defined(__HARMONY_OS__)
+#elif defined(__HARMONYOS__)
     static void initialize(napi_env env, napi_value jsResMgr,
                            std::string& dirFiles, std::string& dirCache);
 

@@ -30,8 +30,8 @@ if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM "harmony")
     set(TARGET_ARCH ${OHOS_ARCH})
-    # 增加宏定义 __HARMONY_OS__
-    add_definitions(-D__HARMONY_OS__)
+    # 增加宏定义 __HARMONYOS__
+    add_definitions(-D__HARMONYOS__)
 else ()
     set(PLATFORM "local")
     add_definitions(-D__LOCAL_OS__)

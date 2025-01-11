@@ -16,7 +16,7 @@
 #define LOG_TAG "zzz_native"
 #endif
 
-#ifdef __HARMONY_OS__
+#ifdef __HARMONYOS__
 #include <hilog/log.h>
 
 #undef LOG_DOMAIN

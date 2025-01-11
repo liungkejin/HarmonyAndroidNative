@@ -16,7 +16,7 @@
 #include <GLES3/gl3.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
-#elif defined(__HARMONY_OS__)
+#elif defined(__HARMONYOS__)
 #include <GLES3/gl3.h>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
