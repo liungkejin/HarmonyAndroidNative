@@ -39,12 +39,12 @@ NAMESPACE_DEFAULT
 #define GL_CORE_VERSION 330
 #endif
 
-#ifdef GLAPI
-#define CORRECT_VERTEX_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, true)
-#define CORRECT_FRAGMENT_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, false)
-#else
+#ifdef GL_GLES_PROTOTYPES
 #define CORRECT_VERTEX_SHADER(shader) shader
 #define CORRECT_FRAGMENT_SHADER(shader) shader
+#else
+#define CORRECT_VERTEX_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, true)
+#define CORRECT_FRAGMENT_SHADER(shader) GLUtil::simpleConvertGLESShaderToGL(shader, false)
 #endif
 
 class GLUtil {
@@ -69,6 +69,9 @@ public:
             }
             index += 2;
         }
+
+        // 将 precision highp float; 注释掉
+
 
         // texture2D -> texture
         index = 0;
