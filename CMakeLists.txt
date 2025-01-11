@@ -248,6 +248,11 @@ else ()
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
 
     if(WIN32)
+        # 最低支持 win7 , cppfs 中定义了 _WIN32_WINNT 和 WINVER, 否则需要定义 -D_WIN32_WINNT=0x0601 -DWINVER=0x0601
+        add_definitions(-D_AFXDLL)
+        set(CMAKE_MFC_FLAG 2)
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
+
         set(GLEW_DIR "${PLATFORM_LIBS_PATH}/win32/glew-2.1.0")
         add_subdirectory(${GLEW_DIR})
         set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glew_s)
@@ -305,8 +310,15 @@ if (${PLATFORM} STREQUAL "local")
             ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends/imgui_impl_opengl3.cpp
     )
 
+    if (${WIN32})
+        set(WIN32_SRC
+                samples/local/win32/WinCamMgr.cpp
+        )
+    endif ()
+
     add_executable(local-sample
             ${IMGUI_SRC}
+            ${WIN32_SRC}
             samples/local/main.cpp
             samples/local/gl/GLMain.cpp
             samples/local/gl/GLRenderer.cpp

@@ -59,8 +59,8 @@ endif()
 # MINGW
 if (MINGW)
     set(DEFAULT_COMPILE_DEFINITIONS ${DEFAULT_COMPILE_DEFINITIONS}
-        WINVER=0x0600
-        _WIN32_WINNT=0x0600
+        WINVER=0x0601
+        _WIN32_WINNT=0x0601
     )
 endif()
 

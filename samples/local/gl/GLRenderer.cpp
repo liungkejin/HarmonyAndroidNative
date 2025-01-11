@@ -13,6 +13,7 @@
 #include <opencv2/opencv.hpp>
 
 #include "../test/ZTest.h"
+#include "../win32/WinCamMgr.h"
 
 using namespace znative;
 
@@ -48,6 +49,8 @@ GLRect vertexRect;
 void GLRenderer::onInit(int width, int height) {
     std::string version = GLUtil::glVersion();
     _INFO("onInit, window size(%dx%d), GL version: %s", width, height, version);
+
+    WinCamMgr::test();
 }
 
 void GLRenderer::onRender(int viewWidth, int viewHeight) {
