@@ -116,7 +116,7 @@ public:
         _FATAL_IF(!m_handle, "OH_AI_ContextCreate failed");
     }
 
-    AIContext(const AIContext &o) : m_handle(o.m_handle), Object(o) {}
+    AIContext(const AIContext &o) : Object(o), m_handle(o.m_handle) {}
 
     ~AIContext() {
         if (no_reference() && m_handle) {
@@ -148,6 +148,12 @@ public:
 
     void addDeviceInfo(const AIDeviceInfo &info) {
         OH_AI_ContextAddDeviceInfo(m_handle, info.value());
+    }
+    
+    std::string toString() {
+        std::stringstream ss;
+        ss << "AIContext{thread num: " << getThreadNum() << ", thread affinity mode: " << getThreadAffinityMode() << ", parallel enable: " << isParallelEnable() << "}";
+        return ss.str();
     }
 
 private:
