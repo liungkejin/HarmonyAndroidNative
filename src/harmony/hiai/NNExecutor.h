@@ -7,6 +7,7 @@
 #include "common/Common.h"
 #include "HiAI.h"
 #include "NNTensor.h"
+#include <cstddef>
 #include <neural_network_runtime/neural_network_core.h>
 #include <vector>
 
@@ -101,6 +102,8 @@ public:
         _FATAL_IF(m_has_built, "OH_NNCompilation has built!");
         auto code = OH_NNCompilation_SetDevice(m_handle, deviceId);
         _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNCompilation_SetDevice(%d) failed, code: %s", deviceId, HiAIUtils::errStr(code));
+        m_device_id = deviceId;
+        m_dev_id_set_flag = true;
         return true;
     }
 
@@ -109,6 +112,7 @@ public:
         _FATAL_IF(m_has_built, "OH_NNCompilation has built!");
         auto code = OH_NNCompilation_SetPerformanceMode(m_handle, mode);
         _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNCompilation_SetPerformanceMode(%s) failed, code: %s", HiAIUtils::performanceModeStr(mode), HiAIUtils::errStr(code));
+        m_perf_mode = mode;
         return true;
     }
 
@@ -117,6 +121,7 @@ public:
         _FATAL_IF(m_has_built, "OH_NNCompilation has built!");
         auto code = OH_NNCompilation_SetPriority(m_handle, priority);
         _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNCompilation_SetPriority(%s) failed, code: %s", HiAIUtils::priorityStr(priority), HiAIUtils::errStr(code));
+        m_priority = priority;
         return true;
     }
 
@@ -125,12 +130,18 @@ public:
         _FATAL_IF(m_has_built, "OH_NNCompilation has built!");
         auto code = OH_NNCompilation_EnableFloat16(m_handle, enable);
         _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNCompilation_EnableFloat16(%d) failed, code: %s", enable, HiAIUtils::errStr(code));
+        m_fp16_enable = enable;
         return true;
     }
 
     bool build() {
         _FATAL_IF(!m_handle, "OH_NNCompilation not create!");
         _FATAL_IF(m_has_built, "OH_NNCompilation has built!");
+        if (!m_dev_id_set_flag) {
+            m_dev_id_set_flag = true;
+            m_device_id = NNDevice::findHiAiDevice();
+            setDevice(m_device_id);
+        }
         auto code = OH_NNCompilation_Build(m_handle);
         _ERROR_RETURN_IF(code != OH_NN_SUCCESS, false, "OH_NNCompilation_Build failed, code: %s", HiAIUtils::errStr(code));
         m_has_built = true;
@@ -144,8 +155,22 @@ public:
         }
         m_has_built = false;
     }
+    
+    std::string toString() {
+        std::stringstream ss;
+        ss << "NNCompilation{\ndevId: " << m_device_id << ",\n"; 
+        ss << "performanceMode: " << HiAIUtils::performanceModeStr(m_perf_mode) << ",\n";
+        ss << "priority: " << HiAIUtils::priorityStr(m_priority) << ",\n";
+        ss << "fp16Enable: " << (m_fp16_enable ? "enable" : "disable") << ",\n";
+        ss << "}";
+        return ss.str();
+    }
 
 private:
+    size_t deviceId() {
+        return m_device_id;
+    }
+    
     OH_NNExecutor *create() {
         _FATAL_IF(!m_handle, "OH_NNCompilation not create!");
         _FATAL_IF(!m_has_built, "OH_NNCompilation not build!");
@@ -156,6 +181,12 @@ private:
 
 private:
     bool m_has_built = false;
+    
+    size_t m_device_id = 0;
+    bool m_dev_id_set_flag = false;
+    bool m_fp16_enable = false;
+    OH_NN_PerformanceMode m_perf_mode = OH_NN_PERFORMANCE_NONE;
+    OH_NN_Priority m_priority = OH_NN_PRIORITY_NONE;
     OH_NNCompilation *m_handle = nullptr;
 };
 
@@ -166,6 +197,8 @@ public:
     }
 
 public:
+    bool valid() const { return m_handle != nullptr; }
+    
     bool create(NNCompilation &compilation) {
         this->release();
         m_handle = compilation.create();
@@ -173,12 +206,14 @@ public:
             return false;
         }
 
-        m_device_id = NNDevice::findHiAiDevice();
+        m_device_id = compilation.deviceId();
         m_input_num = getInputCount();
         for (size_t i = 0; i < m_input_num; i++) {
             auto *tensorDesc = createInputTensorDesc(i);
             auto desc = NNTensorDesc(tensorDesc, true);
+            _INFO("input[%d]: %s", i, desc.toString());
             NNTensor tensor(desc, m_device_id);
+            _INFO("in tensor[%d]: %s", i, tensor.toString());
             m_input_tensors[i] = tensor.value();
             m_inputs.push_back(tensor);
         }
@@ -187,7 +222,9 @@ public:
         for (size_t i = 0; i < m_output_num; i++) {
             auto *tensorDesc = createOutputTensorDesc(i);
             auto desc = NNTensorDesc(tensorDesc, true);
+            _INFO("output[%d]: %s", i, desc.toString());
             NNTensor tensor(desc, m_device_id);
+            _INFO("out tensor[%d]: %s", i, tensor.toString());
             m_output_tensors[i] = tensor.value();
             m_outputs.push_back(tensor);
         }

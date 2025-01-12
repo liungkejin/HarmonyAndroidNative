@@ -5,6 +5,9 @@
 #pragma once
 
 #include "common/Common.h"
+#include "HiAI.h"
+#include <cstddef>
+#include <cstdint>
 
 NAMESPACE_DEFAULT
 
@@ -105,6 +108,18 @@ public:
                          HiAIUtils::errStr(code));
         return byteSize;
     }
+    
+    std::string toString() {
+        std::stringstream ss;
+        ss << "NNTensorDesc(" << getName() << ") {\n";
+        ss << "DataType: " << HiAIUtils::dataTypeStr(getDataType()) << ",\n";
+        ss << "Shape: " << getShape().toString() << ",\n";
+        ss << "Format: " << HiAIUtils::formatStr(getFormat()) << ",\n";
+        ss << "ElementCount: " << getElementCount() << ",\n";
+        ss << "ByteSize: " << getByteSize() << "\n";
+        ss << "}";
+        return ss.str();
+    }
 
 private:
     NN_Tensor *create(size_t deviceID) {
@@ -159,6 +174,10 @@ public:
     void *getDataBuffer() {
         return OH_NNTensor_GetDataBuffer(m_handle);
     }
+    
+    uint8_t *getDataWithOffset() {
+        return (uint8_t *) getDataBuffer() + getOffset();
+    }
 
     size_t getSize() {
         size_t size = 0;
@@ -180,6 +199,14 @@ public:
             m_handle = nullptr;
         }
         reset_reference();
+    }
+    
+    std::string toString() {
+        char str[64] = {0};
+        size_t offset = m_handle ? getOffset() : 0;
+        size_t size = m_handle ? getSize() : 0;
+        sprintf(str, "NNTensor[%p, offset: %zu, size: %zu]", m_handle, offset, size);
+        return str;
     }
 
 private:

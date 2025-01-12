@@ -57,6 +57,22 @@ public:
         }
         m_shape[index] = value;
     }
+    
+    std::string toString() {
+        std::stringstream ss;
+        ss << "NNShape(" << m_length << ")[";
+        for (int i = 0; i < m_length && i < 5; ++i) {
+            ss << m_shape[i];
+            if (i < m_length-1 && i < 4) {
+                ss << ",";
+            }
+        }
+        if (m_length > 4) {
+            ss << ", ... ";
+        }
+        ss << "]";
+        return ss.str();
+    }
 
 private:
     int32_t *m_shape = nullptr;
