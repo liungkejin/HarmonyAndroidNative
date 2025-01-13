@@ -250,7 +250,7 @@ else ()
 
     if(WIN32)
         # 最低支持 win7 , cppfs 中定义了 _WIN32_WINNT 和 WINVER, 否则需要定义 -D_WIN32_WINNT=0x0601 -DWINVER=0x0601
-        add_definitions(-D_AFXDLL)
+        add_definitions(-D_AFXDLL -DREFERENCE_TIME=LONGLONG)
         set(CMAKE_MFC_FLAG 2)
         set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
 
