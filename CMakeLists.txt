@@ -56,9 +56,10 @@ else ()
 endif ()
 
 # 实现在 PLATFORM 为 local 时，默认 ZNATIVE_BUILD_SHARED_LIB 为 ON， 其他平台默认为 OFF
-set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB OFF)
 if (${PLATFORM} STREQUAL "local")
     set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB ON)
+else ()
+    set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB OFF)
 endif ()
 option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ${DEFAULT_ZNATIVE_BUILD_SHARED_LIB})
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
@@ -314,6 +315,7 @@ if (${PLATFORM} STREQUAL "local")
         set(WIN32_SRC
                 samples/local/win32/WinCamMgr.cpp
         )
+        set(PLATFORM_LIBS ${PLATFORM_LIBS} Mfplat Mf mfreadwrite mfuuid)
     endif ()
 
     add_executable(local-sample
