@@ -6,6 +6,8 @@
 #define ZNATIVE_WINCAMMGR_H
 
 #include <common/Common.h>
+#include <local/win32/WinUtils.h>
+#include <local/win32/dshow/DeviceEnumerator.h>
 
 NAMESPACE_DEFAULT
 

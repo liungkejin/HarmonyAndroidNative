@@ -258,6 +258,17 @@ else ()
         add_subdirectory(${GLEW_DIR})
         set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glew_s)
         set(ALL_INCLUDES ${ALL_INCLUDES} ${GLEW_DIR}/include)
+
+        set(PLATFORM_SOURCES
+                ${PLATFORM_SOURCES}
+                src/local/win32/dshow/DeviceEnumerator.cpp
+                src/local/win32/cam/CamDevice.cpp
+        )
+        set(PLATFORM_LIBS
+                ${PLATFORM_LIBS}
+                quartz
+                strmiids
+        )
     endif ()
 endif ()
 

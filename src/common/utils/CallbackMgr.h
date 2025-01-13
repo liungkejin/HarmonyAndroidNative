@@ -12,21 +12,21 @@
 
 NAMESPACE_DEFAULT
 
-#define CALLBACKS_VECTOR std::vector<std::pair<HOST&, CALLBACK*>> 
+#define CALLBACKS_VECTOR std::vector<std::pair<HOST&, ZCALLBACK*>>
 
-template <typename HOST, typename CALLBACK> class CallbackMgr {
+template <typename HOST, typename ZCALLBACK> class CallbackMgr {
 public:
     bool hasAnyCallback(const void *key) {
         return callbacks_map.find(key) != callbacks_map.end();
     }
     
-    void addCallback(const void *key, HOST &host, CALLBACK *callback) {
+    void addCallback(const void *key, HOST &host, ZCALLBACK *callback) {
         if (callback == nullptr) {
             return;
         }
         
         std::lock_guard<std::mutex> lock(mtx);
-        auto wrap = std::pair<HOST&, CALLBACK*>(host, callback);
+        auto wrap = std::pair<HOST&, ZCALLBACK*>(host, callback);
         
         auto it = callbacks_map.find(key);
         if (it == callbacks_map.end()) {
@@ -44,7 +44,7 @@ public:
         }
     }
 
-    void removeCallback(const void *key, CALLBACK *callback) {
+    void removeCallback(const void *key, ZCALLBACK *callback) {
         if (callback == nullptr) {
             return;
         }
