@@ -1,6 +1,7 @@
-#include "gl/GLRenderer.h"
+
 #include <common/AppContext.h>
 #include <common/utils/FileUtils.h>
+#include "MainApp.h"
 
 #ifdef WIN32
 #include <stringapiset.h>
@@ -17,10 +18,14 @@ int main(int argc, char** argv)
     SetConsoleOutputCP(CP_UTF8);
     setbuf(stdout, nullptr);
 #endif
+#ifdef LOCAL_ASSETS_PATH
+    std::string filesDir = LOCAL_ASSETS_PATH;
+#else
     std::string filesDir = "../../../assets";
+#endif
     std::string cacheDir = "./caches";
     FileUtils::mkDir(cacheDir.c_str());
     znative::AppContext::initialize(filesDir, cacheDir);
-    GLRenderer::run();
+    MainApp::run();
     return 0;
 }

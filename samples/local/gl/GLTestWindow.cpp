@@ -1,7 +1,8 @@
 //
 // Created by LiangKeJin on 2024/7/27.
 //
-#include "GLRenderer.h"
+#include "GLTestWindow.h"
+
 #include "common/gles/GLUtil.h"
 #include "common/gles/GLCoord.h"
 #include "common/gles/Texture.h"
@@ -19,12 +20,11 @@ using namespace znative;
 
 struct GuiVars {
     ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    bool show_demo_window = false;
     float alpha_percent = 1.0f;
-    bool enable_sharpen = false;
+    bool enable_sharpen = true;
     float sharpen_strength = 0.0f;
 
-    bool enable_color_adjust = false;
+    bool enable_color_adjust = true;
     float brightness_strength = 0.0f;
     float contrast_strength = 0.0f;
     float saturation_strength = 0.0f;
@@ -46,14 +46,7 @@ FramebufferPool framebufferPool;
 ImageTexture imageTexture;
 GLRect vertexRect;
 
-void GLRenderer::onInit(int width, int height) {
-    std::string version = GLUtil::glVersion();
-    _INFO("onInit, window size(%dx%d), GL version: %s", width, height, version);
-
-    WinCamMgr::test();
-}
-
-void GLRenderer::onRender(int viewWidth, int viewHeight) {
+void GLTestWindow::onPreRender(int viewWidth, int viewHeight) {
     auto &ccolor = guiVars.clear_color;
     GLUtil::clearColor(ccolor.x, ccolor.y, ccolor.z, ccolor.w);
 
@@ -119,18 +112,10 @@ void GLRenderer::onRender(int viewWidth, int viewHeight) {
     texFilter.render();
 }
 
-void GLRenderer::onRenderImgui(int width, int height, ImGuiIO &io) {
-    if (guiVars.show_demo_window) {
-        ImGui::ShowDemoWindow(&guiVars.show_demo_window);
-    }
-
+void GLTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     {
         // 创建一个名叫"ShaderToy"的窗口，ImGui::End()之前的所有ImGui控件都会在这个窗口中显示
-        ImGui::Begin("ShaderToy");
-
-        // Edit bools storing our window open/close state
-        ImGui::Checkbox("标题", &guiVars.show_demo_window);
-        ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+        ImGui::Begin("GLTestWindow");
 
         ImGui::SliderFloat("alpha percent", &guiVars.alpha_percent, 0.0f, 1.0f);
         ImGui::ColorEdit3("clear color", (float *) &guiVars.clear_color); // Edit 3 floats representing a color
@@ -174,11 +159,7 @@ void GLRenderer::onRenderImgui(int width, int height, ImGuiIO &io) {
     }
 }
 
-void GLRenderer::onPostRender(int width, int height) {
-    //
-}
-
-void GLRenderer::onExit() {
+void GLTestWindow::onAppExit() {
     imageTexture.release();
     texFilter.release();
     sharpenFilter.release();

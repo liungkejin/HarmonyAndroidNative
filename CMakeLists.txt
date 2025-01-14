@@ -329,12 +329,15 @@ if (${PLATFORM} STREQUAL "local")
         set(PLATFORM_LIBS ${PLATFORM_LIBS} Mfplat Mf mfreadwrite mfuuid)
     endif ()
 
+    add_definitions(-DLOCAL_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets")
+
     add_executable(local-sample
             ${IMGUI_SRC}
             ${WIN32_SRC}
             samples/local/main.cpp
-            samples/local/gl/GLMain.cpp
-            samples/local/gl/GLRenderer.cpp
+            samples/local/MainApp.cpp
+            samples/local/MainWindow.cpp
+            samples/local/gl/GLTestWindow.cpp
             samples/local/test/TestZImage.cpp
     )
     target_link_libraries(local-sample PRIVATE

@@ -2,7 +2,8 @@
 // Created by LiangKeJin on 2024/7/27.
 //
 
-#include "GLRenderer.h"
+#include "MainApp.h"
+#include "MainWindow.h"
 
 // Dear ImGui: standalone example application for GLFW + OpenGL 3, using programmable pipeline
 // (GLFW is a cross-platform general purpose library for handling windows, inputs, OpenGL/Vulkan/Metal graphics context creation, etc.)
@@ -22,7 +23,9 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 #include <common/AppContext.h>
-#include "../IconsFontAwesome6.h"
+#include <common/gles/GLUtil.h>
+
+#include "IconsFontAwesome6.h"
 #include <GLFW/glfw3.h> // Will drag system OpenGL headers
 
 // [Win32] Our example includes a copy of glfw3.lib pre-compiled with VS2010 to maximize ease of testing and compatibility with old VS compilers.
@@ -43,7 +46,7 @@ static void glfw_error_callback(int error, const char* description)
 }
 
 // Main code
-int GLRenderer::run(int width, int height, const char *title) {
+int MainApp::run(int width, int height, const char *title) {
     glfwSetErrorCallback(glfw_error_callback);
     if (!glfwInit())
         return 1;
@@ -138,7 +141,7 @@ int GLRenderer::run(int width, int height, const char *title) {
     //ImFont* font = io.Fonts->AddFontFromFileTTF("c:\\Windows\\Fonts\\ArialUni.ttf", 18.0f, nullptr, io.Fonts->GetGlyphRangesJapanese());
     //IM_ASSERT(font != nullptr);
 
-    GLRenderer::onInit(width, height);
+    MainWindow::onInit(width, height);
     // Main loop
 #ifdef __EMSCRIPTEN__
     // For an Emscripten build we are disabling file-system access, so let's not attempt to do a fopen() of the imgui.ini file.
@@ -160,21 +163,21 @@ int GLRenderer::run(int width, int height, const char *title) {
         glfwGetFramebufferSize(window, &display_w, &display_h);
         glViewport(0, 0, display_w, display_h);
 
-        GLRenderer::onRender(display_w, display_h);
+        MainWindow::onPreRender(display_w, display_h);
 
         // Start the Dear ImGui frame
         ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
 
-        GLRenderer::onRenderImgui(display_w, display_h, io);
+        MainWindow::onRenderImgui(display_w, display_h, io);
 
         // Rendering
         ImGui::Render();
         glViewport(0, 0, display_w, display_h);
         ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
-        GLRenderer::onPostRender(display_w, display_h);
+        MainWindow::onPostRender(display_w, display_h);
 
         glfwSwapBuffers(window);
     }
@@ -182,7 +185,7 @@ int GLRenderer::run(int width, int height, const char *title) {
     EMSCRIPTEN_MAINLOOP_END;
 #endif
 
-    GLRenderer::onExit();
+    MainWindow::onExit();
 
     // Cleanup
     ImGui_ImplOpenGL3_Shutdown();
