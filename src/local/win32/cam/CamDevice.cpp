@@ -9,8 +9,8 @@
 
 NAMESPACE_DEFAULT
 
-CamDevice CamDevice::getDevice(const std::string &name, IBaseFilter *filter) {
-    CamDevice device(name);
+CamDevice CamDevice::getDevice(const std::string &id, const std::string &name, IBaseFilter *filter) {
+    CamDevice device(id, name);
 
     HRESULT hr = 0;
     IEnumPins *enumPins = nullptr;
@@ -56,8 +56,8 @@ CamDevice CamDevice::getDevice(const std::string &name, IBaseFilter *filter) {
 std::vector<CamDevice> CamDevice::enumAllDevices() {
     std::vector<CamDevice> devices;
 
-    DeviceEnumerator::enumVideoInputDevices([&devices](const std::string &name, IPropertyBag *, IBaseFilter *filter) {
-        auto d = getDevice(name, filter);
+    DeviceEnumerator::enumVideoInputDevices([&devices](const std::string &id, const std::string &name, IPropertyBag *, IBaseFilter *filter) {
+        auto d = getDevice(id, name, filter);
         devices.push_back(d);
         return false;
     });

@@ -9,11 +9,10 @@
 #include <uuids.h>
 #include <strmif.h>
 #include <local/win32/WinUtils.h>
-#include "DSUtils.h"
 
 NAMESPACE_DEFAULT
 
-typedef std::function<bool(const std::string&, IPropertyBag *, IBaseFilter *)> DevEnumCallback;
+typedef std::function<bool(const std::string& id, const std::string& name, IPropertyBag *, IBaseFilter *)> DevEnumCallback;
 
 class DeviceEnumerator {
 public:
@@ -44,6 +43,9 @@ public:
         ULONG cFetched;
         int index = 0;
         while (pEnumCat->Next(1, &pMoniker, &cFetched) == S_OK && pMoniker && cFetched) {
+            OLECHAR *displayName = nullptr;
+            pMoniker->GetDisplayName(nullptr, nullptr, &displayName);
+            std::string id = WinUtils::bstrToString(displayName);
             IPropertyBag *pPropBag = nullptr;
             hr = pMoniker->BindToStorage(nullptr, nullptr, IID_IPropertyBag, (void **) &pPropBag);
             if (SUCCEEDED(hr) && pPropBag) {
@@ -59,7 +61,7 @@ public:
                     }
                     VariantClear(&varName);
                     /// callback 返回 true 表示不再继续，直接结束枚举
-                    if (callback(devName, pPropBag, pFilter)) {
+                    if (callback(id, devName, pPropBag, pFilter)) {
                         if (pFilter) {
                             pFilter->Release();
                         }

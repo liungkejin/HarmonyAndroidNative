@@ -324,7 +324,7 @@ if (${PLATFORM} STREQUAL "local")
 
     if (${WIN32})
         set(WIN32_SRC
-                samples/local/win32/WinCamMgr.cpp
+                samples/local/win32/WinCamTestWindow.cpp
         )
         set(PLATFORM_LIBS ${PLATFORM_LIBS} Mfplat Mf mfreadwrite mfuuid)
     endif ()

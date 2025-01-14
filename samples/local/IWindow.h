@@ -12,7 +12,8 @@ public:
     explicit IWindow(const std::string &name) : m_name(name) {
     }
 
-    virtual ~IWindow() {}
+    virtual ~IWindow() {
+    }
 
 public:
     const std::string &name() const {
@@ -29,6 +30,32 @@ public:
         //
     }
 
+    void preRender(int width, int height) {
+        if (m_visible && !m_gui_checked) {
+            onInvisible(width, height);
+        } else if (!m_visible && m_gui_checked) {
+            onVisible(width, height);
+        }
+        m_visible = m_gui_checked;
+
+        if (m_visible) {
+            onPreRender(width, height);
+        }
+    }
+
+    void renderImgui(int width, int height, ImGuiIO &io) {
+        if (m_visible) {
+            this->onRenderImgui(width, height, io);
+        }
+    }
+
+    void postRender(int width, int height) {
+        if (m_visible) {
+            this->onPostRender(width, height);
+        }
+    }
+
+protected:
     virtual void onVisible(int width, int height) {
         _INFO("IWindow(%s)::onVisible", m_name);
     }
@@ -49,4 +76,8 @@ public:
 
 private:
     const std::string m_name;
+    bool m_visible = false;
+
+public:
+    bool m_gui_checked = false;
 };

@@ -222,7 +222,7 @@ public:
         if (guid == MEDIASUBTYPE_S342) {
             return "S342";
         }
-        return "UNKNOWN";
+        return "UNKNOWN_" + WinUtils::guidToString(guid);
     }
 };
 

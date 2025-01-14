@@ -14,7 +14,6 @@
 #include <opencv2/opencv.hpp>
 
 #include "../test/ZTest.h"
-#include "../win32/WinCamMgr.h"
 
 using namespace znative;
 

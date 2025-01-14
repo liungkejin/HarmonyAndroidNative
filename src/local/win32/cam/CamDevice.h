@@ -81,10 +81,10 @@ class CamDevice {
 public:
     static std::vector<CamDevice> enumAllDevices();
 
-    static CamDevice getDevice(const std::string &name, IBaseFilter *filter);
+    static CamDevice getDevice(const std::string &id, const std::string &name, IBaseFilter *filter);
 
 public:
-    explicit CamDevice(const std::string &name) : m_name(name) {
+    explicit CamDevice(const std::string &id, const std::string &name) : m_id(id), m_name(name) {
     }
 
     CamDevice(const CamDevice &o) : m_name(o.m_name), m_streams(o.m_streams) {
@@ -95,6 +95,10 @@ public:
         m_streams.clear();
         m_streams.assign(device.m_streams.begin(), device.m_streams.end());
         return *this;
+    }
+
+    const std::string &id() const {
+        return m_id;
     }
 
     const std::string &name() const {
@@ -134,6 +138,7 @@ private:
     }
 
 private:
+    std::string m_id;
     std::string m_name;
     std::vector<CamStreamInfo> m_streams;
 };

@@ -1,0 +1,17 @@
+//
+// Created by wutacam on 2025/1/14.
+//
+
+#pragma once
+
+#include <common/Common.h>
+#include "../IWindow.h"
+
+class WinCamTestWindow : public IWindow {
+public:
+    WinCamTestWindow() : IWindow("WinCamTestWindow") {}
+
+public:
+    void onRenderImgui(int width, int height, ImGuiIO &io) override;
+};
+
