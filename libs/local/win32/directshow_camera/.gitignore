@@ -1,0 +1,77 @@
+# Built application files
+/build
+/*/build/
+
+# vcpkg
+vcpkg
+vcpkg_installed
+
+# PlantUML
+plantuml.jar
+/docs/plantuml.jar
+out
+/docs/*.pu
+
+# CMake
+CMakeCache.txt
+/CMakeFiles
+/Testing
+
+# Google Test
+/_deps
+
+# Docs
+/docs/html
+
+# Config
+/config/vcpkg_path.txt
+/config/window_sdk_path.txt
+
+# VS code
+.vscode
+
+# Prerequisites
+*.d
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# =========================
+# Windows detritus
+# =========================
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# Folder config file
+Desktop.ini
+
+# Recycle Bin used on file shares
+$RECYCLE.BIN/
+
+# Mac crap
+.DS_Store
