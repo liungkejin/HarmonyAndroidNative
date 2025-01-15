@@ -6,19 +6,45 @@
 #include <windows.h>
 #include <vector>
 #include <local/win32/cam/CamDevice.h>
+#include <local/win32/dshow/DSUtils.h>
 #include <camera/camera.h>
+#include <common/gles/Texture.h>
 
 using namespace DirectShowCamera;
+using namespace znative;
 
 std::vector<znative::CamDevice> allCamDevices;
 
 Camera *m_camera = nullptr;
 Frame m_frame;
 
+ImageTexture m_img_tex;
+
+int64_t m_camera_fps = 0;
+int64_t m_camera_frame_count = 0;
+int64_t m_camera_start_ms = 0;
+
 void WinCamTestWindow::onPreRender(int width, int height) {
     if (m_camera && m_camera->isOpened() && m_camera->isCapturing()) {
-        if (m_camera->getNewFrame(m_frame)) {
-            _INFO("getNewFrame: Size(%dx%d), frameSize: %d, frameType: %d", m_frame.getWidth(), m_frame.getHeight(), m_frame.getFrameSize(), m_frame.getFrameType());
+        if (m_camera->getFrame(m_frame, true)) {
+            _INFO("getNewFrame: Size(%dx%d), frameSize: %d, frameType: %d, raw frame type: %s",
+                m_frame.getWidth(), m_frame.getHeight(), m_frame.getFrameSize(), m_frame.getFrameType(), DSUtils::videoTypeString(m_frame.getRawFrameType()));
+            m_camera_frame_count += 1;
+            if (m_camera_start_ms == 0) {
+                m_camera_start_ms = TimeUtils::nowMs();
+            }
+            int64_t costMs = TimeUtils::nowMs() - m_camera_start_ms;
+            if (m_camera_frame_count > 1 && costMs > 0) {
+                m_camera_fps = (int64_t) (m_camera_frame_count * 1000.0 / costMs + 0.5);
+            }
+            if (costMs > 5000) {
+                m_camera_frame_count = 0;
+                m_camera_start_ms = TimeUtils::nowMs();
+            }
+
+            int bytes = 0;
+            auto data = m_frame.getFrameData(bytes);
+            m_img_tex.set(data.get(), m_frame.getWidth(), m_frame.getHeight(), GL_BGR);
         }
     }
 }
@@ -52,6 +78,15 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
             m_camera = nullptr;
         }
     }
+    ImGui::SameLine();
+    ImGui::Text("camera fps: %lld", m_camera_fps);
+
+    if (m_img_tex.valid()) {
+        auto tex =  m_img_tex.texture();
+        if (tex) {
+            ImGui::Image((ImTextureID)tex->id(), ImVec2(tex->width()/2, tex->height()/2));
+        }
+    }
 
     if (ImGui::Button("枚举所有摄像头")) {
         allCamDevices = znative::CamDevice::enumAllDevices();
@@ -62,4 +97,15 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
         ImGui::Text("%s", device.toString().c_str());
     }
     ImGui::End();
+}
+
+void WinCamTestWindow::onInvisible(int width, int height) {
+    if (m_camera) {
+        if (m_camera->isCapturing()) {
+            m_camera->StopCapture();
+        }
+        m_camera->Close();
+        delete m_camera;
+        m_camera = nullptr;
+    }
 }

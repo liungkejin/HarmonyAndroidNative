@@ -181,6 +181,11 @@ namespace DirectShowCamera
         return m_frameSize;
     }
 
+    const GUID & Frame::getRawFrameType() const
+    {
+        return m_frameType;
+    }
+
     Frame::FrameType Frame::getFrameType() const
     {
         if (m_frameType == MEDIASUBTYPE_None)

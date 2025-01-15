@@ -145,6 +145,8 @@ namespace DirectShowCamera
         */
         int getFrameSize() const;
 
+        const GUID& getRawFrameType() const;
+
         /**
         * @brief Get the frame type
         * @return Return the frame type
