@@ -12,24 +12,15 @@ namespace Win32Utils
 {
     std::string BSTRToString(const BSTR bstr, const int cp)
     {
-        std::string result = "";
-
-        if (bstr)
-        {
-            // request content length in single-chars through a terminating nullchar in the BSTR.
-            // note: BSTR's support imbedded nullchars, so this will only convert through the first nullchar.
-            int res = WideCharToMultiByte(cp, 0, bstr, -1, NULL, 0, NULL, NULL);
-            if (res > 0)
-            {
-                result.resize(res);
-                WideCharToMultiByte(cp, 0, bstr, -1, &result[0], res, NULL, NULL);
-            }
-            else
-            {   // no content. clear target
-                result.clear();
-            }
+        if (!bstr) {
+            return "";
         }
-
+        int size = WideCharToMultiByte(cp, 0, bstr, -1, nullptr, 0, nullptr, nullptr);
+        if (size < 1) {
+            return "";
+        }
+        std::string result(size - 1, '\0');
+        WideCharToMultiByte(cp, 0, bstr, -1, &result[0], size, nullptr, nullptr);
         return result;
     }
 
