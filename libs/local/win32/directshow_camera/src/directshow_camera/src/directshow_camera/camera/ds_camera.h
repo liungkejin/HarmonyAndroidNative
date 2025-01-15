@@ -9,6 +9,8 @@
 #define DIRECTSHOW_CAMERA__DIRECTSHOW_CAMERA__CAMERA__DIRECTSHOW_CAMERA_H
 
 //************Content************
+#include <thread>
+
 #include "directshow_camera/camera/abstract_ds_camera.h"
 #include "directshow_camera/camera/i_media_control_handler.h"
 

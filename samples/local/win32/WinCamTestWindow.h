@@ -11,7 +11,9 @@ class WinCamTestWindow : public IWindow {
 public:
     WinCamTestWindow() : IWindow("WinCamTestWindow") {}
 
-public:
+protected:
+    void onPreRender(int width, int height) override;
+
     void onRenderImgui(int width, int height, ImGuiIO &io) override;
 };
 

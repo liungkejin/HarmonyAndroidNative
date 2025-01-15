@@ -10,6 +10,7 @@
 
 //************Content************
 
+#include <windows.h>
 #include <winerror.h>
 #include <string>
 

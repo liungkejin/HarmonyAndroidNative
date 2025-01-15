@@ -100,7 +100,9 @@ void main() {
                     DELETE_TO_NULL(m_uv_texture);
                 }
 
-                TexParams params = {.internalFormat = GL_LUMINANCE, .format = GL_LUMINANCE};
+                TexParams params;
+                params.internalFormat = GL_LUMINANCE;
+                params.format = GL_LUMINANCE;
                 m_y_texture = new Texture2D(width, height, params);
 
                 params.internalFormat = GL_LUMINANCE_ALPHA;

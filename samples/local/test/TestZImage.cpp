@@ -2,12 +2,11 @@
 // Created by bigheadson on 2025/1/5.
 //
 
-#include <common/media/img/ZImage.h>
-
 #include "ZTest.h"
 
+#include <common/media/img/ZImage.h>
+
 #include "common/AppContext.h"
-#include <opencv2/opencv.hpp>
 
 using namespace znative;
 

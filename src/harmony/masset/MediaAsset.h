@@ -39,7 +39,7 @@ public:
     }
 
     ML_ErrorCode addResourceWithBuffer(MediaLibrary_ResourceType resourceType, uint8_t *buffer, uint32_t length) {
-        _ASSERT(m_request == nullptr)
+        _FATAL_IF(m_request == nullptr, "m_request is null")
 
         ML_ErrorCode error = OH_MediaAssetChangeRequest_AddResourceWithBuffer(m_request, resourceType, buffer, length);
         _ERROR_RETURN_IF(error, error, "AddResourceWithBuffer failed: %s", MAssetUtils::errString(error));
@@ -48,21 +48,21 @@ public:
     }
 
     ML_ErrorCode saveCameraPhoto(MediaLibrary_ImageFileType fileType = MEDIA_LIBRARY_IMAGE_JPEG) {
-        _ASSERT(m_request == nullptr)
+        _FATAL_IF(m_request == nullptr, "m_request is null")
         ML_ErrorCode error = OH_MediaAssetChangeRequest_SaveCameraPhoto(m_request, fileType);
         _ERROR_RETURN_IF(error, error, "SaveCameraPhoto failed: %s", MAssetUtils::errString(error));
         return error;
     }
     
     ML_ErrorCode discardCameraPhoto() {
-        _ASSERT(m_request == nullptr)
+        _FATAL_IF(m_request == nullptr, "m_request is null")
         ML_ErrorCode error = OH_MediaAssetChangeRequest_DiscardCameraPhoto(m_request);
         _ERROR_RETURN_IF(error, error, "DiscardCameraPhoto failed: %s", MAssetUtils::errString(error));
         return error;
     }
     
     ML_ErrorCode applyChanges() {
-        _ASSERT(m_request == nullptr)
+        _FATAL_IF(m_request == nullptr, "m_request is null")
         
         ML_ErrorCode error = OH_MediaAccessHelper_ApplyChanges(m_request);
         _ERROR_RETURN_IF(error, error, "ApplyChanges failed: %s", MAssetUtils::errString(error));
@@ -89,7 +89,7 @@ public:
     
 public:
     MediaAssetChangeRequest changeRequest() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
         OH_MediaAssetChangeRequest *request = OH_MediaAssetChangeRequest_Create(m_asset);
         _FATAL_IF(request == nullptr, "create request failed!")
         return MediaAssetChangeRequest(request);
@@ -102,7 +102,7 @@ public:
 
 public:
     std::string uri() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         const char *uri = nullptr;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetUri(m_asset, &uri);
@@ -111,7 +111,7 @@ public:
     }
 
     std::string displayName() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         const char *name = nullptr;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetDisplayName(m_asset, &name);
@@ -120,7 +120,7 @@ public:
     }
 
     uint32_t size() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         uint32_t msize = 0;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetSize(m_asset, &msize);
@@ -129,7 +129,7 @@ public:
     }
 
     uint32_t modifiedMs() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         uint32_t dateModifiedMs = 0;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetDateModifiedMs(m_asset, &dateModifiedMs);
@@ -138,7 +138,7 @@ public:
     }
 
     uint32_t width() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         uint32_t w = 0;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetWidth(m_asset, &w);
@@ -147,7 +147,7 @@ public:
     }
 
     uint32_t height() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         uint32_t h = 0;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetHeight(m_asset, &h);
@@ -156,7 +156,7 @@ public:
     }
 
     uint32_t orientation() {
-        _ASSERT(m_asset == nullptr)
+        _FATAL_IF(m_asset == nullptr, "m_asset is null")
 
         uint32_t o = 0;
         MediaLibrary_ErrorCode error = OH_MediaAsset_GetOrientation(m_asset, &o);

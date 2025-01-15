@@ -1,4 +1,5 @@
 build/
 libs/android/opencv*
+libs/local/win32/opencv*
 .idea/
 .DS_Store

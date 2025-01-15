@@ -10,7 +10,8 @@
 
 //************Content************
 
-#include <atlconv.h>
+// #include <atlconv.h>
+#include <windows.h>
 #include <string>
 
 namespace Win32Utils

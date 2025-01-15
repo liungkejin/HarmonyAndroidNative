@@ -5,6 +5,7 @@
 **/
 
 #include "directshow_camera/stub/ds_camera_stub.h"
+#include <stdexcept>
 
 namespace DirectShowCamera
 {
@@ -61,7 +62,8 @@ namespace DirectShowCamera
         }
         else
         {
-            throw std::exception("DirectShowVideoFormat can't be null");
+            std::logic_error ex("DirectShowVideoFormat can't be null");
+            throw std::exception(ex);
         }
 
         return true;

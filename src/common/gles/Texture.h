@@ -75,9 +75,8 @@ public:
 
 public:
     static Texture2D create(GLint width, GLint height, GLenum format = GL_RGBA) {
-        TexParams param = {
-            .format = format
-        };
+        TexParams param;
+        param.format = format;
         Texture2D tex(width, height, param);
         tex.update(nullptr);
         return tex;
@@ -167,9 +166,8 @@ public:
         std::lock_guard<std::mutex> lock(m_update_mutex);
         if (m_tex == nullptr || m_tex->width() != m_width || m_tex->height() != m_height || m_tex->params().format != m_format) {
             DELETE_TO_NULL(m_tex);
-            TexParams params = {
-                    .format = m_format
-            };
+            TexParams params;
+            params.format = m_format;
             m_tex = new Texture2D(m_width, m_height, params);
         }
 

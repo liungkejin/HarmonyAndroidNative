@@ -1,5 +1,3 @@
-#pragma clang diagnostic push
-#pragma ide diagnostic ignored "bugprone-reserved-identifier"
 //
 // Created on 2024/4/15.
 //
@@ -76,12 +74,17 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
     return prettyFunction.substr(begin, end) + "()";
 }
 
+#ifdef _MSC_VER
+#define __PRETTY_FORMAT(fmt, ...)                                                                                      \
+    tfm::format("[%d] " fmt, __LINE__, ##__VA_ARGS__)
+#else
 #define __PRETTY_FORMAT(fmt, args...)                                                                                  \
     tfm::format("[%s:%d] " fmt, __prettyMethodName(__PRETTY_FUNCTION__), __LINE__, ##args)
+#endif
 
-#define _DEBUG(fmt, args...)                                                                                           \
+#define _DEBUG(fmt, ...)                                                                                               \
     do {                                                                                                               \
-        std::string _log_str = __PRETTY_FORMAT(fmt, ##args);                                                           \
+        std::string _log_str = __PRETTY_FORMAT(fmt, ##__VA_ARGS__);                                                    \
         if (__g_logFile != nullptr) {                                                                                  \
             fprintf(__g_logFile, "[D] %s\n", _log_str.c_str());                                                        \
             fflush(__g_logFile);                                                                                       \
@@ -90,9 +93,9 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         }                                                                                                              \
     } while (0)
 
-#define _INFO(fmt, args...)                                                                                            \
+#define _INFO(fmt, ...)                                                                                                \
     do {                                                                                                               \
-        std::string _log_str = __PRETTY_FORMAT(fmt, ##args);                                                           \
+        std::string _log_str = __PRETTY_FORMAT(fmt, ##__VA_ARGS__);                                                    \
         if (__g_logFile != nullptr) {                                                                                  \
             fprintf(__g_logFile, "[I] %s\n", _log_str.c_str());                                                        \
             fflush(__g_logFile);                                                                                       \
@@ -101,9 +104,9 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         }                                                                                                              \
     } while (0)
 
-#define _WARN(fmt, args...)                                                                                            \
+#define _WARN(fmt, ...)                                                                                                \
     do {                                                                                                               \
-        std::string _log_str = __PRETTY_FORMAT(fmt, ##args);                                                           \
+        std::string _log_str = __PRETTY_FORMAT(fmt, ##__VA_ARGS__);                                                    \
         if (__g_logFile != nullptr) {                                                                                  \
             fprintf(__g_logFile, "[W] %s\n", _log_str.c_str());                                                        \
             fflush(__g_logFile);                                                                                       \
@@ -112,9 +115,9 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         }                                                                                                              \
     } while (0)
 
-#define _ERROR(fmt, args...)                                                                                           \
+#define _ERROR(fmt, ...)                                                                                               \
     do {                                                                                                               \
-        std::string _log_str = __PRETTY_FORMAT(fmt, ##args);                                                           \
+        std::string _log_str = __PRETTY_FORMAT(fmt, ##__VA_ARGS__);                                                    \
         if (__g_logFile != nullptr) {                                                                                  \
             fprintf(__g_logFile, "[E] %s\n", _log_str.c_str());                                                        \
             fflush(__g_logFile);                                                                                       \
@@ -126,9 +129,9 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         }                                                                                                              \
     } while (0)
 
-#define _FATAL(fmt, args...)                                                                                           \
+#define _FATAL(fmt, ...)                                                                                               \
     do {                                                                                                               \
-        std::string _log_str = __PRETTY_FORMAT(fmt, ##args);                                                           \
+        std::string _log_str = __PRETTY_FORMAT(fmt, ##__VA_ARGS__);                                                    \
         if (__g_logFile != nullptr) {                                                                                  \
             fprintf(__g_logFile, "[E] %s\n", _log_str.c_str());                                                        \
             fflush(__g_logFile);                                                                                       \
@@ -138,16 +141,14 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         throw std::runtime_error(_log_str);                                                                            \
     } while (0)
 
-#define _ASSERT(condition) if (condition) { _FATAL("" #condition); }
-
-#define _FATAL_IF(condition, fmt, args...)                                                                             \
+#define _FATAL_IF(condition, fmt, ...)                                                                                 \
     if (condition) {                                                                                                   \
-        _FATAL(fmt, ##args);                                                                                           \
+        _FATAL(fmt, ##__VA_ARGS__);                                                                                    \
     }
 
-#define _ERROR_RETURN_IF(condition, retcode, fmt, args...)                                                             \
+#define _ERROR_RETURN_IF(condition, retcode, fmt, ...)                                                                 \
     if (condition) {                                                                                                   \
-        _ERROR(fmt, ##args);                                                                                           \
+        _ERROR(fmt, ##__VA_ARGS__);                                                                                    \
         return (retcode);                                                                                              \
     }
 
@@ -156,32 +157,32 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         return (retcode);                                                                                              \
     }
 
-#define _ERROR_IF(condition, fmt, args...)                                                                             \
+#define _ERROR_IF(condition, fmt, ...)                                                                                 \
     if (condition) {                                                                                                   \
-        _ERROR(fmt, ##args);                                                                                           \
+        _ERROR(fmt, ##__VA_ARGS__);                                                                                    \
     }
 
-#define _WARN_RETURN_IF(condition, retcode, fmt, args...)                                                              \
+#define _WARN_RETURN_IF(condition, retcode, fmt, ...)                                                                  \
     if (condition) {                                                                                                   \
-        _WARN(fmt, ##args);                                                                                            \
+        _WARN(fmt, ##__VA_ARGS__);                                                                                     \
         return (retcode);                                                                                              \
     }
 
-#define _WARN_IF(condition, fmt, args...)                                                                              \
+#define _WARN_IF(condition, fmt, ...)                                                                                  \
     if (condition) {                                                                                                   \
-        _WARN(fmt, ##args);                                                                                            \
+        _WARN(fmt, ##__VA_ARGS__);                                                                                     \
     }
 
-#define _INFO_IF(condition, fmt, args...)                                                                              \
+#define _INFO_IF(condition, fmt, ...)                                                                                  \
     if (condition) {                                                                                                   \
-        _INFO(fmt, ##args);                                                                                            \
+        _INFO(fmt, ##__VA_ARGS__);                                                                                     \
     }
 
-#define _CHECK_RESULT(error, fmt, args...)                                                                              \
+#define _CHECK_RESULT(error, fmt, ...)                                                                                 \
     if (error) {                                                                                                       \
-        _ERROR("Error(%d): " #fmt, error, args);                                                                       \
+        _ERROR("Error(%d): " #fmt, error, ##__VA_ARGS__);                                                              \
     } else {                                                                                                           \
-        _INFO(fmt, args);                                                                                              \
+        _INFO(fmt, __VA_ARGS__);                                                                                       \
     }
 
 #define _CHECK_FUNC(result, func)                                                                                      \
@@ -191,5 +192,3 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
     } else {                                                                                                           \
         _INFO("" #func " success");                                                                                    \
     }
-
-#pragma clang diagnostic pop

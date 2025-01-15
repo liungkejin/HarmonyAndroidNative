@@ -10,7 +10,6 @@
 #include "gl/GLTestWindow.h"
 
 class MainApp {
-  public:
-    static int run(int width=1280, int height=720, const char *title="ZNative");
-    };
-
+public:
+    static int run(int width = 1280, int height = 720, const char *title = "ZNative");
+};

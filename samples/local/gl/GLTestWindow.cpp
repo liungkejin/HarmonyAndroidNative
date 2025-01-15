@@ -11,7 +11,6 @@
 #include "common/gles/FramebufferPool.h"
 #include "common/AppContext.h"
 #include "common/gles/filter/ColorAdjustFilter.h"
-#include <opencv2/opencv.hpp>
 
 #include "../test/ZTest.h"
 

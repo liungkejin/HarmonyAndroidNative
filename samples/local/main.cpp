@@ -4,8 +4,8 @@
 #include "MainApp.h"
 
 #ifdef WIN32
+#include <windows.h>
 #include <stringapiset.h>
-#include <Windows.h>
 #endif
 
 using namespace znative;

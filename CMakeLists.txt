@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.18.1)
 set(PROJ_NAME "znative")
 project(${PROJ_NAME} VERSION 0.1.1)
 
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
 
 #
 # 定义的几个 CACHE 变量
@@ -39,14 +40,18 @@ else ()
                 ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
             if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
                 set(TARGET_ARCH "x64")
+                add_definitions(-D_AMD64_)
             else ()
                 set(TARGET_ARCH "x86")
+                add_definitions(-D_X86_)
             endif ()
         elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
             if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
                 set(TARGET_ARCH "arm64")
+                add_definitions(-D_ARM64_)
             else ()
                 set(TARGET_ARCH "armv7")
+                add_definitions(-D_ARM_)
             endif ()
         else ()
             message(WARNING "Unknown arch: ${CMAKE_SYSTEM_PROCESSOR}")
@@ -55,16 +60,10 @@ else ()
     endif ()
 endif ()
 
-# 实现在 PLATFORM 为 local 时，默认 ZNATIVE_BUILD_SHARED_LIB 为 ON， 其他平台默认为 OFF
-if (${PLATFORM} STREQUAL "local")
-    set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB ON)
-else ()
-    set(DEFAULT_ZNATIVE_BUILD_SHARED_LIB OFF)
-endif ()
-option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" ${DEFAULT_ZNATIVE_BUILD_SHARED_LIB})
+#option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" OFF)
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
 
-message(STATUS "ZNATIVE_BUILD_SHARED_LIB: ${ZNATIVE_BUILD_SHARED_LIB}")
+#message(STATUS "ZNATIVE_BUILD_SHARED_LIB: ${ZNATIVE_BUILD_SHARED_LIB}")
 message(STATUS "ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
 message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
@@ -107,8 +106,18 @@ if (${ZNATIVE_OPENCV_ENABLE})
         set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.9.0/${OHOS_ARCH}/lib/cmake/opencv4)
     endif ()
     if (WIN32)
-        # 这里配置自己的路径, 注意 opencv 必须使用 mingw 编译的.a，而且不能带.a 文件版本后缀，不是 cmake-gui 编译出来的.lib
-        set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.9.0/x64/mingw/staticlib")
+        # Windows 上使用 Visual Studio 工具链时，编译的 opencv 静态库时，注意将 BUILD_WITH_STATIC_CRT 置为 OFF
+        # 同时需要编译两份，一份是 debug 版本，一份是 release 版本
+        if (MSVC)
+            if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
+                set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/debug/x64/vc17/staticlib")
+            else ()
+                set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/release/x64/vc17/staticlib")
+            endif ()
+        else ()
+            # MINGW
+            set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.9.0/x64/mingw/staticlib")
+        endif ()
     endif ()
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
@@ -249,15 +258,25 @@ else ()
     set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
 
     if(WIN32)
-        # 最低支持 win7 , cppfs 中定义了 _WIN32_WINNT 和 WINVER, 否则需要定义 -D_WIN32_WINNT=0x0601 -DWINVER=0x0601
-        add_definitions(-D_AFXDLL -DREFERENCE_TIME=LONGLONG)
-        set(CMAKE_MFC_FLAG 2)
-        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mwindows")
+        add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
+        add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 
         set(GLEW_DIR "${PLATFORM_LIBS_PATH}/win32/glew-2.1.0")
         add_subdirectory(${GLEW_DIR})
-        set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} glew_s)
-        set(ALL_INCLUDES ${ALL_INCLUDES} ${GLEW_DIR}/include)
+
+        set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/win32/directshow_camera")
+        add_subdirectory(${DS_CAMERA_DIR})
+
+        set(THIRD_PARTY_LIBS
+                ${THIRD_PARTY_LIBS}
+                glew_s
+                directshow_camera
+        )
+        set(ALL_INCLUDES
+                ${ALL_INCLUDES}
+                ${GLEW_DIR}/include
+                ${DS_CAMERA_DIR}/src
+        )
 
         set(PLATFORM_SOURCES
                 ${PLATFORM_SOURCES}
@@ -286,25 +305,23 @@ set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sour
 set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 
+add_library(${PROJ_NAME}-shared SHARED ${COMMON_SOURCES} ${PLATFORM_SOURCES})
+add_library(${PROJ_NAME}-static STATIC ${COMMON_SOURCES} ${PLATFORM_SOURCES})
+
+install(TARGETS ${PROJ_NAME}-shared DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
+install(TARGETS ${PROJ_NAME}-static DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
+
+target_link_libraries(${PROJ_NAME}-shared PUBLIC ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS})
+target_link_libraries(${PROJ_NAME}-static PUBLIC ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS})
+
 message(STATUS "dep libs: ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS}")
-
-if (${ZNATIVE_BUILD_SHARED_LIB})
-    message(STATUS "build shared library")
-    add_library(${PROJ_NAME} SHARED ${COMMON_SOURCES} ${PLATFORM_SOURCES})
-else ()
-    message(STATUS "build static library")
-    add_library(${PROJ_NAME} STATIC ${COMMON_SOURCES} ${PLATFORM_SOURCES})
-endif ()
-
-install(TARGETS ${PROJ_NAME} DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
-
-target_link_libraries(${PROJ_NAME} PUBLIC ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS})
 
 if (${PLATFORM} STREQUAL "local")
     include_directories(
             ${PLATFORM_LIBS_PATH}/glfw-3.4/include
             ${PLATFORM_LIBS_PATH}/imgui-1.90.9
             ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends
+            samples/local
     )
 
     set(GLFW_INSTALL OFF)
@@ -326,7 +343,7 @@ if (${PLATFORM} STREQUAL "local")
         set(WIN32_SRC
                 samples/local/win32/WinCamTestWindow.cpp
         )
-        set(PLATFORM_LIBS ${PLATFORM_LIBS} Mfplat Mf mfreadwrite mfuuid)
+#        set(PLATFORM_LIBS ${PLATFORM_LIBS})
     endif ()
 
     add_definitions(-DLOCAL_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets")
@@ -342,7 +359,8 @@ if (${PLATFORM} STREQUAL "local")
     )
     target_link_libraries(local-sample PRIVATE
             glfw
-            ${PROJ_NAME}
-            ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS}
+            ${PLATFORM_LIBS}
+            ${THIRD_PARTY_LIBS}
+            ${PROJ_NAME}-static
     )
 endif ()
