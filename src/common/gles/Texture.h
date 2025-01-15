@@ -118,12 +118,12 @@ public:
         int channels;
         switch (format) {
             case GL_RGBA:
-#ifdef GLAPI
+#ifndef GL_GLES_PROTOTYPES
             case GL_BGRA:
 #endif
                 channels = 4;
                 break;
-#ifdef GLAPI
+#ifndef GL_GLES_PROTOTYPES
             case GL_BGR:
 #endif
             case GL_RGB:

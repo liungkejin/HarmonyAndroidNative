@@ -76,7 +76,7 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
 
 #ifdef _MSC_VER
 #define __PRETTY_FORMAT(fmt, ...)                                                                                      \
-    tfm::format("[%d] " fmt, __LINE__, ##__VA_ARGS__)
+    tfm::format("[%s:%d] " fmt, __FUNCTION__, __LINE__, ##__VA_ARGS__)
 #else
 #define __PRETTY_FORMAT(fmt, args...)                                                                                  \
     tfm::format("[%s:%d] " fmt, __prettyMethodName(__PRETTY_FUNCTION__), __LINE__, ##args)
