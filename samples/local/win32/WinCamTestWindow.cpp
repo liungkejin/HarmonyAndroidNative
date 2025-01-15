@@ -13,7 +13,9 @@
 using namespace DirectShowCamera;
 using namespace znative;
 
-std::vector<znative::CamDevice> allCamDevices;
+std::vector<CameraDevice> all_camera_devices;
+std::string selected_camera_device_name;
+std::string selected_camera_device_path;
 
 Camera *m_camera = nullptr;
 Frame m_frame;
@@ -52,6 +54,47 @@ void WinCamTestWindow::onPreRender(int width, int height) {
 void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     ImGui::Begin("Win32 Camera Test");
 
+    if (ImGui::Button("枚举所有相机设备:")) {
+        if (m_camera == nullptr) {
+            m_camera = new Camera();
+        }
+        all_camera_devices = m_camera->getCameras();
+        if (all_camera_devices.empty()) {
+            selected_camera_device_name = "";
+            selected_camera_device_path = "";
+        } else {
+            selected_camera_device_name = "";
+            for (auto & d : all_camera_devices) {
+                if (d.getDevicePath() == selected_camera_device_path) {
+                    selected_camera_device_name = d.getFriendlyName();
+                    selected_camera_device_path = d.getDevicePath();
+                }
+            }
+            if (selected_camera_device_name.empty()) {
+                selected_camera_device_name = all_camera_devices[0].getFriendlyName();
+                selected_camera_device_path = all_camera_devices[0].getDevicePath();
+            }
+        }
+    }
+    ImGui::SameLine();
+    if (!all_camera_devices.empty()) {
+        if (ImGui::BeginCombo("Devices", selected_camera_device_name.c_str())) {
+            for (auto &device : all_camera_devices) {
+                bool is_selected = (device.getDevicePath() == selected_camera_device_path);
+                if (ImGui::Selectable(device.getFriendlyName().c_str(), is_selected)) {
+                    selected_camera_device_path = device.getDevicePath();
+                    selected_camera_device_name = device.getFriendlyName();
+                }
+                if (is_selected) {
+                    ImGui::SetItemDefaultFocus();
+                }
+            }
+            ImGui::EndCombo();
+        }
+    } else {
+        ImGui::Text("No camera device found.");
+    }
+
     static std::string openCamLabel = "打开相机";
     if (ImGui::Button(openCamLabel.c_str())) {
         if (m_camera == nullptr) {
@@ -88,14 +131,14 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
         }
     }
 
-    if (ImGui::Button("枚举所有摄像头")) {
-        allCamDevices = znative::CamDevice::enumAllDevices();
-    }
-    for (auto &device : allCamDevices) {
-        ImGui::NewLine();
-        ImGui::Button(device.name().c_str());
-        ImGui::Text("%s", device.toString().c_str());
-    }
+    // if (ImGui::Button("枚举所有摄像头")) {
+    //     allCamDevices = znative::CamDevice::enumAllDevices();
+    // }
+    // for (auto &device : allCamDevices) {
+    //     ImGui::NewLine();
+    //     ImGui::Button(device.name().c_str());
+    //     ImGui::Text("%s", device.toString().c_str());
+    // }
     ImGui::End();
 }
 

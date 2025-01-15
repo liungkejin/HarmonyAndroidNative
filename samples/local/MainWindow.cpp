@@ -49,7 +49,10 @@ void MainWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
         ImGui::ShowDemoWindow(&g_show_demo_window);
     }
 
-    ImGui::Begin("Main");
+    ImGuiWindowFlags flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
+    ImGui::Begin("Main", 0, flags);
+    ImGui::SetWindowPos(ImVec2(0, 0));
+    ImGui::SetWindowSize(ImVec2(300, height));
 
     // Edit bools storing our window open/close state
     ImGui::Checkbox("显示 demo window", &g_show_demo_window);
