@@ -55,9 +55,9 @@ struct CamOpenCfg {
         return curDevice.valid() && videoFormat.valid();
     }
 
-    std::string id() {
-        return curDevice.getDevicePath();
-    }
+    // std::string id() {
+    //     return curDevice.getDevicePath();
+    // }
 
     std::string name() {
         return curDevice.getFriendlyName();
@@ -100,7 +100,7 @@ int64_t m_camera_frame_count = 0;
 int64_t m_camera_start_ms = 0;
 
 void WinCamTestWindow::onVisible(int width, int height) {
-    all_camera_devices = getCamera()->getDirectShowCameras(false);
+    all_camera_devices = getCamera()->getDirectShowCameras();
     for (auto &dev : all_camera_devices) {
         _INFO("Camera device: %s", dev);
     }
@@ -149,10 +149,9 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
         if (all_camera_devices.empty()) {
             cam_open_cfg.clear();
         } else {
-            std::string id = cam_open_cfg.id();
             DirectShowCameraDevice *selectedDev = nullptr;
             for (auto &dev : all_camera_devices) {
-                if (dev.getDevicePath() == id) {
+                if (dev.getFriendlyName() == cam_open_cfg.name()) {
                     selectedDev = &dev;
                     break;
                 }
@@ -171,7 +170,7 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
         static ImGuiComboFlags flags = ImGuiComboFlags_WidthFitPreview;
         if (ImGui::BeginCombo(":", cam_open_cfg.name().c_str(), flags)) {
             for (auto &device : all_camera_devices) {
-                bool is_selected = (device.getDevicePath() == cam_open_cfg.id());
+                bool is_selected = (device.getFriendlyName() == cam_open_cfg.name());
                 if (ImGui::Selectable(device.getFriendlyName().c_str(), is_selected)) {
                     cam_open_cfg.choose(device);
                 }

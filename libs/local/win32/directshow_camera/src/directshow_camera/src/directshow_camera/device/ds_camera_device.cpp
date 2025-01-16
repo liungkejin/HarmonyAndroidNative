@@ -35,9 +35,7 @@ namespace DirectShowCamera
 #pragma region Getter
 
     bool DirectShowCameraDevice::valid() const {
-        if (m_devicePath.empty()) {
-            return false;
-        }
+        //不能判断path是否为空，因为有的设备没有path
         for (auto &f : m_videoFormats) {
             if (f.valid()) {
                 return true;
