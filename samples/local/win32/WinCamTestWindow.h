@@ -12,6 +12,8 @@ public:
     WinCamTestWindow() : IWindow("WinCamTestWindow") {}
 
 protected:
+    void onVisible(int width, int height) override;
+
     void onInvisible(int width, int height) override;
 
     void onPreRender(int width, int height) override;

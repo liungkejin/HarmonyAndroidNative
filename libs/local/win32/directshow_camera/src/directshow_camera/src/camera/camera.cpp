@@ -464,7 +464,7 @@ namespace DirectShowCamera
 
 #pragma region Cameras
 
-    std::vector<DirectShowCameraDevice> Camera::getDirectShowCameras()
+    std::vector<DirectShowCameraDevice> Camera::getDirectShowCameras(bool filterInvalid)
     {
         std::vector<DirectShowCameraDevice> result;
         bool success = m_directShowCamera->getCameras(result);
@@ -472,13 +472,21 @@ namespace DirectShowCamera
         // Throw DirectShow Camera Exception
         if (!success) ThrowDirectShowException();
 
+        // delete all invalid device
+        if (filterInvalid) {
+            std::erase_if(
+                result,
+                [](const DirectShowCameraDevice& device) { return !device.valid(); }
+            );
+        }
+
         return result;
     }
 
-    std::vector<CameraDevice> Camera::getCameras()
+    std::vector<CameraDevice> Camera::getCameras(bool filterInvalid)
     {
         // Get DirectShowCameraDevice
-        std::vector<DirectShowCameraDevice> directShowCameras = getDirectShowCameras();
+        std::vector<DirectShowCameraDevice> directShowCameras = getDirectShowCameras(filterInvalid);
 
         // Convert to CameraDevice
         std::vector<CameraDevice> result;

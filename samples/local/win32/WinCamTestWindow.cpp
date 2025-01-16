@@ -13,11 +13,84 @@
 using namespace DirectShowCamera;
 using namespace znative;
 
-std::vector<CameraDevice> all_camera_devices;
-std::string selected_camera_device_name;
-std::string selected_camera_device_path;
+struct CamOpenCfg {
+    DirectShowCameraDevice curDevice;
+    DirectShowVideoFormat videoFormat;
+
+    void choose(const DirectShowCameraDevice& dev) {
+        curDevice = dev;
+
+        // 选择第一个支持的分辨率
+        std::vector<DirectShowVideoFormat> formats = dev.getAllSupportedUniqueVideoFormats();
+        // 默认选择第一个有效的格式
+        if (formats.empty()) {
+            _FATAL("No valid video format found for camera: %s", name());
+        }
+        std::vector<DirectShowVideoFormat> resolutions = dev.getAllResolutionOfFormat(formats[0].getVideoType());
+        if (resolutions.empty()) {
+            _FATAL("No valid resolution found for camera: %s", name());
+        }
+
+        videoFormat = resolutions[0];
+    }
+
+    void chooseFormat(const DirectShowVideoFormat& fmt) {
+        int w = width();
+        int h = height();
+        auto allResolutions = curDevice.getAllResolutionOfFormat(fmt.getVideoType());
+        for (auto &r : allResolutions) {
+            if (r.getWidth() == w && r.getHeight() == h) {
+                videoFormat = fmt;
+                return;
+            }
+        }
+        videoFormat = allResolutions.empty() ? fmt : allResolutions[0];
+    }
+
+    void chooseResolution(const DirectShowVideoFormat& fmt) {
+        videoFormat = fmt;
+    }
+
+    bool valid() {
+        return curDevice.valid() && videoFormat.valid();
+    }
+
+    std::string id() {
+        return curDevice.getDevicePath();
+    }
+
+    std::string name() {
+        return curDevice.getFriendlyName();
+    }
+
+    int width() {
+        return videoFormat.getWidth();
+    }
+
+    int height() {
+        return videoFormat.getHeight();
+    }
+
+    std::string sizeStr() {
+        return std::to_string(width()) + "x" + std::to_string(height());
+    }
+
+    void clear() {
+        curDevice = DirectShowCameraDevice();
+    }
+};
+
+std::vector<DirectShowCameraDevice> all_camera_devices;
+CamOpenCfg cam_open_cfg;
 
 Camera *m_camera = nullptr;
+Camera * getCamera() {
+    if (m_camera == nullptr) {
+        m_camera = new Camera();
+    }
+    return m_camera;
+}
+
 Frame m_frame;
 
 ImageTexture m_img_tex;
@@ -25,6 +98,19 @@ ImageTexture m_img_tex;
 int64_t m_camera_fps = 0;
 int64_t m_camera_frame_count = 0;
 int64_t m_camera_start_ms = 0;
+
+void WinCamTestWindow::onVisible(int width, int height) {
+    all_camera_devices = getCamera()->getDirectShowCameras(false);
+    for (auto &dev : all_camera_devices) {
+        _INFO("Camera device: %s", dev);
+    }
+    if (!all_camera_devices.empty()) {
+        auto & first = all_camera_devices[0];
+        cam_open_cfg.choose(first);
+    } else {
+        cam_open_cfg.clear();
+    }
+}
 
 void WinCamTestWindow::onPreRender(int width, int height) {
     if (m_camera && m_camera->isOpened() && m_camera->isCapturing()) {
@@ -52,38 +138,42 @@ void WinCamTestWindow::onPreRender(int width, int height) {
 }
 
 void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
-    ImGui::Begin("Win32 Camera Test");
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoCollapse;
 
-    if (ImGui::Button("枚举所有相机设备:")) {
-        if (m_camera == nullptr) {
-            m_camera = new Camera();
-        }
-        all_camera_devices = m_camera->getCameras();
+    ImGui::Begin("Win32 Camera Test", 0, window_flags);
+    ImGui::SetWindowSize(ImVec2(width-300, height));
+    ImGui::SetWindowPos(ImVec2(300, 0));
+
+    if (ImGui::Button("刷新")) {
+        all_camera_devices = m_camera->getDirectShowCameras();
         if (all_camera_devices.empty()) {
-            selected_camera_device_name = "";
-            selected_camera_device_path = "";
+            cam_open_cfg.clear();
         } else {
-            selected_camera_device_name = "";
-            for (auto & d : all_camera_devices) {
-                if (d.getDevicePath() == selected_camera_device_path) {
-                    selected_camera_device_name = d.getFriendlyName();
-                    selected_camera_device_path = d.getDevicePath();
+            std::string id = cam_open_cfg.id();
+            DirectShowCameraDevice *selectedDev = nullptr;
+            for (auto &dev : all_camera_devices) {
+                if (dev.getDevicePath() == id) {
+                    selectedDev = &dev;
+                    break;
                 }
             }
-            if (selected_camera_device_name.empty()) {
-                selected_camera_device_name = all_camera_devices[0].getFriendlyName();
-                selected_camera_device_path = all_camera_devices[0].getDevicePath();
+            if (selectedDev) {
+                cam_open_cfg.choose(*selectedDev);
+            } else {
+                cam_open_cfg.choose(all_camera_devices[0]);
             }
         }
     }
     ImGui::SameLine();
     if (!all_camera_devices.empty()) {
-        if (ImGui::BeginCombo("Devices", selected_camera_device_name.c_str())) {
+        ImGui::Text("相机设置：");
+        ImGui::SameLine();
+        static ImGuiComboFlags flags = ImGuiComboFlags_WidthFitPreview;
+        if (ImGui::BeginCombo(":", cam_open_cfg.name().c_str(), flags)) {
             for (auto &device : all_camera_devices) {
-                bool is_selected = (device.getDevicePath() == selected_camera_device_path);
+                bool is_selected = (device.getDevicePath() == cam_open_cfg.id());
                 if (ImGui::Selectable(device.getFriendlyName().c_str(), is_selected)) {
-                    selected_camera_device_path = device.getDevicePath();
-                    selected_camera_device_name = device.getFriendlyName();
+                    cam_open_cfg.choose(device);
                 }
                 if (is_selected) {
                     ImGui::SetItemDefaultFocus();
@@ -91,34 +181,56 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
             }
             ImGui::EndCombo();
         }
+
+        if (cam_open_cfg.valid()) {
+            ImGui::SameLine();
+            if (ImGui::BeginCombo("|", cam_open_cfg.videoFormat.getVideoTypeString().c_str(), flags)) {
+                auto formats = cam_open_cfg.curDevice.getAllSupportedUniqueVideoFormats();
+                for (auto &f : formats) {
+                    bool is_selected = (f.getVideoType() == cam_open_cfg.videoFormat.getVideoType());
+                    if (ImGui::Selectable(f.getVideoTypeString().c_str(), is_selected)) {
+                        cam_open_cfg.chooseFormat(f);
+                    }
+                    if (is_selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+
+            ImGui::SameLine();
+            if (ImGui::BeginCombo(" ", cam_open_cfg.sizeStr().c_str(), flags)) {
+                auto resolutions = cam_open_cfg.curDevice.getAllResolutionOfFormat(cam_open_cfg.videoFormat.getVideoType());
+                for (auto &r : resolutions) {
+                    bool is_selected = (r.getWidth() == cam_open_cfg.width() && r.getHeight() == cam_open_cfg.height());
+                    if (ImGui::Selectable((std::to_string(r.getWidth()) + "x" + std::to_string(r.getHeight())).c_str(), is_selected)) {
+                        cam_open_cfg.chooseResolution(r);
+                    }
+                    if (is_selected) {
+                        ImGui::SetItemDefaultFocus();
+                    }
+                }
+                ImGui::EndCombo();
+            }
+        }
     } else {
         ImGui::Text("No camera device found.");
     }
-
-    static std::string openCamLabel = "打开相机";
-    if (ImGui::Button(openCamLabel.c_str())) {
-        if (m_camera == nullptr) {
-            openCamLabel = "关闭相机";
-            m_camera = new Camera();
-
-            std::vector<CameraDevice> allCamDevices = m_camera->getCameras();
-            for (auto &c : allCamDevices) {
-                _INFO("Camera Device: %s", c);
+    std::string camLabel = ((getCamera()->isOpened() || getCamera()->isCapturing()) ? "关闭相机" : "打开相机");
+    if (ImGui::Button(camLabel.c_str())) {
+        if (getCamera()->isOpened() || getCamera()->isCapturing()) {
+            if (getCamera()->isCapturing()) {
+                getCamera()->StopCapture();
             }
-
-            bool success = m_camera->Open();
-            _INFO("open camera result: %d", success);
-            if (success) {
-                m_camera->StartCapture();
-            }
+            getCamera()->Close();
         } else {
-            openCamLabel = "打开相机";
-            if (m_camera->isCapturing()) {
-                m_camera->StopCapture();
+            if (cam_open_cfg.valid()) {
+                bool success = getCamera()->Open(cam_open_cfg.curDevice, cam_open_cfg.videoFormat);
+                _INFO("open camera result: %d", success);
+                if (success) {
+                    m_camera->StartCapture();
+                }
             }
-
-            delete m_camera;
-            m_camera = nullptr;
         }
     }
     ImGui::SameLine();
@@ -127,18 +239,10 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     if (m_img_tex.valid()) {
         auto tex =  m_img_tex.texture();
         if (tex) {
-            ImGui::Image((ImTextureID)tex->id(), ImVec2(tex->width()/2, tex->height()/2));
+            ImGui::Image((ImTextureID)tex->id(), ImVec2(tex->width(), tex->height()));
         }
     }
 
-    // if (ImGui::Button("枚举所有摄像头")) {
-    //     allCamDevices = znative::CamDevice::enumAllDevices();
-    // }
-    // for (auto &device : allCamDevices) {
-    //     ImGui::NewLine();
-    //     ImGui::Button(device.name().c_str());
-    //     ImGui::Text("%s", device.toString().c_str());
-    // }
     ImGui::End();
 }
 

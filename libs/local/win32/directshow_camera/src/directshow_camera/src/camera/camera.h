@@ -307,13 +307,13 @@ namespace DirectShowCamera
          * @brief Get the available DirectShowCameraDevice list. It is a advance option. Suggest to use getCameras().
          * @return Return the available DirectShowCameraDevice list
         */
-        std::vector<DirectShowCameraDevice> getDirectShowCameras();
+        std::vector<DirectShowCameraDevice> getDirectShowCameras(bool filterInvalid = true);
 
         /**
          * @brief Get the available camera.
          * @return Return the available camera.
         */
-        std::vector<CameraDevice> getCameras();
+        std::vector<CameraDevice> getCameras(bool filterInvalid = true);
 
 #pragma endregion Camera
 

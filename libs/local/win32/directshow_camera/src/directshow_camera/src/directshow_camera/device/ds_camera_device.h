@@ -24,6 +24,8 @@ namespace DirectShowCamera
     public:
 
 #pragma region Constructor and Destructor
+        DirectShowCameraDevice();
+
         /**
          * @brief Constructor
          *
@@ -45,11 +47,28 @@ namespace DirectShowCamera
 #pragma region Getter
 
         /**
+         * 必须有一个可用的格式和分辨率
+         * @return Return true if the camera device is valid
+         */
+        bool valid() const;
+
+        /**
          * @brief Get the supported DirectShowVideoFormats
          *
-         * @return Return the the supported DirectShowVideoFormats
+         * @return Return the supported DirectShowVideoFormats
          */
         std::vector<DirectShowVideoFormat> getDirectShowVideoFormats() const;
+
+        /**
+         * 剔除掉无法识别的格式
+         * @return Get all supported video formats
+         */
+        std::vector<DirectShowVideoFormat> getAllSupportedUniqueVideoFormats(bool filterInvalid = true) const;
+
+        /**
+         * @return 获取某一个格式的所有分辨率
+         */
+        std::vector<DirectShowVideoFormat> getAllResolutionOfFormat(const GUID& videoFormat) const;
 
         /**
          * @brief Get the camera friendly name
