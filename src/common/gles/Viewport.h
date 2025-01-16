@@ -39,6 +39,10 @@ public:
         m_scissor = scissor;
         return *this;
     }
+    
+    Viewport& enableClearColor() {
+        return enableClearColor(0, 0, 0, 1);
+    }
 
     Viewport& enableClearColor(float red, float green, float blue, float alpha) {
         m_clear_color[0] = red;

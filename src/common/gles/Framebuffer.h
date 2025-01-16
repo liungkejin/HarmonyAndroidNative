@@ -47,6 +47,25 @@ public:
     inline GLint texWidth() const { return m_texture == nullptr ? 0 : m_texture->width(); }
 
     inline GLint texHeight() const { return m_texture == nullptr ? 0 : m_texture->height(); }
+    
+    bool copyTexTo(GLuint dstId) {
+        _ERROR_RETURN_IF(!valid(), false, "source frame buffer bind failed!")
+        
+        glBindFramebuffer(GL_FRAMEBUFFER, m_fb_id);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, dstId);
+        glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, texWidth(), texHeight());
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        return true;
+    }
+    
+    bool copyTo(Framebuffer& dst) {
+        _ERROR_RETURN_IF(!valid(), false, "source frame buffer invalid!")
+        dst.create(texWidth(), texHeight());
+        return this->copyTexTo(dst.texID());
+    }
 
     bool bind() const {
         if (valid()) {
