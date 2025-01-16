@@ -66,6 +66,25 @@ public:
         return m_params;
     }
 
+    bool copyTo(const Texture2D& dst) {
+        _ERROR_RETURN_IF(!valid(), false, "invalid texture");
+        _ERROR_RETURN_IF(!dst.valid(), false, "invalid dst texture");
+        _ERROR_RETURN_IF(m_width != dst.width() || m_height != dst.height(), false, "size not match");
+        _ERROR_RETURN_IF(m_params.format != dst.params().format, false, "format not match");
+        _ERROR_RETURN_IF(m_params.internalFormat != dst.params().internalFormat, false, "internal format not match");
+
+        glBindTexture(GL_TEXTURE_2D, dst.id());
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, m_params.internalFormat, 0, 0, m_width, m_height, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        return true;
+    }
+
+    void copyTo(GLint id) {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glCopyTexImage2D(GL_TEXTURE_2D, 0, m_params.internalFormat, 0, 0, m_width, m_height, 0);
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+
     void release() {
         if (m_id != INVALID_GL_ID) {
             glDeleteTextures(1, &m_id);
