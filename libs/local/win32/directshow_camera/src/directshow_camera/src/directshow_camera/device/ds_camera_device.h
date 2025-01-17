@@ -112,7 +112,7 @@ namespace DirectShowCamera
             return true;
         }
 
-        operator std::string() const
+        std::string toString() const
         {
             std::string result = "Friend Name: " + m_friendlyName + "\n";
             result += "Description: " + m_description + "\n";
@@ -131,7 +131,7 @@ namespace DirectShowCamera
         }
 
         friend std::ostream& operator << (std::ostream& out, const DirectShowCameraDevice& obj) {
-            return out << (std::string)obj;
+            return out << obj.toString();
         }
 
 #pragma endregion operator

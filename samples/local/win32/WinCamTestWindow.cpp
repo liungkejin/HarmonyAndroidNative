@@ -128,8 +128,8 @@ void WinCamTestWindow::onPreRender(int width, int height) {
 
             if (m_frame.getRawFrameType() == MEDIASUBTYPE_RGB24) {
                 int bytes = 0;
-                auto data = m_frame.getFrameDataPtr(bytes);
-                m_img_tex.set(data, m_frame.getWidth(), m_frame.getHeight(), GL_BGR);
+                auto data = m_frame.getFrameData(bytes, false, true);
+                m_img_tex.set(data.get(), m_frame.getWidth(), m_frame.getHeight(), GL_BGR);
             }
         }
     }

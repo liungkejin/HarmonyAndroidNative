@@ -478,10 +478,14 @@ namespace DirectShowCamera
 
         // delete all invalid device
         if (filterInvalid) {
-            std::erase_if(
-                result,
-                [](const DirectShowCameraDevice& device) { return !device.valid(); }
-            );
+            for (int i = 0; i < result.size(); i++)
+            {
+                if (!result[i].valid())
+                {
+                    result.erase(result.begin() + i);
+                    i--;
+                }
+            }
         }
 
         return result;

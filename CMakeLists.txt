@@ -277,7 +277,7 @@ else ()
         set(ALL_INCLUDES
                 ${ALL_INCLUDES}
                 ${GLEW_DIR}/include
-                ${DS_CAMERA_DIR}/src
+                ${DS_CAMERA_DIR}/src/directshow_camera/src
         )
 
         set(PLATFORM_SOURCES

@@ -88,7 +88,7 @@ namespace DirectShowCamera
         return m_totalSize;
     }
 
-    GUID DirectShowVideoFormat::getVideoType() const
+    const GUID& DirectShowVideoFormat::getVideoType() const
     {
         return m_videoType;
     }

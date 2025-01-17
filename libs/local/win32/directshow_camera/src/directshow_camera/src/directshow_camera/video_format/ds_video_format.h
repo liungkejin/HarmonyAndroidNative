@@ -99,7 +99,7 @@ namespace DirectShowCamera
          * @brief Return the video type.
          * @return Return the video type.
         */
-        GUID getVideoType() const;
+        const GUID& getVideoType() const;
 
 
         std::string getVideoTypeString() const;
