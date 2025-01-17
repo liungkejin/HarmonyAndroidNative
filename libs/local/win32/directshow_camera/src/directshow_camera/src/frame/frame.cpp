@@ -28,22 +28,22 @@ namespace DirectShowCamera
     {
         m_width = other.m_width;
         m_height = other.m_height;
-        m_frameSize = other.m_frameSize;
+        m_dataCapacity = other.m_dataCapacity;
+        m_dataSize = other.m_dataSize;
         m_frameIndex = other.m_frameIndex;
         m_frameType = other.m_frameType;
-        m_frameSettings = other.m_frameSettings;
-        m_data = std::make_unique<unsigned char[]>(m_frameSize);
-        memcpy(m_data.get(), other.m_data.get(), m_frameSize);
+        m_data = std::make_unique<unsigned char[]>(m_dataCapacity);
+        memcpy(m_data.get(), other.m_data.get(), m_dataSize);
     }
 
     Frame::Frame(Frame&& other) noexcept
     {
         m_width = other.m_width;
         m_height = other.m_height;
-        m_frameSize = other.m_frameSize;
+        m_dataCapacity = other.m_dataCapacity;
+        m_dataSize = other.m_dataSize;
         m_frameIndex = other.m_frameIndex;
         m_frameType = other.m_frameType;
-        m_frameSettings = other.m_frameSettings;
         m_data = std::move(other.m_data);
 
         // Reset other after move
@@ -54,54 +54,39 @@ namespace DirectShowCamera
     {
         m_width = -1;
         m_height = -1;
-        m_frameSize = 0;
+        m_dataCapacity = 0;
+        m_dataSize = 0;
         m_frameIndex = 0;
-        m_frameSettings.Reset();
         if (m_data != nullptr) m_data.reset();
     }
 
 #pragma endregion Constructor and Destructor
 
 #pragma region Frame
-
-    void Frame::ImportData(
-        const long frameSize,
-        const int width,
-        const int height,
-        const GUID frameType,
-        const FrameSettings frameSettings,
-        ImportDataFunc importDataFunc
-    )
-    {
-        // Check
-        if (frameSize <= 0) throw std::invalid_argument("Frame size(" + std::to_string(frameSize) + ") can't be <= 0.");
-        if (width <= 0) throw std::invalid_argument("Width(" + std::to_string(width) + ") can't be <= 0.");
-        if (height <= 0) throw std::invalid_argument("Height(" + std::to_string(height) + ") can't be <= 0.");
-
-        // Reset
-        Clear();
-
+    void Frame::setInfo(int width, int height, const GUID &frameType) {
         // Set
         m_width = width;
         m_height = height;
         m_frameType = frameType;
-        m_frameSize = frameSize;
-        m_frameSettings = frameSettings;
+    }
 
-        // Allocate memory
-        m_data = std::make_unique<unsigned char[]>(frameSize);
-
-        // Import
-        importDataFunc(m_data.get(), m_frameIndex);
+    void Frame::putData(int frameIndex, const unsigned char *data, int dataSize) {
+        if (m_dataCapacity < dataSize) {
+            m_data = std::make_unique<unsigned char[]>(dataSize);
+            m_dataCapacity = dataSize;
+        }
+        memcpy(m_data.get(), data, dataSize);
+        m_frameIndex = frameIndex;
+        m_dataSize = dataSize;
     }
 
     unsigned char* Frame::getFrameDataPtr(int& numOfBytes)
     {
-        numOfBytes = m_frameSize;
+        numOfBytes = m_dataSize;
         return m_data.get();
     }
 
-    std::shared_ptr<unsigned char[]> Frame::getFrameData(int& numOfBytes)
+    std::shared_ptr<unsigned char[]> Frame::getFrameData(int& numOfBytes, bool flipVertical, bool rgb2bgr)
     {
         // Check
         if (!FrameDecoder::isMonochromeFrameType(m_frameType) &&
@@ -111,44 +96,52 @@ namespace DirectShowCamera
             throw std::runtime_error("Frame type(" + DirectShowVideoFormatUtils::ToString(m_frameType) + ") is not 8 bit.");
         }
 
+        numOfBytes = m_dataSize;
         // Convert
         if (FrameDecoder::isMonochromeFrameType(m_frameType))
         {
-            // Monochrome
+            // Monochrome 这里并没有做任何解码，只是拷贝了一下数据
             return FrameDecoder::DecodeMonochromeFrame(
                 m_data.get(),
                 m_frameType,
                 m_width,
                 m_height,
-                m_frameSettings.VerticalFlip
+                flipVertical
             );
         }
         else
         {
+            if (m_frameType != MEDIASUBTYPE_RGB24) {
+                auto result = std::make_unique<unsigned char[]>(m_dataSize);
+                memcpy(result.get(), m_data.get(), m_dataSize);
+                return result;
+            }
+
             // RGB
             return FrameDecoder::DecodeRGBFrame(
                 m_data.get(),
                 m_frameType,
                 m_width,
                 m_height,
-                m_frameSettings.VerticalFlip,
-                !m_frameSettings.BGR
+                flipVertical,
+                !rgb2bgr
             );
         }
     }
 
-    std::shared_ptr<unsigned short[]> Frame::getFrame16bitData(int& numOfBytes)
+    std::shared_ptr<unsigned short[]> Frame::getFrame16bitData(int& numOfBytes, bool flipVertical)
     {
         // Check
         FrameDecoder::Check16BitMonochromeFrameType(m_frameType);
 
+        numOfBytes = m_dataSize;
         // Convert
         return FrameDecoder::Decode16BitMonochromeFrame(
             m_data.get(),
             m_frameType,
             m_width,
             m_height,
-            m_frameSettings.VerticalFlip
+            flipVertical
         );
     }
 
@@ -158,7 +151,7 @@ namespace DirectShowCamera
 
     bool Frame::isEmpty() const
     {
-        return m_data == nullptr || m_frameSize == 0;
+        return m_data == nullptr || m_dataSize == 0;
     }
 
     unsigned long Frame::getFrameIndex() const
@@ -178,7 +171,7 @@ namespace DirectShowCamera
 
     int Frame::getFrameSize() const
     {
-        return m_frameSize;
+        return m_dataSize;
     }
 
     const GUID & Frame::getRawFrameType() const
@@ -202,14 +195,7 @@ namespace DirectShowCamera
         }
         else if (FrameDecoder::isRGBFrameType(m_frameType))
         {
-            if (m_frameSettings.BGR)
-            {
-                return FrameType::ColorBGR24bit;
-            }
-            else
-            {
-                return FrameType::ColorRGB24bit;
-            }
+            return FrameType::ColorRGB24bit;
         }
         else
         {
@@ -217,17 +203,12 @@ namespace DirectShowCamera
         }
     }
 
-    FrameSettings& Frame::getFrameSettings()
-    {
-        return m_frameSettings;
-    }
-
 #pragma endregion Getter
 
 #ifdef WITH_OPENCV2
 #pragma region OpenCV
 
-    cv::Mat Frame::getMat()
+    cv::Mat Frame::getMat(bool flipVertical, bool rgb2bgr)
     {
         // Check
         FrameDecoder::CheckSupportVideoType(m_frameType);
@@ -238,8 +219,8 @@ namespace DirectShowCamera
             m_frameType,
             m_width, 
             m_height,
-            m_frameSettings.VerticalFlip,
-            !m_frameSettings.BGR
+            flipVertical,
+            rgb2bgr
         );
     }
 
@@ -294,18 +275,19 @@ namespace DirectShowCamera
         }
         else
         {
+            // TODO convert raw frame type to RGB24
             pixelFormat = PixelFormat24bppRGB;
         }
         Gdiplus::Bitmap bitmap(m_width, m_height, pixelFormat);
 
         // Draw
-        if (m_frameSettings.VerticalFlip)
+        if (false)
         {
             // Draw image which is vertical flip
 
             // Note: The image is already vertical flip in m_data
 
-            Utils::GDIPLUSUtils::DrawBitmap(bitmap, m_data.get(), m_frameSize);
+            Utils::GDIPLUSUtils::DrawBitmap(bitmap, m_data.get(), m_dataSize);
         }
         else
         {
@@ -313,7 +295,7 @@ namespace DirectShowCamera
             // As image is already vertical flip in m_data, we need to flip it
 
             // Create a image buffer
-            auto data = new unsigned char[m_frameSize];
+            auto data = new unsigned char[m_dataSize];
 
             try {
                 // Flip the image into the buffer
@@ -328,7 +310,7 @@ namespace DirectShowCamera
                 );
 
                 // Draw
-                Utils::GDIPLUSUtils::DrawBitmap(bitmap, data, m_frameSize);
+                Utils::GDIPLUSUtils::DrawBitmap(bitmap, data, m_dataSize);
 
                 // Delete the buffer
                 delete[] data;

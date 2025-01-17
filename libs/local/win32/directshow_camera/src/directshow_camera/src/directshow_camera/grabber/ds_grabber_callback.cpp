@@ -26,13 +26,15 @@ namespace DirectShowCamera
 
 #pragma region Buffer Size
 
-    void SampleGrabberCallback::setBufferSize(const int numOfBytes)
+    void SampleGrabberCallback::setBufferSize(const GUID& videoType, const int numOfBytes)
     {
         // Lock all buffer
         m_bufferMutex.lock();
 
         // Reallocate buffer
         m_bufferSize = numOfBytes;
+        m_realDataSize = 0;
+        m_videoType = videoType;
         m_pixelsBuffer.reset();
         m_pixelsBuffer = std::make_unique<unsigned char[]>(m_bufferSize);
 
@@ -52,14 +54,11 @@ namespace DirectShowCamera
 
 #pragma region Frame
 
-    bool SampleGrabberCallback::getFrame(
-        unsigned char* frame,
-        int& numOfBytes,
-        unsigned long& frameIndex
-    )
+    bool SampleGrabberCallback::getFrame(Frame &frame, bool onlyGetNewFrame, long lastFrameIndex)
     {
         // Check
-        if (frame == nullptr)  return false;
+        if (m_realDataSize < 1)  return false;
+        if (onlyGetNewFrame && lastFrameIndex == m_frameIndex) return false;
 
         // Copy frame
         try
@@ -68,13 +67,7 @@ namespace DirectShowCamera
             m_bufferMutex.lock();
 
             //     Copy
-            memcpy(frame, m_pixelsBuffer.get(), m_bufferSize);
-
-            //     Return frame size
-            numOfBytes = m_bufferSize;
-
-            //     Return frame index
-            frameIndex = m_frameIndex;
+            frame.putData(m_frameIndex, m_pixelsBuffer.get(), m_realDataSize);
 
             //     Unlock mutex
             m_bufferMutex.unlock();
@@ -163,75 +156,53 @@ namespace DirectShowCamera
     }
 
     STDMETHODIMP SampleGrabberCallback::SampleCB(double, IMediaSample* pSample) {
+        // printf("Sample callback: %p\n", pSample);
 
         // Get data
         unsigned char* directShowBufferPointer;
         HRESULT hr = pSample->GetPointer(&directShowBufferPointer);
 
         if (hr == S_OK) {
-
             // Get frame data size
-            int currentPixelSize = pSample->GetActualDataLength();
+            m_realDataSize = pSample->GetActualDataLength();
+            // TODO 判断是否是压缩数据，如果是压缩数据，那么实际大小就不是 buffersize，否则应该等于 buffersize
+            // 这里默认返回的数据一定是正确的数据, 不会出错，其实这里出错了也无法纠正
+            if (m_realDataSize > m_bufferSize) {
+                // error, should be never happen
+                setBufferSize(m_videoType, m_realDataSize);
+            }
 
-            if (currentPixelSize == m_bufferSize) {
-                
-                // Lock
-                m_bufferMutex.lock();
+            // Lock
+            m_bufferMutex.lock();
 
-                // Copy to buffer
-                memcpy(m_pixelsBuffer.get(), directShowBufferPointer, m_bufferSize);
+            // Copy to buffer
+            memcpy(m_pixelsBuffer.get(), directShowBufferPointer, m_bufferSize);
 
-                // Update frame index
-                if (m_frameIndex >= ULONG_MAX - 1)
-                {
-                    m_frameIndex = 1;
-                }				
-                else
-                {
-                    m_frameIndex++;
-                }
-
-                // Release Lock
-                m_bufferMutex.unlock();
-
-                // Update fps
-                auto nowTime = std::chrono::system_clock::now();
-                double timeDiff = (std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - m_lastFrameTime)).count() / 1000.0;
-                m_fps = 1 / timeDiff;
-                m_lastFrameTime = nowTime;
-
-                // Reset variable
-                m_numOfRepeatPixelCount = 0;
+            // Update frame index
+            if (m_frameIndex >= ULONG_MAX - 1)
+            {
+                m_frameIndex = 1;
             }
             else
             {
-                // Pixel count not match the buffer size, rest buffer size after 5 same pixel count
-                if (currentPixelSize == m_latestPixelCount)
-                {
-                    m_numOfRepeatPixelCount++;
-
-                    if (m_numOfRepeatPixelCount > m_resetBufferCount)
-                    {
-                        // Reset size
-                        setBufferSize(currentPixelSize);
-                        m_numOfRepeatPixelCount = 0;
-                    }
-                }
-                else
-                {
-                    m_numOfRepeatPixelCount = 0;
-                }
+                m_frameIndex++;
             }
 
-            // Update latest pixel size
-            m_latestPixelCount = currentPixelSize;
+            // Release Lock
+            m_bufferMutex.unlock();
 
+            // Update fps
+            auto nowTime = std::chrono::system_clock::now();
+            double timeDiff = (std::chrono::duration_cast<std::chrono::milliseconds>(nowTime - m_lastFrameTime)).count() / 1000.0;
+            m_fps = 1 / timeDiff;
+            m_lastFrameTime = nowTime;
         }
 
         return S_OK;
     }
 
-    STDMETHODIMP SampleGrabberCallback::BufferCB(double, BYTE*, long) {
+    STDMETHODIMP SampleGrabberCallback::BufferCB(double, BYTE* data, long size) {
+        // printf("buffer callback: %p, size: %ld\n", data, size);
         // prevent nodiscard warning by casting to void
         static_cast<void>(std::chrono::system_clock::now());
         return E_NOTIMPL;

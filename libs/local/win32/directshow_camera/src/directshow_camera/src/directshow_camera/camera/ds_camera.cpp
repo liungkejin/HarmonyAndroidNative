@@ -96,7 +96,9 @@ namespace DirectShowCamera
 
     bool DirectShowCamera::Open(
         IBaseFilter** directShowFilter,
-        std::optional<const DirectShowVideoFormat> videoFormat
+        std::optional<const DirectShowVideoFormat> videoFormat,
+        // If true, the output data will be converted to RGB24 if the format support it.
+        bool convertOutputDataToRGB24IfSupported
     )
     {
         // Initialize variable
@@ -105,6 +107,7 @@ namespace DirectShowCamera
         if (!m_isOpening)
         {
             m_directShowFilter = *directShowFilter;
+            m_convertOutputDataToRGB24IfSupported = convertOutputDataToRGB24IfSupported;
 
             m_sampleGrabberCallback = new SampleGrabberCallback();
             // Create the capture graph builder
@@ -483,21 +486,15 @@ namespace DirectShowCamera
 #pragma region Frame
 
 
-    bool DirectShowCamera::getFrame
-    (
-        unsigned char* frame,
-        int& numOfBytes,
-        unsigned long& frameIndex
-    )
+    bool DirectShowCamera::getFrame(Frame &frame, bool onlyGetNewFrame, int lastFrameIndex)
     {
         // Check
         if (!m_isCapturing) return false;
-        if (frame == nullptr) return false;
 
+        frame.setInfo(m_sampleGrabberVideoFormat.getWidth(),
+            m_sampleGrabberVideoFormat.getHeight(), m_grabberMediaSubType);
         // Get frame
-        m_sampleGrabberCallback->getFrame(frame, numOfBytes, frameIndex);
-
-        return true;
+        return m_sampleGrabberCallback->getFrame(frame, onlyGetNewFrame, lastFrameIndex);
     }
 
     unsigned long DirectShowCamera::getLastFrameIndex() const
@@ -572,10 +569,8 @@ namespace DirectShowCamera
                     int width = videoInfoHeader->bmiHeader.biWidth;
                     int height = videoInfoHeader->bmiHeader.biHeight;
 
-                    if (DirectShowVideoFormatUtils::isSupportRGBConvertion(mediaType->subtype))
+                    if (m_convertOutputDataToRGB24IfSupported && DirectShowVideoFormatUtils::isSupportRGBConvertion(mediaType->subtype))
                     {
-                        // Todo: Now we focus SampleGrabber to convert Frame into RGB24. We should change it to change it support other format.
-                        
                         // Transform to RGB in the grabber filter
                         frameTotalSize = width * height * 3;
                         mediaSubType = MEDIASUBTYPE_RGB24;
@@ -612,7 +607,7 @@ namespace DirectShowCamera
                 }
 
                 // Set buffer size
-                m_sampleGrabberCallback->setBufferSize(frameTotalSize);
+                m_sampleGrabberCallback->setBufferSize(mediaSubType, frameTotalSize);
             }
             else
             {

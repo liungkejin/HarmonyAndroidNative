@@ -47,7 +47,9 @@ namespace DirectShowCamera
 
     bool DirectShowCameraStub::Open(
         IBaseFilter** directShowFilter,
-        std::optional<const DirectShowVideoFormat> videoFormat
+        std::optional<const DirectShowVideoFormat> videoFormat,
+        // If true, the output data will be converted to RGB24 if the format support it.
+        bool convertOutputDataToRGB24IfSupported
     )
     {
         m_isOpening = true;
@@ -211,42 +213,31 @@ namespace DirectShowCamera
         m_getFrameFunc = func;
     }
 
-    bool DirectShowCameraStub::getFrame(
-        unsigned char* frame,
-        int& numOfBytes,
-        unsigned long& frameIndex
-    )
+    bool DirectShowCameraStub::getFrame(Frame& outFrame, bool onlyGetNewFrame, int lastFrameIndex)
     {
-        if (m_isCapturing && frame)
+        if (m_isCapturing)
         {
-            if (m_getFrameFunc)
+            // Update frame index
+            if (UpdateFrameIndexAfterGetFrame)
             {
-                // Return the user define image
-                m_getFrameFunc(frame, numOfBytes, frameIndex, m_frameIndex);
-
-                // Update frame index
-                m_frameIndex = frameIndex;
-            }
-            else
-            {
-                // Update frame index
-                if (UpdateFrameIndexAfterGetFrame)
-                {
-                    m_frameIndex = m_frameIndex + 1;
-                }
-
-                frameIndex = m_frameIndex;
-
-                // Return the default image, image will be generated based on the frame index value
-                DirectShowCameraStubDefaultSetting::getFrame(
-                    frame,
-                    numOfBytes,
-                    frameIndex,
-                    m_videoFormats.getVideoFormat(m_currentVideoFormatIndex).getWidth(),
-                    m_videoFormats.getVideoFormat(m_currentVideoFormatIndex).getHeight()
-                );
+                m_frameIndex = m_frameIndex + 1;
             }
 
+            int width = m_videoFormats.getVideoFormat(m_currentVideoFormatIndex).getWidth();
+            int height = m_videoFormats.getVideoFormat(m_currentVideoFormatIndex).getHeight();
+            int numberOfBytes = width * height * 3;
+            auto data = std::make_unique<unsigned char []>(width*height*3);
+
+            // Return the default image, image will be generated based on the frame index value
+            DirectShowCameraStubDefaultSetting::getFrame(
+                data.get(),
+                numberOfBytes,
+                m_frameIndex,
+                m_videoFormats.getVideoFormat(m_currentVideoFormatIndex).getWidth(),
+                m_videoFormats.getVideoFormat(m_currentVideoFormatIndex).getHeight()
+            );
+
+            outFrame.putData(m_frameIndex, data.get(), numberOfBytes);
             return true;
         }
         else

@@ -81,7 +81,9 @@ namespace DirectShowCamera
         */
         bool Open(
             IBaseFilter** directShowFilter,
-            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt
+            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt,
+            // If true, the output data will be converted to RGB24 if the format support it.
+            bool convertOutputDataToRGB24IfSupported = false
         ) override;
 
         /**
@@ -135,17 +137,11 @@ namespace DirectShowCamera
 
         /**
          * @brief Get current frame
-         * @param[out] frame Frame bytes
-         * @param[out] numOfBytes Number of bytes of the frames.
-         * @param[out] frameIndex Index of frame, use to indicate whether a new frame.
+         * @param[out] frame Frame
+         * @param[in] onlyGetNewFrame Set it as true if you only want to get the new frame which has not been get by getFrame.
          * @return Return true if success.
         */
-        bool getFrame
-        (
-            unsigned char* pixels,
-            int& numOfBytes,
-            unsigned long& frameIndex
-        ) override;
+        bool getFrame(Frame &frame, bool onlyGetNewFrame, int lastFrameIndex) override;
 
         /**
         * @brief Get the last frame index. It use to identify whether a new frame. Index will only be updated when you call getFrame() or gatMat();
@@ -166,6 +162,7 @@ namespace DirectShowCamera
         double getFPS() const override;
 
         /**
+         * 这个size是数据原本的大小，比如 MJPG 的数据，他的total size 是RGB24的大小，但是real size是MJPEG的大小
          * @brief Get current frame size in bytes. Return 0 if camera is not opened.
          * @return Return frame size in bytes.
         */
@@ -375,6 +372,10 @@ namespace DirectShowCamera
         bool m_isRunningCheckConnectionThread = false;
         bool m_stopCheckConnectionThread = false;
         std::function<void()> m_disconnectionProcess = NULL;
+
+        // 将能支持转换为 RGB24 的捕获格式的数据转换为 RGB24, 默认输出原始数据
+        // 这个参数必须在 open() 之前设置
+        bool m_convertOutputDataToRGB24IfSupported = false;
     };
 }
 

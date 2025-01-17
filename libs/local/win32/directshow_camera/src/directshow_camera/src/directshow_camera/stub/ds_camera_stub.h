@@ -71,7 +71,9 @@ namespace DirectShowCamera
         */
         bool Open(
             IBaseFilter** directShowFilter,
-            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt
+            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt,
+            // If true, the output data will be converted to RGB24 if the format support it.
+            bool convertOutputDataToRGB24IfSupported = false
         ) override;
 
         /**
@@ -132,17 +134,12 @@ namespace DirectShowCamera
 
         /**
          * @brief Get current frame
-         * @param[out] frame Frame in bytes
-         * @param[out] numOfBytes Number of bytes of the frames.
-         * @param[out] frameIndex Index of frame, use to indicate whether a new frame.
+         * @param[out] frame Frame
+         * @param[in] onlyGetNewFrame (Optional) Set it as true if you only want to get the new frame which has not been get by getFrame
          * @return Return true if success.
         */
-        bool getFrame
-        (
-            unsigned char* frame,
-            int& numOfBytes,
-            unsigned long& frameIndex
-        ) override;
+        bool getFrame(Frame& frame, bool onlyGetNewFrame, int lastFrameIndex) override;
+
 
         /**
         * @brief Get the last frame index.

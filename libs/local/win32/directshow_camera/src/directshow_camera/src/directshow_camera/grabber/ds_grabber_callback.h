@@ -20,6 +20,8 @@
 #include <chrono>
 #include <memory>
 
+#include "frame/frame.h"
+
 namespace DirectShowCamera
 {
     /**
@@ -47,12 +49,13 @@ namespace DirectShowCamera
 
         /**
          * @brief Set the buffer size.
+         * @param [in] videoType Video type
          * @paraml[in] numOfBytes Number of bytes of a frame
         */
-        void setBufferSize(const int numOfBytes);
+        void setBufferSize(const GUID &videoType, const int numOfBytes);
 
         /**
-        * @brief Get the buffer size.
+        * @brief Get the buffer size. 这是原本数据的大小，比如MJPG数据，他的buffersize 是 RGB24 的大小 和返回的真实数据大小不一样
         * 
         * @return The buffer size
         */
@@ -64,16 +67,10 @@ namespace DirectShowCamera
 
         /**
          * @brief Get the current frame
-         * @param[out] frame Frame in bytes
-         * @param[out] numOfBytes Number of the byte of the frame. It will change if the size is change in 5 frame.
-         * @param[out] frameIndex (Optional) A frame index,such as a frame id. It can be use to identify whether it is a new frame.
+         * @param[out] frame Frame
          * @return Return true if the current is copied. If error occurred, it return false.
         */
-        bool getFrame(
-            unsigned char* frame,
-            int& numOfBytes,
-            unsigned long& frameIndex
-        );
+        bool getFrame(Frame &frame, bool onlyGetNewFrame, long lastFrameIndex);
 
         /**
         * @brief Get the last frame index. It can be used to identify whether a new frame. Index will only be updated when you call getFrame()
@@ -138,15 +135,18 @@ namespace DirectShowCamera
          * @brief The current frame size in bytes.
         */
         int m_bufferSize = 0;
+        // 真实数据大小，可能比buffersize小，比如返回的时压缩数据时
+        int m_realDataSize = 0;
+        GUID m_videoType = MEDIASUBTYPE_None;
 
         /**
          * @brief Current Frame index. Such as ID of the current frame. It use to identify whether a new frame.
         */
         unsigned long m_frameIndex = 1;
 
-        int m_latestPixelCount = 0;
-        int m_numOfRepeatPixelCount = 0;
-        static const int m_resetBufferCount = 5;
+        // int m_latestPixelCount = 0;
+        // int m_numOfRepeatPixelCount = 0;
+        // static const int m_resetBufferCount = 5;
 
         std::chrono::system_clock::time_point m_lastFrameTime;
         double m_fps = 0;

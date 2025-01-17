@@ -17,6 +17,8 @@
 
 #include <optional>
 
+#include "frame/frame.h"
+
 namespace DirectShowCamera
 {
     /**
@@ -32,7 +34,9 @@ namespace DirectShowCamera
 
         virtual bool Open(
             IBaseFilter** directShowFilter,
-            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt
+            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt,
+            // If true, the output data will be converted to RGB24 if the format support it.
+            bool convertOutputDataToRGB24IfSupported = false
         ) = 0;
         virtual void Close() = 0;
         virtual bool isOpening() const = 0;
@@ -43,16 +47,8 @@ namespace DirectShowCamera
         virtual bool Stop() = 0;
         virtual bool isCapturing() const = 0;
 
-        virtual bool getFrame
-        (
-            unsigned char* pixels,
-            int& numOfBytes,
-            unsigned long& frameIndex
-        ) {
-            numOfBytes = 0;
-            frameIndex = 0;
-            return false;
-        }
+        virtual bool getFrame(Frame &frame, bool onlyGetNewFrame, int lastFrameIndex) = 0;
+
         virtual unsigned long getLastFrameIndex() const = 0;
         virtual void setMinimumFPS(const double minimumFPS) = 0;
         virtual double getFPS() const = 0;

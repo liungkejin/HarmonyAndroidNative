@@ -117,7 +117,7 @@ namespace DirectShowCamera
         if (width <= 0 || height <= 0)
         {
             // No specific format
-            result = Open(possibleCamera[cameraIndex]);
+            result = Open(possibleCamera[cameraIndex], std::nullopt, rgb);
         }
         else
         {
@@ -171,7 +171,7 @@ namespace DirectShowCamera
                 if (videoFormatIndex >= 0)
                 {
                     // Open
-                    result = Open(possibleCamera[cameraIndex], possibleVideoFormat[videoFormatIndex]);
+                    result = Open(possibleCamera[cameraIndex], possibleVideoFormat[videoFormatIndex], rgb);
                 }
                 else
                 {
@@ -194,7 +194,9 @@ namespace DirectShowCamera
 
     bool Camera::Open(
         const DirectShowCameraDevice& device,
-        std::optional<const DirectShowVideoFormat> videoFormat
+        std::optional<const DirectShowVideoFormat> videoFormat,
+        // If true, the output data will be converted to RGB24 if the format support it.
+        bool convertOutputDataToRGB24IfSupported
     )
     {
         bool result = false;
@@ -206,7 +208,7 @@ namespace DirectShowCamera
         // Open
         if (result)
         {
-            result = Open(&directShowFilter, videoFormat);
+            result = Open(&directShowFilter, videoFormat, convertOutputDataToRGB24IfSupported);
         }
         else
         {
@@ -222,13 +224,15 @@ namespace DirectShowCamera
 
     bool Camera::Open(
         IBaseFilter** directShowFilter,
-        std::optional<const DirectShowVideoFormat> videoFormat
+        std::optional<const DirectShowVideoFormat> videoFormat,
+        // If true, the output data will be converted to RGB24 if the format support it.
+        bool convertOutputDataToRGB24IfSupported
     )
     {
         bool result = false;
 
         // Initialize camera
-        result = m_directShowCamera->Open(directShowFilter, videoFormat);
+        result = m_directShowCamera->Open(directShowFilter, videoFormat, convertOutputDataToRGB24IfSupported);
 
         // Throw DirectShow Camera Exception
         if (!result) ThrowDirectShowException();
@@ -550,47 +554,12 @@ namespace DirectShowCamera
 
     bool Camera::getFrame(Frame& frame, const bool onlyGetNewFrame)
     {
-        // Check
-        if (!m_directShowCamera->isCapturing()) return false;
-
-        // Check frame index if user only want a new Frame
-        if (onlyGetNewFrame)
-        {
-            if (m_lastFrameIndex == m_directShowCamera->getLastFrameIndex())
-            {
-                // No new frame
-                return false;
-            }
+        if (m_directShowCamera->getFrame(frame, onlyGetNewFrame, m_lastFrameIndex)) {
+            // Update frame index
+            m_lastFrameIndex = frame.getFrameIndex();
+            return true;
         }
-
-        // Get frame information
-        const auto width = getDirectShowVideoFormat().getWidth();
-        const auto height = getDirectShowVideoFormat().getHeight();
-        const long bufferSize = m_directShowCamera->getFrameTotalSize();
-        const auto frameType = m_directShowCamera->getFrameType();
-
-        // Get frame
-        frame.ImportData(
-            bufferSize,
-            width,
-            height,
-            frameType,
-            m_frameSettings,
-            [this, onlyGetNewFrame](unsigned char* data, unsigned long& frameIndex)
-            {   
-                int numOfBytes;
-                bool success = m_directShowCamera->getFrame(
-                    data, 
-                    numOfBytes,
-                    frameIndex
-                );
-            }
-        );
-
-        // Update frame index
-        m_lastFrameIndex = frame.getFrameIndex();
-
-        return true;
+        return false;
     }
 
     bool Camera::getNewFrame(Frame& frame, const int step, const int timeout, const int skip)

@@ -35,16 +35,11 @@ struct CamOpenCfg {
     }
 
     void chooseFormat(const DirectShowVideoFormat& fmt) {
-        int w = width();
-        int h = height();
         auto allResolutions = curDevice.getAllResolutionOfFormat(fmt.getVideoType());
-        for (auto &r : allResolutions) {
-            if (r.getWidth() == w && r.getHeight() == h) {
-                videoFormat = fmt;
-                return;
-            }
+        if (allResolutions.empty()) {
+            _FATAL("No valid resolution found for camera: %s, type: %s", name(), fmt.getVideoTypeString());
         }
-        videoFormat = allResolutions.empty() ? fmt : allResolutions[0];
+        videoFormat = allResolutions[0];
     }
 
     void chooseResolution(const DirectShowVideoFormat& fmt) {
@@ -82,6 +77,7 @@ struct CamOpenCfg {
 
 std::vector<DirectShowCameraDevice> all_camera_devices;
 CamOpenCfg cam_open_cfg;
+bool convert_data_to_rgb24 = false;
 
 Camera *m_camera = nullptr;
 Camera * getCamera() {
@@ -130,9 +126,11 @@ void WinCamTestWindow::onPreRender(int width, int height) {
                 m_camera_start_ms = TimeUtils::nowMs();
             }
 
-            int bytes = 0;
-            auto data = m_frame.getFrameData(bytes);
-            m_img_tex.set(data.get(), m_frame.getWidth(), m_frame.getHeight(), GL_BGR);
+            if (m_frame.getRawFrameType() == MEDIASUBTYPE_RGB24) {
+                int bytes = 0;
+                auto data = m_frame.getFrameDataPtr(bytes);
+                m_img_tex.set(data, m_frame.getWidth(), m_frame.getHeight(), GL_BGR);
+            }
         }
     }
 }
@@ -224,14 +222,16 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
             getCamera()->Close();
         } else {
             if (cam_open_cfg.valid()) {
-                bool success = getCamera()->Open(cam_open_cfg.curDevice, cam_open_cfg.videoFormat);
-                _INFO("open camera result: %d", success);
+                bool success = getCamera()->Open(cam_open_cfg.curDevice, cam_open_cfg.videoFormat, convert_data_to_rgb24);
+                _INFO("open camera: %s\nformat: %s", cam_open_cfg.curDevice, cam_open_cfg.videoFormat);
                 if (success) {
                     m_camera->StartCapture();
                 }
             }
         }
     }
+    ImGui::SameLine();
+    ImGui::Checkbox("输出RGB24", &convert_data_to_rgb24);
     ImGui::SameLine();
     ImGui::Text("camera fps: %lld", m_camera_fps);
 
