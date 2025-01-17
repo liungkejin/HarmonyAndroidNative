@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include "GLReader.h"
 #include "GLUtil.h"
 #include "Texture.h"
 
@@ -88,6 +89,15 @@ public:
             return pixels;
         }
         return nullptr;
+    }
+
+    void fastReadPixels(GLReader &reader, const std::function<void(GLubyte *pixels, int width, int height)>& callback) {
+        if (bind()) {
+            GLint width = m_texture->width();
+            GLint height = m_texture->height();
+            reader.readPixels(width, height, callback);
+            unbind();
+        }
     }
 
     void release() {

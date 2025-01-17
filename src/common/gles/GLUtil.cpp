@@ -5,6 +5,7 @@
 // please include "napi/native_api.h".
 
 #include "GLUtil.h"
+#include "GLReader.h"
 #include "filter/TextureFilter.h"
 #include "filter/NV21Filter.h"
 #include "filter/SharpenFilter.h"
