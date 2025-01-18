@@ -6,7 +6,17 @@
 
 #pragma once
 
-#include "GLUtil.h"
+#if defined(__ANDROID__) || defined(__HARMONYOS__)
+#include <EGL/egl.h>
+#include <EGL/eglext.h>
+#endif
+
+#ifdef EGL_EGL_PROTOTYPES
+
+#include "common/Object.h"
+#include "common/utils/Base.h"
+#include "common/Log.h"
+
 #include <cstdint>
 
 NAMESPACE_DEFAULT
@@ -52,3 +62,5 @@ private:
 };
 
 NAMESPACE_END
+
+#endif

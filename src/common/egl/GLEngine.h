@@ -7,6 +7,9 @@
 #pragma once
 
 #include "EGLCtx.h"
+
+#ifdef EGL_EGL_PROTOTYPES
+
 #include "common/utils/EventThread.h"
 #include <cstdint>
 
@@ -54,3 +57,5 @@ protected:
 };
 
 NAMESPACE_END
+
+#endif // EGL_EGL_PROTOTYPES

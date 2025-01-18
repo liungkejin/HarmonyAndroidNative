@@ -129,18 +129,17 @@ set(ALL_INCLUDES ${ALL_INCLUDES} ${libyuv_path}/include)
 FILE(GLOB_RECURSE LIBYUV_SRCS ${libyuv_path}/source/*.cc)
 set(COMMON_SOURCES
         ${LIBYUV_SRCS}
-        src/ZNative.cpp
-        src/common/Log.cpp
-        src/common/utils/YuvUtils.cpp
-        src/common/gles/GLUtil.cpp
-        src/common/media/ZMedia.cpp
+        ${CMAKE_SOURCE_DIR}/src/ZNative.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/Log.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/utils/YuvUtils.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/egl/EGLCtx.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/egl/GLEngine.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/gles/GLUtil.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/media/ZMedia.cpp
 )
 
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(PLATFORM_SOURCES
-            # 对于 local 平台不需要
-            src/common/gles/EGLCtx.cpp
-            src/common/gles/GLEngine.cpp
             src/android/AppContext.cpp
             src/android/utils/JNIUtils.cpp
             src/android/surface/NativeWindow.cpp
@@ -173,9 +172,6 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     find_library(hiai_foundation-lib hiai_foundation)
 #    MESSAGE(STATUS "hiai_foundation-lib: ${hiai_foundation-lib} in ${HMS_SDK_PATH}/native/sysroot/usr/lib")
     set(PLATFORM_SOURCES
-            # 对于 local 平台不需要
-            src/common/gles/EGLCtx.cpp
-            src/common/gles/GLEngine.cpp
             src/harmony/Harmony.cpp
             src/harmony/AppContext.cpp
             src/harmony/utils/NapiUtils.cpp
@@ -270,7 +266,7 @@ else ()
         add_subdirectory(${DS_CAMERA_DIR})
 
 #        set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/win32/libdshowcapture")
-#        add_subdirectory(${LIB_DS_CAPTURE_DIR})
+#        add_subdirectory(${LI B_DS_CAPTURE_DIR})
 
 #        set(WIN_DSHOW_DIR "${PLATFORM_LIBS_PATH}/win32/win-dshow")
 #        add_subdirectory(${WIN_DSHOW_DIR})

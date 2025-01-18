@@ -12,10 +12,8 @@
 #include "filter/ColorAdjustFilter.h"
 #include "Framebuffer.h"
 #include "FramebufferPool.h"
-#ifndef __LOCAL_OS__
 #include "ShareFramebuffer.h"
 #include "GLFenceSyncer.h"
-#endif
 
 NAMESPACE_DEFAULT
 

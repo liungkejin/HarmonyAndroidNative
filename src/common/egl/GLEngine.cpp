@@ -4,6 +4,8 @@
 
 #include "GLEngine.h"
 
+#ifdef EGL_EGL_PROTOTYPES
+
 NAMESPACE_DEFAULT
 
 GLEngine::GLEngine(const char *name, int glVersion)
@@ -71,3 +73,5 @@ void GLEngine::destroy() {
 }
 
 NAMESPACE_END
+
+#endif // EGL_EGL_PROTOTYPES

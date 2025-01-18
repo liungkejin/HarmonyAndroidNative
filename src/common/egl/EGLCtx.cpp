@@ -6,6 +6,8 @@
 
 #include "EGLCtx.h"
 
+#ifdef EGL_EGL_PROTOTYPES
+
 NAMESPACE_DEFAULT
 
 EGLCtx::EGLCtx(const char *name, int version) : m_name(name), m_gl_version(version) {
@@ -124,3 +126,5 @@ void EGLCtx::destroy() {
 }
 
 NAMESPACE_END
+
+#endif // EGL_EGL_PROTOTYPES
