@@ -269,10 +269,18 @@ else ()
         set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/win32/directshow_camera")
         add_subdirectory(${DS_CAMERA_DIR})
 
+#        set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/win32/libdshowcapture")
+#        add_subdirectory(${LIB_DS_CAPTURE_DIR})
+
+#        set(WIN_DSHOW_DIR "${PLATFORM_LIBS_PATH}/win32/win-dshow")
+#        add_subdirectory(${WIN_DSHOW_DIR})
+
         set(THIRD_PARTY_LIBS
                 ${THIRD_PARTY_LIBS}
                 glew_s
                 directshow_camera
+#                libdshowcapture
+#                win-dshow
         )
         set(ALL_INCLUDES
                 ${ALL_INCLUDES}
