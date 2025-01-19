@@ -5,9 +5,10 @@
 #pragma once
 
 #include <android/native_window_jni.h>
-#include "Namespace.h"
-#include "common/Object.h"
-#include "common/gles/GLEngine.h"
+#include <Namespace.h>
+#include <common/Object.h>
+#include <common/egl/GLEngine.h>
+#include <common/Log.h>
 
 NAMESPACE_DEFAULT
 
