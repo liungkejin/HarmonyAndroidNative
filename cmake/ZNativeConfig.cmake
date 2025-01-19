@@ -31,9 +31,7 @@ message(STATUS "ZSYSTEM_ARCH: ${ZSYSTEM_ARCH}")
 message(STATUS "CURRENT_SOURCE_DIR: ${CMAKE_CURRENT_SOURCE_DIR}")
 
 get_filename_component(ZNative_CONFIG_PATH "${CMAKE_CURRENT_LIST_DIR}" REALPATH)
-get_filename_component(ZNative_INSTALL_PATH "${OpenCV_CONFIG_PATH}/../../../" REALPATH)
 message(STATUS "ZNative_CONFIG_PATH: ${ZNative_CONFIG_PATH}")
-message(STATUS "ZNative_INSTALL_PATH: ${ZNative_INSTALL_PATH}")
 
 # 查找库的头文件目录
 find_path(ZNative_INCLUDE_DIRS

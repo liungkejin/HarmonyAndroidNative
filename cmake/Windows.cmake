@@ -61,8 +61,8 @@ set(PLATFORM_INCLUDES
 
 set(PLATFORM_SOURCES
         ${PLATFORM_SOURCES}
-        ${CMAKE_SOURCE_DIR}/src/local/win32/dshow/DeviceEnumerator.cpp
-        ${CMAKE_SOURCE_DIR}/src/local/win32/cam/CamDevice.cpp
+        ${PLATFORM_SRC_PATH}/DeviceEnumerator.cpp
+        ${PLATFORM_SRC_PATH}/cam/CamDevice.cpp
 )
 set(PLATFORM_LIBS
         ${PLATFORM_LIBS}

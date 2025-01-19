@@ -5,6 +5,13 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
+# debug 时增加宏定义 __DEBUG__
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    add_definitions(-D__DEBUG__)
+endif()
+
+add_definitions(-DSTRICT_MODE=false)
+
 #
 # 几个关键变量说明
 # PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
@@ -51,15 +58,12 @@ elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(PLATFORM "harmony")
     set(TARGET_ARCH ${OHOS_ARCH})
 else ()
-    set(ZLOCAL ON)
-    set(PLATFORM "local")
-    add_definitions(-D__LOCAL_OS__)
     if (WIN32)
-        set(ZWINDOWS ON)
+        set(PLATFORM "local/win32")
     elseif (APPLE)
-        set(ZMACOS ON)
+        set(PLATFORM "local/macos")
     else ()
-        set(ZLINUX ON)
+        set(PLATFORM "local/linux")
     endif ()
 
     if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
@@ -91,8 +95,10 @@ message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NA
 
 # 公共第三方库路径
 set(COMMON_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/common)
+set(COMMON_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/common)
 # 平台相关第三方库路径
 set(PLATFORM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/${PLATFORM})
+set(PLATFORM_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/${PLATFORM})
 
 set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${PLATFORM}/${CMAKE_BUILD_TYPE})
 set(ZNATIVE_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/znative)
@@ -122,17 +128,10 @@ set(COMMON_INCLUDES
         ${COMMON_LIBS_PATH}/source/cppfs/include
 )
 
-# debug 时增加宏定义 __DEBUG__
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    add_definitions(-D__DEBUG__)
-endif()
-
-add_definitions(-DSTRICT_MODE=false)
-
-if (${ZANDROID})
+if (ZANDROID)
     include(cmake/Android.cmake)
-elseif (${ZOHOS})
-    include(cmake/Harmonyos.cmake)
+elseif (ZOHOS)
+    include(cmake/HarmonyOS.cmake)
 else ()
     include(cmake/Local.cmake)
 endif ()
@@ -156,13 +155,13 @@ FILE(GLOB_RECURSE LIBYUV_SRCS ${LIBYUV_PATH}/source/*.cc)
 set(COMMON_SOURCES
         ${LIBYUV_SRCS}
         ${CMAKE_SOURCE_DIR}/src/ZNative.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/Log.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/utils/YuvUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/utils/FileUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/egl/EGLCtx.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/egl/GLEngine.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/gles/GLUtil.cpp
-        ${CMAKE_SOURCE_DIR}/src/common/media/ZMedia.cpp
+        ${COMMON_SRC_PATH}/Log.cpp
+        ${COMMON_SRC_PATH}/utils/YuvUtils.cpp
+        ${COMMON_SRC_PATH}/utils/FileUtils.cpp
+        ${COMMON_SRC_PATH}/egl/EGLCtx.cpp
+        ${COMMON_SRC_PATH}/egl/GLEngine.cpp
+        ${COMMON_SRC_PATH}/gles/GLUtil.cpp
+        ${COMMON_SRC_PATH}/media/ZMedia.cpp
 )
 set(COMMON_INCLUDES
         ${COMMON_INCLUDES}
@@ -189,17 +188,7 @@ install(FILES src/ZNamespace.h src/ZNative.h
 install(DIRECTORY src/common
         DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
         FILES_MATCHING PATTERN "*.h")
-set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/${PLATFORM})
-if (${ZLOCAL})
-    if (WIN32)
-        set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/local/win32)
-    elseif (APPLE)
-        set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/local/macos)
-    else ()
-        set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/local/linux)
-    endif ()
-endif ()
-install(DIRECTORY ${PLATFORM_INCLUDE_SRC_PATH}
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/${PLATFORM}
         DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
         FILES_MATCHING PATTERN "*.h")
 # install third-party libs
@@ -228,6 +217,6 @@ set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sour
 set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 
-if (${ZLOCAL})
-    include(cmake/Local-sample.cmake)
+if (${PLATFORM} MATCHES "local")
+    include(samples/local/Local-sample.cmake)
 endif ()

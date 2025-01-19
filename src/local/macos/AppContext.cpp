@@ -24,7 +24,7 @@ void AppContext::initialize(std::string& dirFiles, std::string& dirCache) {
 
 std::string AppContext::bundleName() {
     _FATAL_IF(!initialized(), "AppContext not initialized")
-    return "local";
+    return "macos";
 }
 
 std::string AppContext::filesDir() {
