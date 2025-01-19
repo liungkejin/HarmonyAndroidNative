@@ -4,7 +4,7 @@
 
 #include "GLEngine.h"
 
-#ifdef EGL_EGL_PROTOTYPES
+#ifdef EGL_VERSION_1_0
 
 NAMESPACE_DEFAULT
 
@@ -74,4 +74,4 @@ void GLEngine::destroy() {
 
 NAMESPACE_END
 
-#endif // EGL_EGL_PROTOTYPES
+#endif // EGL_VERSION_1_0

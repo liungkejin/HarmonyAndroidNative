@@ -11,7 +11,7 @@
 #include <EGL/eglext.h>
 #endif
 
-#ifdef EGL_EGL_PROTOTYPES
+#ifdef EGL_VERSION_1_0
 
 #include "common/Object.h"
 #include "common/utils/Base.h"

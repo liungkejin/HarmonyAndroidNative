@@ -8,7 +8,7 @@
 
 #include "EGLCtx.h"
 
-#ifdef EGL_EGL_PROTOTYPES
+#ifdef EGL_VERSION_1_0
 
 #include "common/utils/EventThread.h"
 #include <cstdint>
@@ -58,4 +58,4 @@ protected:
 
 NAMESPACE_END
 
-#endif // EGL_EGL_PROTOTYPES
+#endif // EGL_VERSION_1_0
