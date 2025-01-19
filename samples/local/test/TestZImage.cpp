@@ -7,6 +7,7 @@
 #include <common/media/img/ZImage.h>
 
 #include "common/AppContext.h"
+#include <opencv2/opencv.hpp>
 
 using namespace znative;
 
@@ -23,7 +24,7 @@ void ZTest::test_ZImage() {
         ZImgFormat::F_YUV_NV21,
         ZImgFormat::F_GRAY
     };
-
+#ifdef __ZNATIVE_WITH_OPENCV__
     for (ZImgFormat srcF: allFormats) {
         _INFO("test source format: %s", ZImage::formatStr(srcF));
         ZImage s = srcImg.convertToImg(srcF);
@@ -37,4 +38,5 @@ void ZTest::test_ZImage() {
         }
     }
     _INFO("Test ZImage end");
+#endif
 }

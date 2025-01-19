@@ -4,11 +4,18 @@ set(GLFW_BUILD_DOCS OFF)
 set(GLFW_BUILD_TESTS OFF)
 add_subdirectory(${PLATFORM_LIBS_PATH}/glfw-3.4)
 
+set(PLATFORM_SAMPLE_LIBS glfw)
 # PLATFORM_SAMPLE_SOURCES is defined in cmake/Windows-sample.cmake
 # PLATFORM_SAMPLE_INCLUDES is defined in cmake/Windows-sample.cmake
 
 if (${WIN32})
     include(${CMAKE_SOURCE_DIR}/cmake/Windows-sample.cmake)
+endif ()
+
+if (NOT ${ZNATIVE_OPENCV_ENABLE})
+    find_package(OpenCV REQUIRED)
+    set(PLATFORM_SAMPLE_INCLUDES ${PLATFORM_SAMPLE_INCLUDES} ${OpenCV_INCLUDE_DIRS})
+    set(PLATFORM_SAMPLE_LIBS ${PLATFORM_SAMPLE_LIBS} ${OpenCV_LIBS})
 endif ()
 
 include_directories(
@@ -33,15 +40,15 @@ set(IMGUI_SRC
 add_executable(local-sample
         ${IMGUI_SRC}
         ${PLATFORM_SAMPLE_SOURCES}
-        samples/local/main.cpp
-        samples/local/MainApp.cpp
-        samples/local/MainWindow.cpp
-        samples/local/gl/GLTestWindow.cpp
-        samples/local/test/TestZImage.cpp
+        ${CMAKE_SOURCE_DIR}/samples/local/main.cpp
+        ${CMAKE_SOURCE_DIR}/samples/local/MainApp.cpp
+        ${CMAKE_SOURCE_DIR}/samples/local/MainWindow.cpp
+        ${CMAKE_SOURCE_DIR}/samples/local/gl/GLTestWindow.cpp
+        ${CMAKE_SOURCE_DIR}/samples/local/test/TestZImage.cpp
 )
 target_link_libraries(local-sample PRIVATE
-        glfw
         ${COMMON_LIBS}
         ${PLATFORM_LIBS}
         ${TARGET_STATIC}
+        ${PLATFORM_SAMPLE_LIBS}
 )

@@ -11,6 +11,7 @@ set(CMAKE_CXX_STANDARD 17)
 #                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
 # TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
 # ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认启用
+# ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
 #
 # COMMON_LIBS_PATH          公共第三方库路径
 # COMMON_INCLUDES           所有公共的 include 目录
@@ -32,20 +33,15 @@ set(CMAKE_CXX_STANDARD 17)
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 #
 
+option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
+option(ZNATIVE_INSTALL_STATIC "Install static library" OFF) # install shared library
+
 set(TARGET_SHARED ${PROJ_NAME}-shared)
 set(TARGET_STATIC ${PROJ_NAME}-static)
 add_library(${TARGET_SHARED} SHARED)
 add_library(${TARGET_STATIC} STATIC)
 
-# debug 时增加宏定义 __DEBUG__
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    add_definitions(-D__DEBUG__)
-endif()
-
-add_definitions(-DSTRICT_MODE=false)
-
-option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
-
+set(ZNATIVE ON)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(ZANDROID ON)
     set(PLATFORM "android")
@@ -78,7 +74,7 @@ else ()
         if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
             set(TARGET_ARCH "arm64")
         else ()
-            set(TARGET_ARCH "armv7")
+            set(TARGET_ARCH "arm")
         endif ()
     else ()
         if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
@@ -118,6 +114,13 @@ set(COMMON_INCLUDES
         ${COMMON_LIBS_PATH}/source/cppfs/include
 )
 
+# debug 时增加宏定义 __DEBUG__
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    add_definitions(-D__DEBUG__)
+endif()
+
+add_definitions(-DSTRICT_MODE=false)
+
 if (${ZANDROID})
     include(cmake/Android.cmake)
 elseif (${ZOHOS})
@@ -129,7 +132,7 @@ endif ()
 # OpenCV
 if (${ZNATIVE_OPENCV_ENABLE})
     message(STATUS "Use OpenCV")
-    add_definitions(-D__OPENCV__)
+    add_definitions(-D__ZNATIVE_WITH_OPENCV__)
 
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
@@ -172,20 +175,40 @@ target_link_libraries(${TARGET_STATIC} PRIVATE ${PLATFORM_LIBS} ${COMMON_LIBS})
 message(STATUS "COMMON_LIBS: ${COMMON_LIBS}")
 message(STATUS "PLATFORM_LIBS: ${PLATFORM_LIBS}")
 
+# install
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${PLATFORM}/${CMAKE_BUILD_TYPE})
+set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include)
+set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+
+install(FILES src/ZNamespace.h src/ZNative.h
+        DESTINATION ${INCLUDE_INSTALL_DIR}/znative)
+install(DIRECTORY src/common
+        DESTINATION ${INCLUDE_INSTALL_DIR}/znative
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY src/${PLATFORM}
+        DESTINATION ${INCLUDE_INSTALL_DIR}/znative
+        FILES_MATCHING PATTERN "*.h")
+# install third-party libs
+install(FILES ${COMMON_LIBS_PATH}/tinyformat/tinyformat.h
+        DESTINATION ${INCLUDE_INSTALL_DIR}/thirdparty)
+install(DIRECTORY ${COMMON_LIBS_PATH}/json/nlohmann
+        DESTINATION ${INCLUDE_INSTALL_DIR}/thirdparty)
+install(DIRECTORY ${COMMON_LIBS_PATH}/eventpp-0.1.3/include/eventpp
+        DESTINATION ${INCLUDE_INSTALL_DIR}/thirdparty)
+
+if (${ZNATIVE_INSTALL_STATIC})
+    install(TARGETS ${TARGET_STATIC} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+else ()
+    install(TARGETS ${TARGET_SHARED} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+endif ()
+
+install(FILES cmake/ZNativeConfig.cmake DESTINATION ${CMAKE_INSTALL_PREFIX})
+
 ## 注意这些变量 cache string 一旦存储之后就不会改动了，所以不能依赖这个变量
 set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE STRING "all includes")
 set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
 set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
-
-# TODO install
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${PLATFORM})
-install(FILES src/Namespace.h src/ZNative.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
-install(DIRECTORY src/common DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY src/${PLATFORM} DESTINATION ${CMAKE_INSTALL_PREFIX}/include/ FILES_MATCHING PATTERN "*.h")
-
-install(TARGETS ${TARGET_SHARED} DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
-install(TARGETS ${TARGET_STATIC} DESTINATION ${CMAKE_INSTALL_PREFIX}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
 
 if (${ZLOCAL})
     include(cmake/Local-sample.cmake)
