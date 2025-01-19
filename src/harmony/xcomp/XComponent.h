@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Namespace.h>
+#include <ZNamespace.h>
 #include "napi/native_api.h"
 #include <common/egl/GLEngine.h>
 #include <ace/xcomponent/native_interface_xcomponent.h>

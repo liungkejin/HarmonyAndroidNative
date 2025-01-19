@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "AVBuffer.h"
 #include "AVFormat.h"
 #include "AVUtils.h"

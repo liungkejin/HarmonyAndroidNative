@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include <multimedia/image_framework/image_receiver_mdk.h>
 #include "MDKImage.h"
 

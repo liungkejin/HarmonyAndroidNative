@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "CamDevice.h"
 
 NAMESPACE_DEFAULT

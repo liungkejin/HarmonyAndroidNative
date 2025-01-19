@@ -6,7 +6,7 @@
 
 #include <common/utils/YuvUtils.h>
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 #include "common/Log.h"
 #ifdef __OPENCV__

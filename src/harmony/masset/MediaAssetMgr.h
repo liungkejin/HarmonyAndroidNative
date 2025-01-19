@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "MAssetUtils.h"
 #include "harmony/image/NImageSource.h"
 #include <multimedia/media_library/media_asset_manager_capi.h>

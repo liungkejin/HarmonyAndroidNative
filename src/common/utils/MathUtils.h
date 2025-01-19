@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include <cmath>
 #ifdef _MSC_VER
 #include <corecrt_math_defines.h>

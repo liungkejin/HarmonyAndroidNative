@@ -10,7 +10,7 @@
 #include <string>
 #include <uv.h>
 #include <napi/native_api.h>
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Log.h"
 
 

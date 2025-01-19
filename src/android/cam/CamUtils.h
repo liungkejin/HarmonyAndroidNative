@@ -6,7 +6,7 @@
 
 #include <camera/NdkCameraError.h>
 #include <camera/NdkCameraDevice.h>
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 
 NAMESPACE_DEFAULT

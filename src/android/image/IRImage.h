@@ -5,7 +5,7 @@
 #pragma once
 
 #include <media/NdkImage.h>
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 #include "common/Log.h"
 #include "common/utils/RawData.h"

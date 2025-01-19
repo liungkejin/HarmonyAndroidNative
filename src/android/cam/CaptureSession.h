@@ -7,7 +7,7 @@
 #include <vector>
 #include <unordered_map>
 #include <camera/NdkCameraCaptureSession.h>
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 #include "CaptureRequest.h"
 #include "CamCharacteristics.h"

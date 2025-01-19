@@ -7,13 +7,14 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Log.h"
 #include "common/Object.h"
 #include "common/utils/RawData.h"
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <functional>
 
 NAMESPACE_DEFAULT
 

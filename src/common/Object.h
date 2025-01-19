@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include <cstdio>
 #include <iostream>
 #include <memory>

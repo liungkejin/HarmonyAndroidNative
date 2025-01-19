@@ -8,7 +8,7 @@
 
 #include <map>
 #include <mutex>
-#include "Namespace.h"
+#include "ZNamespace.h"
 
 NAMESPACE_DEFAULT
 

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 
 #define DELETE_TO_NULL(ptr)  if (ptr) { delete ptr; ptr = nullptr; }

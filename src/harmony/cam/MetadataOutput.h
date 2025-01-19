@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "CamDevice.h"
 #include <cstdint>
 #include <ohcamera/camera.h>
