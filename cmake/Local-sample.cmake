@@ -4,6 +4,7 @@ set(GLFW_BUILD_DOCS OFF)
 set(GLFW_BUILD_TESTS OFF)
 add_subdirectory(${PLATFORM_LIBS_PATH}/glfw-3.4)
 
+set(GLFW_INSTALL OFF)
 set(PLATFORM_SAMPLE_LIBS glfw)
 # PLATFORM_SAMPLE_SOURCES is defined in cmake/Windows-sample.cmake
 # PLATFORM_SAMPLE_INCLUDES is defined in cmake/Windows-sample.cmake

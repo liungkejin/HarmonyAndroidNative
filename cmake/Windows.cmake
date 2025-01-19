@@ -27,12 +27,6 @@ else ()
     set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/mingw-release/x64/mingw/staticlib")
 endif ()
 
-set(PLATFORM_SOURCES
-        ${CMAKE_SOURCE_DIR}/src/local/AppContext.cpp
-)
-find_package(OpenGL REQUIRED)
-set(PLATFORM_LIBS ${PLATFORM_LIBS} OpenGL::GL)
-
 if (MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
     add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
@@ -74,10 +68,4 @@ set(PLATFORM_LIBS
         ${PLATFORM_LIBS}
         quartz
         strmiids
-)
-
-
-set(LOCAL_SAMPLE_SOURCES
-        ${LOCAL_SAMPLE_SOURCES}
-        ${CMAKE_SOURCE_DIR}/samples/local/win32/WinCamTestWindow.cpp
 )

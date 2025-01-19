@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 # PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
 #                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
 # TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
-# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认启用
+# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认不启用
 # ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
 #
 # COMMON_LIBS_PATH          公共第三方库路径
@@ -26,15 +26,15 @@ set(CMAKE_CXX_STANDARD 17)
 # ${PROJ_NAME}-shared       共享库
 # ${PROJ_NAME}-static       静态库
 #
-# 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以引用工程所使用
+# 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以被引用工程所使用
 # ZNATIVE_INCLUDES   所有的include目录
 # ZNATIVE_SOURCES    所有的源文件
 # ZNATIVE_DEP_LIBS   所有的依赖库
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 #
 
-option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
-option(ZNATIVE_INSTALL_STATIC "Install static library" OFF) # install shared library
+option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
+option(ZNATIVE_INSTALL_STATIC "Install static library" ON) # install shared library
 
 set(TARGET_SHARED ${PROJ_NAME}-shared)
 set(TARGET_STATIC ${PROJ_NAME}-static)
@@ -93,6 +93,14 @@ message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NA
 set(COMMON_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/common)
 # 平台相关第三方库路径
 set(PLATFORM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/${PLATFORM})
+
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${PLATFORM}/${CMAKE_BUILD_TYPE})
+set(ZNATIVE_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/znative)
+set(THIRDPARTY_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/thirdparty)
+set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+
+set(CMAKE_INSTALL_INCLUDEDIR ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+set(CMAKE_INSTALL_LIBDIR ${LIBRARY_INSTALL_DIR})
 
 # eventpp
 add_subdirectory(${COMMON_LIBS_PATH}/eventpp-0.1.3)
@@ -176,25 +184,35 @@ message(STATUS "COMMON_LIBS: ${COMMON_LIBS}")
 message(STATUS "PLATFORM_LIBS: ${PLATFORM_LIBS}")
 
 # install
-set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${PLATFORM}/${CMAKE_BUILD_TYPE})
-set(INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include)
-set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
-
 install(FILES src/ZNamespace.h src/ZNative.h
-        DESTINATION ${INCLUDE_INSTALL_DIR}/znative)
+        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR})
 install(DIRECTORY src/common
-        DESTINATION ${INCLUDE_INSTALL_DIR}/znative
+        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
         FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY src/${PLATFORM}
-        DESTINATION ${INCLUDE_INSTALL_DIR}/znative
+set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/${PLATFORM})
+if (${ZLOCAL})
+    if (WIN32)
+        set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/local/win32)
+    elseif (APPLE)
+        set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/local/macos)
+    else ()
+        set(PLATFORM_INCLUDE_SRC_PATH ${CMAKE_SOURCE_DIR}/src/local/linux)
+    endif ()
+endif ()
+install(DIRECTORY ${PLATFORM_INCLUDE_SRC_PATH}
+        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
         FILES_MATCHING PATTERN "*.h")
 # install third-party libs
 install(FILES ${COMMON_LIBS_PATH}/tinyformat/tinyformat.h
-        DESTINATION ${INCLUDE_INSTALL_DIR}/thirdparty)
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
 install(DIRECTORY ${COMMON_LIBS_PATH}/json/nlohmann
-        DESTINATION ${INCLUDE_INSTALL_DIR}/thirdparty)
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
 install(DIRECTORY ${COMMON_LIBS_PATH}/eventpp-0.1.3/include/eventpp
-        DESTINATION ${INCLUDE_INSTALL_DIR}/thirdparty)
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+install(DIRECTORY ${COMMON_LIBS_PATH}/libyuv-stable/include/libyuv
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+install(FILES ${COMMON_LIBS_PATH}/libyuv-stable/include/libyuv.h
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
 
 if (${ZNATIVE_INSTALL_STATIC})
     install(TARGETS ${TARGET_STATIC} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
