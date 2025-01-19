@@ -173,7 +173,7 @@ void decode(Iter1 start, Iter1 end, Iter2 out)
             continue;
         }
         char value = ConversionTraits::decode(*iter);
-        if (value == ERROR) {
+        if ((int)value == ERROR) {
             // malformed data, but let's go on...
             ++iter;
             continue;
