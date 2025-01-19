@@ -147,6 +147,7 @@ set(COMMON_SOURCES
         ${CMAKE_SOURCE_DIR}/src/ZNative.cpp
         ${CMAKE_SOURCE_DIR}/src/common/Log.cpp
         ${CMAKE_SOURCE_DIR}/src/common/utils/YuvUtils.cpp
+        ${CMAKE_SOURCE_DIR}/src/common/utils/FileUtils.cpp
         ${CMAKE_SOURCE_DIR}/src/common/egl/EGLCtx.cpp
         ${CMAKE_SOURCE_DIR}/src/common/egl/GLEngine.cpp
         ${CMAKE_SOURCE_DIR}/src/common/gles/GLUtil.cpp
