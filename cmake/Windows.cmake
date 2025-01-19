@@ -18,13 +18,13 @@ endif ()
 # 同时需要编译两份，一份是 debug 版本，一份是 release 版本
 if (MSVC)
     if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-        set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/vc17-debug/x64/vc17/staticlib")
+        set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/opencv-4.10.0/vc17-debug/x64/vc17/staticlib")
     else ()
-        set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/vc17-release/x64/vc17/staticlib")
+        set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/opencv-4.10.0/vc17-release/x64/vc17/staticlib")
     endif ()
 else ()
     # MINGW
-    set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/mingw-release/x64/mingw/staticlib")
+    set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/opencv-4.10.0/mingw-release/x64/mingw/staticlib")
 endif ()
 
 if (MSVC)
@@ -33,10 +33,10 @@ if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif ()
 
-set(GLEW_DIR "${PLATFORM_LIBS_PATH}/win32/glew-2.1.0")
+set(GLEW_DIR "${PLATFORM_LIBS_PATH}/glew-2.1.0")
 add_subdirectory(${GLEW_DIR})
 
-set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/win32/directshow_camera")
+set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/directshow_camera")
 add_subdirectory(${DS_CAMERA_DIR})
 
 #        set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/win32/libdshowcapture")
@@ -61,7 +61,7 @@ set(PLATFORM_INCLUDES
 
 set(PLATFORM_SOURCES
         ${PLATFORM_SOURCES}
-        ${PLATFORM_SRC_PATH}/DeviceEnumerator.cpp
+        ${PLATFORM_SRC_PATH}/dshow/DeviceEnumerator.cpp
         ${PLATFORM_SRC_PATH}/cam/CamDevice.cpp
 )
 set(PLATFORM_LIBS
