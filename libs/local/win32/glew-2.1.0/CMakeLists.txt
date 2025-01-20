@@ -155,7 +155,7 @@ endif()
 
 install ( TARGETS ${targets_to_install}
           ${MAYBE_EXPORT}
-#          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+          RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
           FRAMEWORK DESTINATION ${CMAKE_INSTALL_PREFIX}
@@ -182,8 +182,10 @@ if (BUILD_UTILS)
     target_link_libraries(visualinfo ${X11_LIBRARIES})
   endif ()
 
-  install ( TARGETS glewinfo visualinfo
-            DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (NOT ZNATIVE)
+    install ( TARGETS glewinfo visualinfo
+              DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif ()
 endif ()
 
 set (prefix ${CMAKE_INSTALL_PREFIX})
@@ -202,9 +204,11 @@ endif ()
 
 configure_file (${GLEW_DIR}/glew.pc.in ${GLEW_DIR}/glew.pc @ONLY)
 
+if (NOT ZNATIVE)
 install(FILES ${GLEW_DIR}/glew.pc
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
 )
+endif ()
 
 if(WIN32 AND MSVC AND (NOT MSVC_VERSION LESS 1600) AND (NOT CMAKE_VERSION VERSION_LESS "3.1"))
     install(
@@ -220,7 +224,7 @@ install (FILES
     ${GLEW_DIR}/include/GL/glxew.h
     DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/GL)
 
-if(MAYBE_EXPORT)
+if(MAYBE_EXPORT AND NOT ZNATIVE)
   install(EXPORT glew-targets DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/glew
     NAMESPACE GLEW::)
   install(FILES

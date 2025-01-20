@@ -64,10 +64,21 @@ else ()
                 PATHS ${ZNative_CONFIG_PATH}/libs/${ZSYSTEM_ARCH}
         )
     endif ()
+    find_library(glew_LIBRARIES
+            NAMES glew32
+            PATHS ${ZNative_CONFIG_PATH}/libs/${ZSYSTEM_ARCH}
+    )
+    if (${glew_LIBRARIES} STREQUAL "glew_LIBRARIES-NOTFOUND")
+        find_library(glew_LIBRARIES
+                NAMES glew32d
+                PATHS ${ZNative_CONFIG_PATH}/libs/${ZSYSTEM_ARCH}
+        )
+    endif ()
 
     set(ZNative_LIBRARIES
             ${ZNative_LIBRARIES}
             ${Cppfs_LIBRARIES}
+            ${glew_LIBRARIES}
     )
 endif ()
 
