@@ -8,10 +8,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(ALL_DEFINITIONS "")
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(ALL_DEFINITIONS "${ALL_DEFINITIONS} -D__DEBUG__")
+    set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-D__DEBUG__")
 endif()
 
-set(ALL_DEFINITIONS "${ALL_DEFINITIONS} -DSTRICT_MODE=false")
+set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 
 #
 # 几个关键变量说明
@@ -141,7 +141,7 @@ endif ()
 # OpenCV
 if (${ZNATIVE_OPENCV_ENABLE})
     message(STATUS "Use OpenCV")
-    set(ALL_DEFINITIONS "${ALL_DEFINITIONS} -D__ZNATIVE_WITH_OPENCV__")
+    set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-D__ZNATIVE_WITH_OPENCV__")
 
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
