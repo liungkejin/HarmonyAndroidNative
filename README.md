@@ -69,12 +69,18 @@ libs/                    # 依赖库目录
     |_ android/          # Android 依赖库目录
     |_ harmony/          # HarmonyOS 依赖库目录
     |_ local/            # 本地依赖库目录
+        |_ win32
+        |_ linux
+        |_ macos
     |_ common/           # 共享依赖库目录
     
 src/                     # 源码目录
     |_ android/          # Android 源码目录
     |_ harmony/          # HarmonyOS 源码目录
     |_ local/            # 本地源码目录
+        |_ win32
+        |_ linux
+        |_ macos
     |_ common/           # 共享源码目录
 
 samples/                 # 示例代码目录
@@ -82,6 +88,38 @@ samples/                 # 示例代码目录
     |_ harmony/          # HarmonyOS 示例代码目录
     |_ local/            # 本地示例代码目录
 CMakeLists.txt           # 项目 CMakeLists.txt
+```
+
+### 使用方式
+
+**add_subdirectory**
+
+```cmake
+#
+# 两个 option:
+# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认不启用
+# ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
+#
+# 输出的 target:
+# ${PROJ_NAME}-shared       共享库
+# ${PROJ_NAME}-static       静态库
+#
+# 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以被引用工程所使用
+# ZNATIVE_INCLUDES   所有的include目录
+# ZNATIVE_SOURCES    所有的源文件
+# ZNATIVE_DEP_LIBS   所有的依赖库
+# ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
+# ZNATIVE_DEFINITIONS 所有的宏定义
+#
+
+set(ZNATIVE_OPENCV_ENABLE ON)
+add_subdirectory(${LIBS_PATH}/znative)
+include_directories(${ZNATIVE_INCLUDES})
+add_definitions(${ZNATIVE_DEFINITIONS})
+if (${ZNATIVE_OPENCV_ENABLE})
+    set(OpenCV_DIR ${ZNATIVE_OPENCV_DIR})
+    find_package(OpenCV REQUIRED)
+endif()
 ```
 
 ### 运行 local sample

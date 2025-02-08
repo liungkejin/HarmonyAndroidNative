@@ -5,12 +5,13 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
+set(ALL_DEFINITIONS "")
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    add_definitions(-D__DEBUG__)
+    set(ALL_DEFINITIONS "${ALL_DEFINITIONS} -D__DEBUG__")
 endif()
 
-add_definitions(-DSTRICT_MODE=false)
+set(ALL_DEFINITIONS "${ALL_DEFINITIONS} -DSTRICT_MODE=false")
 
 #
 # 几个关键变量说明
@@ -38,6 +39,7 @@ add_definitions(-DSTRICT_MODE=false)
 # ZNATIVE_SOURCES    所有的源文件
 # ZNATIVE_DEP_LIBS   所有的依赖库
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
+# ZNATIVE_DEFINITIONS 所有的宏定义
 #
 
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
@@ -139,7 +141,7 @@ endif ()
 # OpenCV
 if (${ZNATIVE_OPENCV_ENABLE})
     message(STATUS "Use OpenCV")
-    add_definitions(-D__ZNATIVE_WITH_OPENCV__)
+    set(ALL_DEFINITIONS "${ALL_DEFINITIONS} -D__ZNATIVE_WITH_OPENCV__")
 
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
@@ -154,7 +156,7 @@ set(LIBYUV_PATH ${COMMON_LIBS_PATH}/libyuv-stable)
 FILE(GLOB_RECURSE LIBYUV_SRCS ${LIBYUV_PATH}/source/*.cc)
 set(COMMON_SOURCES
         ${LIBYUV_SRCS}
-        ${CMAKE_SOURCE_DIR}/src/ZNative.cpp
+        ${COMMON_SRC_PATH}/../ZNative.cpp
         ${COMMON_SRC_PATH}/Log.cpp
         ${COMMON_SRC_PATH}/utils/YuvUtils.cpp
         ${COMMON_SRC_PATH}/utils/FileUtils.cpp
@@ -168,6 +170,8 @@ set(COMMON_INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${LIBYUV_PATH}/include
 )
+
+add_definitions(${ALL_DEFINITIONS})
 
 include_directories(${COMMON_INCLUDES} ${PLATFORM_INCLUDES})
 message(STATUS "COMMON_INCLUDES: ${COMMON_INCLUDES}")
@@ -188,7 +192,7 @@ install(FILES src/ZNamespace.h src/ZNative.h
 install(DIRECTORY src/common
         DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
         FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/${PLATFORM}
+install(DIRECTORY ${PLATFORM_SRC_PATH}
         DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
         FILES_MATCHING PATTERN "*.h")
 # install third-party libs
@@ -216,6 +220,7 @@ set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE STRING "all i
 set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
 set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
+set(ZNATIVE_DEFINITIONS ${ALL_DEFINITIONS} CACHE STRING "all definitions")
 
 if (${PLATFORM} MATCHES "local")
     include(samples/local/Local-sample.cmake)
