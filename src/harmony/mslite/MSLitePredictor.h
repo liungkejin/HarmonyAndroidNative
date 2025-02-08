@@ -22,14 +22,6 @@ public:
             delete m_model;
             m_model = nullptr;
         }
-        if (m_context) {
-            delete m_context;
-            m_context = nullptr;
-        }
-        if (m_dev_info) {
-            delete m_dev_info;
-            m_dev_info = nullptr;
-        }
     }
 
 public:
@@ -41,6 +33,7 @@ public:
         m_thread_affinity_mode = mode;
     }
 
+    // 只对 cpu 有效，如果使用 nnrt 时，设置 parallel 会导致编译失败
     void setParallelEnable(bool enable) {
         m_parallel_enable = enable;
     }
@@ -71,47 +64,40 @@ public:
     }
 
     bool build(const uint8_t *data, size_t size) {
+        AIDeviceInfo devInfo;
+        if (!devInfo.create(m_device_type)) {
+            _ERROR("create device info failed, type: %s", AIUtils::deviceTypeStr(m_device_type));
+            return false;
+        }
+        if (m_device_type != OH_AI_DEVICETYPE_KIRIN_NPU && m_device_type != OH_AI_DEVICETYPE_GPU) {
+            devInfo.setF16Enable(m_fp16_enable);
+        }
+        devInfo.setPerformanceMode(OH_AI_PERFORMANCE_HIGH);
+
+        AIContext context;
+        if (m_thread_num > 0) {
+            context.setThreadNum(m_thread_num);
+        }
+        if (m_thread_affinity_mode >= 0) {
+            context.setThreadAffinityMode(m_thread_affinity_mode);
+        }
+        if (m_device_type == OH_AI_DEVICETYPE_CPU) {
+            context.setParallelEnable(m_parallel_enable);
+        }
+        context.addDeviceInfo(devInfo);
+
         if (m_model) {
             delete m_model;
         }
         m_model = new AIModel();
-        
-        if (m_dev_info) {
-            delete m_dev_info;
-        }
-        m_dev_info = new AIDeviceInfo();
-        if (!m_dev_info->create(m_device_type)) {
-            _ERROR("create device info failed, type: %s", AIUtils::deviceTypeStr(m_device_type));
-            delete m_dev_info;
-            m_dev_info = nullptr;
-            return false;
-        }
-        if (m_device_type != OH_AI_DEVICETYPE_KIRIN_NPU && m_device_type != OH_AI_DEVICETYPE_GPU) {
-            m_dev_info->setF16Enable(m_fp16_enable);
-        }
-        m_dev_info->setPerformanceMode(OH_AI_PERFORMANCE_EXTREME);
-        
-        if (m_context) {
-            delete m_context;
-        }
-        m_context = new AIContext();
-        if (m_thread_num > 0) {
-            m_context->setThreadNum(m_thread_num);
-        }
-        if (m_thread_affinity_mode >= 0) {
-            m_context->setThreadAffinityMode(m_thread_affinity_mode);
-        }
-        m_context->setParallelEnable(m_parallel_enable);
-        m_context->addDeviceInfo(*m_dev_info);
-        
-        auto status = m_model->build(data, size, m_context->value());
+        auto status = m_model->build(data, size, context.value());
         if (status) {
-            _INFO("build failed! \n device context: %s, \n device info: %s", m_context->toString(), m_dev_info->toString());
+            _INFO("build failed! \n device context: %s, \n device info: %s", context.toString(), devInfo.toString());
             release();
             return false;
         }
         
-        _INFO("build success! \n device context: %s, \n device info: %s", m_context->toString(), m_dev_info->toString());
+        _INFO("build success! \n device context: %s, \n device info: %s", context.toString(), devInfo.toString());
         m_build_flag = true;
         return true;
     }
@@ -137,20 +123,9 @@ public:
     void release() {
         m_build_flag = false;
 
-        // fixme 释放 context 和 device info 会崩溃
-//        if (m_context) {
-//            delete m_context;
-//            m_context = nullptr;
-//        }
-//        if (m_dev_info) {
-//            delete m_dev_info;
-//            m_dev_info = nullptr;
-//        }
         if (m_model) {
             delete m_model;
             m_model = nullptr;
-            m_context = nullptr;
-            m_dev_info = nullptr;
         }
     }
 
@@ -164,8 +139,6 @@ private:
     bool m_build_flag = false;
 
     AIModel *m_model = nullptr;
-    AIContext *m_context = nullptr;
-    AIDeviceInfo *m_dev_info = nullptr;
 };
 
 NAMESPACE_END

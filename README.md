@@ -69,12 +69,18 @@ libs/                    # 依赖库目录
     |_ android/          # Android 依赖库目录
     |_ harmony/          # HarmonyOS 依赖库目录
     |_ local/            # 本地依赖库目录
+        |_ win32
+        |_ linux
+        |_ macos
     |_ common/           # 共享依赖库目录
     
 src/                     # 源码目录
     |_ android/          # Android 源码目录
     |_ harmony/          # HarmonyOS 源码目录
     |_ local/            # 本地源码目录
+        |_ win32
+        |_ linux
+        |_ macos
     |_ common/           # 共享源码目录
 
 samples/                 # 示例代码目录
@@ -84,36 +90,52 @@ samples/                 # 示例代码目录
 CMakeLists.txt           # 项目 CMakeLists.txt
 ```
 
+### 使用方式
+
+**add_subdirectory**
+
+```cmake
+#
+# 两个 option:
+# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认不启用
+# ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
+#
+# 输出的 target:
+# ${PROJ_NAME}-shared       共享库
+# ${PROJ_NAME}-static       静态库
+#
+# 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以被引用工程所使用
+# ZNATIVE_INCLUDES   所有的include目录
+# ZNATIVE_SOURCES    所有的源文件
+# ZNATIVE_DEP_LIBS   所有的依赖库
+# ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
+# ZNATIVE_DEFINITIONS 所有的宏定义
+#
+
+set(ZNATIVE_OPENCV_ENABLE ON)
+add_subdirectory(${LIBS_PATH}/znative)
+include_directories(${ZNATIVE_INCLUDES})
+add_definitions(${ZNATIVE_DEFINITIONS})
+if (${ZNATIVE_OPENCV_ENABLE})
+    set(OpenCV_DIR ${ZNATIVE_OPENCV_DIR})
+    find_package(OpenCV REQUIRED)
+endif()
+
+target_link_libraries(xxx PUBLIC
+    znative-static
+    ${ZNATIVE_DEP_LIBS}
+)
+```
+
+初始化 znative 的 AppContext
+
+```cpp
+AppContext::initialize(xxxxxx);
+```
+
 ### 运行 local sample
 
 本地运行sample，基于 `imgui` 实现，可以非常方便的测试非平台相关的代码，相关代码在 `samples/local` 目录下，可以直接运行。
-
-##### GLRenderer
-
-用于测试 OpenGL shader
-
-```cpp
-class GLRenderer {
-public:
-    static int run(int width=1280, int height=720, const char *title="ZNativeSample");
-
-private:
-    // 初始化, 只调用一次
-    static void onInit(int width, int height);
-
-    // 在 Imgui::render() 之前
-    static void onRender(int width, int height);
-
-    // 画 imgui
-    static void onRenderImgui(int width, int height, ImGuiIO& io);
-
-    // 在 Imgui::render() 之后
-    static void onPostRender(int width, int height);
-
-    // 窗口关闭
-    static void onExit();
-};
-```
 
 ### 通用代码
 
@@ -140,11 +162,13 @@ _FATAL("fatal message"); // 抛出运行时异常
 #define __LOG_INFO(msg)
 #endif
 
-// debug 模式默认为严格模式，即使用 _ERROR() 直接抛出运行时异常
+// 严格模式，_ERROR直接抛出运行时异常
+#ifndef STRICT_MODE
 #ifdef __DEBUG__
 #define STRICT_MODE true
 #else
 #define STRICT_MODE false
+#endif
 #endif
 
 // 设置日志文件路径
@@ -170,9 +194,8 @@ delete thread;
 **common/utils/FileUtils.h**
 
 ```cpp
-Directory dir("/sdcard");
-dir.listFiles();
-dir.listFilesAlphaSort();
+FileUtils::remove(dirOrFile);
+FileUtils::listFilesSort(dir);
 
 FileUtils::read("/sdcard/test.txt").toString();
 ```

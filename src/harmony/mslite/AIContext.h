@@ -15,21 +15,13 @@
 #include <mindspore/status.h>
 
 NAMESPACE_DEFAULT
-    class AIDeviceInfo {
+
+class AIDeviceInfo {
 public:
     static NNRTDeviceDesc *getAllNNRTDeviceDescs(size_t &outNum) { return OH_AI_GetAllNNRTDeviceDescs(&outNum); }
 
     static NNRTDeviceDesc *getElementOfNNRTDeviceDescs(NNRTDeviceDesc *descs, size_t index) {
         return OH_AI_GetElementOfNNRTDeviceDescs(descs, index);
-    }
-
-public:
-
-    ~AIDeviceInfo() {
-        if (m_handle) {
-            OH_AI_DeviceInfoDestroy(&m_handle);
-            m_handle = nullptr;
-        }
     }
 
 public:
@@ -46,7 +38,21 @@ public:
             OH_AI_DeviceInfoDestroy(&m_handle);
             m_handle = nullptr;
         }
-        m_handle = OH_AI_DeviceInfoCreate(type);
+        if (type == OH_AI_DEVICETYPE_NNRT) {
+            OH_AI_NNRTDeviceType allTypes[] = {OH_AI_NNRTDEVICE_ACCELERATOR, OH_AI_NNRTDEVICE_GPU, OH_AI_NNRTDEVICE_CPU,
+                                               OH_AI_NNRTDEVICE_OTHERS};
+            for (auto t : allTypes) {
+                m_handle = OH_AI_CreateNNRTDeviceInfoByType(t);
+                if (m_handle) {
+                    _INFO("create NNRTDevice success type: %d", t);
+                    break;
+                } else {
+                    _WARN("create NNRTDevice failed type: %d", t);
+                }
+            }
+        } else {
+            m_handle = OH_AI_DeviceInfoCreate(type);
+        }
         _WARN_IF(!m_handle, "create ai device info(%s) failed!", AIUtils::deviceTypeStr(type));
         return m_handle != nullptr;
     }
@@ -87,6 +93,12 @@ public:
         return OH_AI_DeviceInfoAddExtension(m_handle, name, value, value_size);
     }
     
+    void release() {
+        if (m_handle) {
+            OH_AI_DeviceInfoDestroy(&m_handle);
+            m_handle = nullptr;
+        }
+    }
 public:
     std::string toString() const {
         auto type = getDeviceType();
@@ -97,7 +109,7 @@ public:
            << "  provider device: " << getProviderDevice() << "\n"
            << "  f16: " << (isF16Enable() ? "enable" : "disable") << "\n";
         if (type == OH_AI_DEVICETYPE_NNRT) {
-            ss << "  frequency: " << getFrequency() << "\n"
+            ss << "  device id: " << getDeviceId() << "\n"
                << "  performance mode: " << AIUtils::performanceModeStr(getPerformanceMode()) << "\n";
 //           << "  priority: " << AIUtils::priorityStr(getPriority()) << "\n"
         }
@@ -117,13 +129,6 @@ public:
     }
 
     AIContext(const AIContext &o) : Object(o), m_handle(o.m_handle) {}
-
-    ~AIContext() {
-        if (no_reference() && m_handle) {
-            OH_AI_ContextDestroy(&m_handle);
-            m_handle = nullptr;
-        }
-    }
 
 public:
     const OH_AI_ContextHandle& value() const {
@@ -148,6 +153,13 @@ public:
 
     void addDeviceInfo(const AIDeviceInfo &info) {
         OH_AI_ContextAddDeviceInfo(m_handle, info.value());
+    }
+    
+    void release() {
+        if (no_reference() && m_handle) {
+            OH_AI_ContextDestroy(&m_handle);
+            m_handle = nullptr;
+        }
     }
     
     std::string toString() {

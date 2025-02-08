@@ -17,34 +17,34 @@ MESSAGE(STATUS "hiai_foundation-lib: ${hiai_foundation-lib} in ${HMS_SDK_PATH}/n
 
 set(PLATFORM_INCLUDES
         ${HMS_SDK_PATH}/native/sysroot/usr/include
-        ${CMAKE_SOURCE_DIR}/src/harmony
+        ${PLATFORM_SRC_PATH}
 )
 
 set(PLATFORM_SOURCES
-        ${CMAKE_SOURCE_DIR}/src/harmony/Harmony.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/AppContext.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/utils/NapiUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/xcomp/XComponent.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/xcomp/XCompGLBinder.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/CamDevice.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/CamInput.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/CamManager.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/CamUtils.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/CaptureSession.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/MetadataOutput.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/PhotoOutput.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/PreviewOutput.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/cam/VideoOutput.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/image/MDKImageReader.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/image/NativeImageReader.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/masset/MediaAssetMgr.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/media/audio/read/AudioReader.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/media/audio/AudioEncoder.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/media/video/VideoEncoder.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/sensor/SensorGravity.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/sensor/SensorMgr.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/mslite/MSLitePredictor.cpp
-        ${CMAKE_SOURCE_DIR}/src/harmony/hiai/HiAI.cpp
+        ${PLATFORM_SRC_PATH}/Harmony.cpp
+        ${PLATFORM_SRC_PATH}/AppContext.cpp
+        ${PLATFORM_SRC_PATH}/utils/NapiUtils.cpp
+        ${PLATFORM_SRC_PATH}/xcomp/XComponent.cpp
+        ${PLATFORM_SRC_PATH}/xcomp/XCompGLBinder.cpp
+        ${PLATFORM_SRC_PATH}/cam/CamDevice.cpp
+        ${PLATFORM_SRC_PATH}/cam/CamInput.cpp
+        ${PLATFORM_SRC_PATH}/cam/CamManager.cpp
+        ${PLATFORM_SRC_PATH}/cam/CamUtils.cpp
+        ${PLATFORM_SRC_PATH}/cam/CaptureSession.cpp
+        ${PLATFORM_SRC_PATH}/cam/MetadataOutput.cpp
+        ${PLATFORM_SRC_PATH}/cam/PhotoOutput.cpp
+        ${PLATFORM_SRC_PATH}/cam/PreviewOutput.cpp
+        ${PLATFORM_SRC_PATH}/cam/VideoOutput.cpp
+        ${PLATFORM_SRC_PATH}/image/MDKImageReader.cpp
+        ${PLATFORM_SRC_PATH}/image/NativeImageReader.cpp
+        ${PLATFORM_SRC_PATH}/masset/MediaAssetMgr.cpp
+        ${PLATFORM_SRC_PATH}/media/audio/read/AudioReader.cpp
+        ${PLATFORM_SRC_PATH}/media/audio/AudioEncoder.cpp
+        ${PLATFORM_SRC_PATH}/media/video/VideoEncoder.cpp
+        ${PLATFORM_SRC_PATH}/sensor/SensorGravity.cpp
+        ${PLATFORM_SRC_PATH}/sensor/SensorMgr.cpp
+        ${PLATFORM_SRC_PATH}/mslite/MSLitePredictor.cpp
+        ${PLATFORM_SRC_PATH}/hiai/HiAI.cpp
 )
 
 set(PLATFORM_LIBS
