@@ -9,3 +9,12 @@
 
 #define DELETE_TO_NULL(ptr)  if (ptr) { delete ptr; ptr = nullptr; }
 #define DELETE_ARR_TO_NULL(ptr)  if (ptr) { delete [] ptr; ptr = nullptr; }
+
+NAMESPACE_DEFAULT
+
+class ZUtils {
+public:
+
+};
+
+NAMESPACE_END

@@ -5,11 +5,136 @@
 #pragma once
 
 #include <windows.h>
+#include <uuids.h>
 #include <common/Common.h>
+#include <local/win32/WinUtils.h>
 
 NAMESPACE_DEFAULT
+enum class DSVideoFmt {
+    Any,
+    Unknown,
+
+    /* raw formats */
+    ARGB = 100,
+    XRGB,
+    RGB24,
+
+    /* planar YUV formats */
+    I420 = 200,
+    NV12,
+    YV12,
+    Y800,
+    P010,
+
+    /* packed YUV formats */
+    YVYU = 300,
+    YUY2,
+    UYVY,
+    HDYC,
+
+    /* encoded formats */
+    MJPEG = 400,
+    H264,
+    HEVC,
+};
+
+enum class DSAudioFmt {
+    Any,
+    Unknown,
+
+    /* raw formats */
+    Wave16bit = 100,
+    WaveFloat,
+
+    /* encoded formats */
+    AAC = 200,
+    AC3,
+    MPGA, /* MPEG 1 */
+};
+
+enum class DSAudioMode {
+    Capture,
+    DirectSound,
+    WaveOut,
+};
+
 class DSUtils {
 public:
+    static std::string audioModeString(const DSAudioMode mode) {
+        switch (mode) {
+            case DSAudioMode::Capture:
+                return "Capture";
+            case DSAudioMode::DirectSound:
+                return "DirectSound";
+            case DSAudioMode::WaveOut:
+                return "WaveOut";
+            default:
+                return "Unknown";
+        }
+    }
+
+    static std::string audioFmtString(const int fmt) {
+        switch (fmt) {
+            case DSAudioFmt::Any:
+                return "Any";
+            case DSAudioFmt::Unknown:
+                return "Unknown";
+            case DSAudioFmt::Wave16bit:
+                return "Wave16bit";
+            case DSAudioFmt::WaveFloat:
+                return "WaveFloat";
+            case DSAudioFmt::AAC:
+                return "AAC";
+            case DSAudioFmt::AC3:
+                return "AC3";
+            case DSAudioFmt::MPGA:
+                return "MPGA";
+            default:
+                return "Unknown_" + std::to_string(fmt);
+        }
+    }
+
+    static std::string videoFmtString(const int fmt) {
+        switch (fmt) {
+            case DSVideoFmt::Any:
+                return "Any";
+            case DSVideoFmt::Unknown:
+                return "Unknown";
+            case DSVideoFmt::ARGB:
+                return "ARGB";
+            case DSVideoFmt::XRGB:
+                return "XRGB";
+            case DSVideoFmt::RGB24:
+                return "RGB24";
+            case DSVideoFmt::I420:
+                return "I420";
+            case DSVideoFmt::NV12:
+                return "NV12";
+            case DSVideoFmt::YV12:
+                return "YV12";
+            case DSVideoFmt::Y800:
+                return "Y800";
+            case DSVideoFmt::P010:
+                return "P010";
+            case DSVideoFmt::YVYU:
+                return "YVYU";
+            case DSVideoFmt::YUY2:
+                return "YUY2";
+            case DSVideoFmt::UYVY:
+                return "UYVY";
+            case DSVideoFmt::HDYC:
+                return "HDYC";
+            case DSVideoFmt::MJPEG:
+                return "MJPEG";
+            case DSVideoFmt::H264:
+                return "H264";
+            case DSVideoFmt::HEVC:
+                return "HEVC";
+            default:
+                return "Unknown_" + std::to_string(fmt);
+        }
+    }
+
     static std::string mediaTypeString(const GUID &guid) {
         if (guid == MEDIATYPE_Video) {
             return "MEDIATYPE_Video";

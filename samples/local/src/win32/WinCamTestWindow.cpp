@@ -9,85 +9,14 @@
 #include <local/win32/dshow/DSUtils.h>
 #include <camera/camera.h>
 #include <common/gles/Texture.h>
+#include <local/win32/dshow/DSCaptureMgr.h>
 
 using namespace DirectShowCamera;
 using namespace znative;
 
-struct CamOpenCfg {
-    DirectShowCameraDevice curDevice;
-    DirectShowVideoFormat videoFormat;
+DSCamDeviceMgr cam_mgr;
 
-    void choose(const DirectShowCameraDevice& dev) {
-        curDevice = dev;
-
-        // 选择第一个支持的分辨率
-        std::vector<DirectShowVideoFormat> formats = dev.getAllSupportedUniqueVideoFormats();
-        // 默认选择第一个有效的格式
-        if (formats.empty()) {
-            _FATAL("No valid video format found for camera: %s", name());
-        }
-        std::vector<DirectShowVideoFormat> resolutions = dev.getAllResolutionOfFormat(formats[0].getVideoType());
-        if (resolutions.empty()) {
-            _FATAL("No valid resolution found for camera: %s", name());
-        }
-
-        videoFormat = resolutions[0];
-    }
-
-    void chooseFormat(const DirectShowVideoFormat& fmt) {
-        auto allResolutions = curDevice.getAllResolutionOfFormat(fmt.getVideoType());
-        if (allResolutions.empty()) {
-            _FATAL("No valid resolution found for camera: %s, type: %s", name(), fmt.getVideoTypeString());
-        }
-        videoFormat = allResolutions[0];
-    }
-
-    void chooseResolution(const DirectShowVideoFormat& fmt) {
-        videoFormat = fmt;
-    }
-
-    bool valid() {
-        return curDevice.valid() && videoFormat.valid();
-    }
-
-    // std::string id() {
-    //     return curDevice.getDevicePath();
-    // }
-
-    std::string name() {
-        return curDevice.getFriendlyName();
-    }
-
-    int width() {
-        return videoFormat.getWidth();
-    }
-
-    int height() {
-        return videoFormat.getHeight();
-    }
-
-    std::string sizeStr() {
-        return std::to_string(width()) + "x" + std::to_string(height());
-    }
-
-    void clear() {
-        curDevice = DirectShowCameraDevice();
-    }
-};
-
-std::vector<DirectShowCameraDevice> all_camera_devices;
-CamOpenCfg cam_open_cfg;
 bool convert_data_to_rgb24 = false;
-
-Camera *m_camera = nullptr;
-Camera * getCamera() {
-    if (m_camera == nullptr) {
-        m_camera = new Camera();
-    }
-    return m_camera;
-}
-
-Frame m_frame;
 
 ImageTexture m_img_tex;
 
@@ -96,23 +25,15 @@ int64_t m_camera_frame_count = 0;
 int64_t m_camera_start_ms = 0;
 
 void WinCamTestWindow::onVisible(int width, int height) {
-    all_camera_devices = getCamera()->getDirectShowCameras();
-    for (auto &dev : all_camera_devices) {
-        _INFO("Camera device: %s", dev);
-    }
-    if (!all_camera_devices.empty()) {
-        auto & first = all_camera_devices[0];
-        cam_open_cfg.choose(first);
-    } else {
-        cam_open_cfg.clear();
-    }
+    cam_mgr.updateDeviceList();
 }
 
 void WinCamTestWindow::onPreRender(int width, int height) {
-    if (m_camera && m_camera->isOpened() && m_camera->isCapturing()) {
-        if (m_camera->getFrame(m_frame, true)) {
-            _INFO("getNewFrame: Size(%dx%d), frameSize: %d, frameType: %d, raw frame type: %s",
-                m_frame.getWidth(), m_frame.getHeight(), m_frame.getFrameSize(), m_frame.getFrameType(), DSUtils::videoTypeString(m_frame.getRawFrameType()));
+    if (cam_mgr.isOpened()) {
+        auto * frame = cam_mgr.getLatestFrame(true);
+        if (frame) {
+            // _INFO("getNewFrame: Size(%dx%d), frameSize: %d, frameType: %d, raw frame type: %s",
+            //     m_frame.getWidth(), m_frame.getHeight(), m_frame.getFrameSize(), m_frame.getFrameType(), DSUtils::videoTypeString(m_frame.getRawFrameType()));
             m_camera_frame_count += 1;
             if (m_camera_start_ms == 0) {
                 m_camera_start_ms = TimeUtils::nowMs();
@@ -126,10 +47,8 @@ void WinCamTestWindow::onPreRender(int width, int height) {
                 m_camera_start_ms = TimeUtils::nowMs();
             }
 
-            if (m_frame.getRawFrameType() == MEDIASUBTYPE_RGB24) {
-                int bytes = 0;
-                auto data = m_frame.getFrameData(bytes, false, true);
-                m_img_tex.set(data.get(), m_frame.getWidth(), m_frame.getHeight(), GL_BGR);
+            if (frame->fmt == DSVideoFmt::RGB24) {
+                m_img_tex.set(frame->data, frame->width, frame->height, GL_BGR);
             }
         }
     }
@@ -143,34 +62,20 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     ImGui::SetWindowPos(ImVec2(300, 0));
 
     if (ImGui::Button("刷新")) {
-        all_camera_devices = m_camera->getDirectShowCameras();
-        if (all_camera_devices.empty()) {
-            cam_open_cfg.clear();
-        } else {
-            DirectShowCameraDevice *selectedDev = nullptr;
-            for (auto &dev : all_camera_devices) {
-                if (dev.getFriendlyName() == cam_open_cfg.name()) {
-                    selectedDev = &dev;
-                    break;
-                }
-            }
-            if (selectedDev) {
-                cam_open_cfg.choose(*selectedDev);
-            } else {
-                cam_open_cfg.choose(all_camera_devices[0]);
-            }
-        }
+        cam_mgr.updateDeviceList();
     }
     ImGui::SameLine();
+
+    auto &all_camera_devices = cam_mgr.getAllDevices();
     if (!all_camera_devices.empty()) {
         ImGui::Text("相机设置：");
         ImGui::SameLine();
         static ImGuiComboFlags flags = ImGuiComboFlags_WidthFitPreview;
-        if (ImGui::BeginCombo(":", cam_open_cfg.name().c_str(), flags)) {
+        if (ImGui::BeginCombo(":", cam_mgr.getCfgName().c_str(), flags)) {
             for (auto &device : all_camera_devices) {
-                bool is_selected = (device.getFriendlyName() == cam_open_cfg.name());
-                if (ImGui::Selectable(device.getFriendlyName().c_str(), is_selected)) {
-                    cam_open_cfg.choose(device);
+                bool is_selected = (device.name() == cam_mgr.getCfgName());
+                if (ImGui::Selectable(device.name().c_str(), is_selected)) {
+                    cam_mgr.setDevice(device);
                 }
                 if (is_selected) {
                     ImGui::SetItemDefaultFocus();
@@ -179,14 +84,14 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
             ImGui::EndCombo();
         }
 
-        if (cam_open_cfg.valid()) {
+        if (cam_mgr.currentDevice().valid()) {
             ImGui::SameLine();
-            if (ImGui::BeginCombo("|", cam_open_cfg.videoFormat.getVideoTypeString().c_str(), flags)) {
-                auto formats = cam_open_cfg.curDevice.getAllSupportedUniqueVideoFormats();
+            if (ImGui::BeginCombo("|", cam_mgr.getCfgInternalFmtString().c_str(), flags)) {
+                auto formats = cam_mgr.getSupportedFormats();
                 for (auto &f : formats) {
-                    bool is_selected = (f.getVideoType() == cam_open_cfg.videoFormat.getVideoType());
-                    if (ImGui::Selectable(f.getVideoTypeString().c_str(), is_selected)) {
-                        cam_open_cfg.chooseFormat(f);
+                    bool is_selected = (f == cam_mgr.getCfgInternalFmt());
+                    if (ImGui::Selectable(DSUtils::videoFmtString((int)f).c_str(), is_selected)) {
+                        cam_mgr.setCfgInternalFmt(f);
                     }
                     if (is_selected) {
                         ImGui::SetItemDefaultFocus();
@@ -196,12 +101,14 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
             }
 
             ImGui::SameLine();
-            if (ImGui::BeginCombo(" ", cam_open_cfg.sizeStr().c_str(), flags)) {
-                auto resolutions = cam_open_cfg.curDevice.getAllResolutionOfFormat(cam_open_cfg.videoFormat.getVideoType());
+            if (ImGui::BeginCombo(" ", cam_mgr.getCfgSizeString().c_str(), flags)) {
+                auto resolutions = cam_mgr.getStreams();
                 for (auto &r : resolutions) {
-                    bool is_selected = (r.getWidth() == cam_open_cfg.width() && r.getHeight() == cam_open_cfg.height());
-                    if (ImGui::Selectable((std::to_string(r.getWidth()) + "x" + std::to_string(r.getHeight())).c_str(), is_selected)) {
-                        cam_open_cfg.chooseResolution(r);
+                    int w = r.minWidth();
+                    int h = r.minHeight();
+                    bool is_selected = (w == cam_mgr.getCfgWidth() && h == cam_mgr.getCfgHeight());
+                    if (ImGui::Selectable((std::to_string(w) + "x" + std::to_string(h)).c_str(), is_selected)) {
+                        cam_mgr.setCfgSize(w, h);
                     }
                     if (is_selected) {
                         ImGui::SetItemDefaultFocus();
@@ -213,25 +120,25 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     } else {
         ImGui::Text("No camera device found.");
     }
-    std::string camLabel = ((getCamera()->isOpened() || getCamera()->isCapturing()) ? "关闭相机" : "打开相机");
+    std::string camLabel = cam_mgr.isOpened() ? "关闭相机" : "打开相机";
     if (ImGui::Button(camLabel.c_str())) {
-        if (getCamera()->isOpened() || getCamera()->isCapturing()) {
-            if (getCamera()->isCapturing()) {
-                getCamera()->StopCapture();
-            }
-            getCamera()->Close();
+        if (cam_mgr.isOpened()) {
+            cam_mgr.closeCamera();
         } else {
-            if (cam_open_cfg.valid()) {
-                bool success = getCamera()->Open(cam_open_cfg.curDevice, cam_open_cfg.videoFormat, convert_data_to_rgb24);
-                _INFO("open camera: %s\nformat: %s", cam_open_cfg.curDevice, cam_open_cfg.videoFormat);
-                if (success) {
-                    m_camera->StartCapture();
-                }
-            }
+            cam_mgr.openCamera();
         }
     }
     ImGui::SameLine();
     ImGui::Checkbox("输出RGB24", &convert_data_to_rgb24);
+    if (convert_data_to_rgb24) {
+        if (cam_mgr.getCfgDesireFmt() != DSVideoFmt::RGB24) {
+            cam_mgr.setCfgDesireFmt(DSVideoFmt::RGB24);
+        }
+    } else {
+        if (cam_mgr.getCfgDesireFmt() != cam_mgr.getCfgInternalFmt()) {
+            cam_mgr.setCfgDesireFmt(cam_mgr.getCfgInternalFmt());
+        }
+    }
     ImGui::SameLine();
     ImGui::Text("camera fps: %lld", m_camera_fps);
 
@@ -246,12 +153,5 @@ void WinCamTestWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
 }
 
 void WinCamTestWindow::onInvisible(int width, int height) {
-    if (m_camera) {
-        if (m_camera->isCapturing()) {
-            m_camera->StopCapture();
-        }
-        m_camera->Close();
-        delete m_camera;
-        m_camera = nullptr;
-    }
+    //
 }

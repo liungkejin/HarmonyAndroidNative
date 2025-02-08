@@ -1,13 +1,13 @@
-if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
+if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
         ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD" OR
         ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
-    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
         add_definitions(-D_AMD64_)
     else ()
         add_definitions(-D_X86_)
     endif ()
 elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
+    if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
         add_definitions(-D_ARM64_)
     else ()
         add_definitions(-D_ARM_)
@@ -39,29 +39,30 @@ add_subdirectory(${GLEW_DIR})
 set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/directshow_camera")
 add_subdirectory(${DS_CAMERA_DIR})
 
-#        set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/win32/libdshowcapture")
-#        add_subdirectory(${LI B_DS_CAPTURE_DIR})
-
-#        set(WIN_DSHOW_DIR "${PLATFORM_LIBS_PATH}/win32/win-dshow")
-#        add_subdirectory(${WIN_DSHOW_DIR})
+set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/libdshowcapture")
+set(BUILD_SHARED_LIBS OFF)
+add_subdirectory(${LIB_DS_CAPTURE_DIR})
+message(STATUS "libdshowcapture include dir: ${libdshowcapture_HEADERS}")
 
 set(PLATFORM_LIBS
         ${PLATFORM_LIBS}
         glew_s
         directshow_camera
-        #                libdshowcapture
-        #                win-dshow
+        libdshowcapture
+        #                        win-dshow
 )
 
 set(PLATFORM_INCLUDES
         ${PLATFORM_INCLUDES}
         ${GLEW_DIR}/include
         ${DS_CAMERA_DIR}/src/directshow_camera/src
+        ${LIB_DS_CAPTURE_DIR}
 )
 
 set(PLATFORM_SOURCES
         ${PLATFORM_SOURCES}
         ${PLATFORM_SRC_PATH}/dshow/DeviceEnumerator.cpp
+        ${PLATFORM_SRC_PATH}/dshow/DSCaptureMgr.cpp
         ${PLATFORM_SRC_PATH}/cam/CamDevice.cpp
 )
 set(PLATFORM_LIBS

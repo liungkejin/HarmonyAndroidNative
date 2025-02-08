@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.28...3.30)
 project(win-dshow)
 
-set(DEPS_DIR "D:/Workspace/Github/obs-studio/.deps/obs-deps-2024-09-12-x64")
-#find_package(FFmpeg REQUIRED avcodec avutil)
-set(libavcodec ${DEPS_DIR}/lib/libavcodec.lib)
-set(libavutil ${DEPS_DIR}/lib/libavutil.lib)
+set(FFmpeg_DIR "D:/projects/github/obs-studio/.deps/obs-deps-2024-09-12-x64/lib")
+find_package(FFmpeg REQUIRED avcodec avutil)
+#set(libavcodec ${DEPS_DIR}/lib/libavcodec.lib)
+#set(libavutil ${DEPS_DIR}/lib/libavutil.lib)
 include_directories(
         ${DEPS_DIR}/include
 )
@@ -34,7 +34,7 @@ include_directories(
 #target_sources(win-dshow PRIVATE win-dshow.rc)
 
 add_library(win-dshow
-        dshow-plugin.cpp encode-dstr.hpp ffmpeg-decode.c ffmpeg-decode.h win-dshow-encoder.cpp win-dshow.cpp shared-memory-queue.c tiny-nv12-scale.c win-dshow.rc
+        dshow-plugin.cpp encode-dstr.hpp ffmpeg-decode.c ffmpeg-decode.h win-dshow-encoder.cpp win-dshow.cpp shared-memory-queue.c tiny-nv12-scale.c
 )
 
 target_link_libraries(
@@ -42,8 +42,10 @@ target_link_libraries(
   PRIVATE
     libobs
     libdshowcapture
-        ${libavcodec}
-        ${libavutil}
+        avcodec
+        avutil
+#        ${libavcodec}
+#        ${libavutil}
     strmiids
     winmm
 )

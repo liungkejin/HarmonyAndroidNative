@@ -5,12 +5,24 @@
 #ifndef WINUTILS_H
 #define WINUTILS_H
 
+#include <codecvt>
+#include <locale>
 #include <common/common.h>
 #include <windows.h>
 
 NAMESPACE_DEFAULT
 class WinUtils {
 public:
+    static std::wstring stringToWString(const std::string& str) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+        return converter.from_bytes(str);
+    }
+
+    static std::string wstringToString(const std::wstring& wstr) {
+        std::wstring_convert<std::codecvt_utf8<wchar_t>> converter;
+        return converter.to_bytes(wstr);
+    }
+
     // wchar_t to std::string
     static std::string bstrToString(wchar_t *bstr) {
         if (!bstr) {
