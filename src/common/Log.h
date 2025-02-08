@@ -82,7 +82,7 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
     tfm::format("[%s:%d] " fmt, __prettyMethodName(__PRETTY_FUNCTION__), __LINE__, ##args)
 #endif
 
-#define _DEBUG(fmt, ...)                                                                                               \
+#define _PRINT(fmt, ...)                                                                                               \
     do {                                                                                                               \
         std::string _log_str = __PRETTY_FORMAT(fmt, ##__VA_ARGS__);                                                    \
         if (__g_logFile != nullptr) {                                                                                  \

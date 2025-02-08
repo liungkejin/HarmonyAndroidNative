@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "harmony/media/audio/AudioUtils.h"
 #include <multimedia/player_framework/native_avcodec_videoencoder.h>
 #include <multimedia/player_framework/native_avformat.h>

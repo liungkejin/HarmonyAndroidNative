@@ -5,14 +5,6 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
-#
-# 定义的几个 CACHE 变量
-# ZNATIVE_INCLUDES  所有的include目录
-# ZNATIVE_SOURCES   所有的源文件
-# ZNATIVE_DEP_LIBS  所有的依赖库
-# ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
-#
-
 # debug 时增加宏定义 __DEBUG__
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     add_definitions(-D__DEBUG__)
@@ -20,349 +12,211 @@ endif()
 
 add_definitions(-DSTRICT_MODE=false)
 
+#
+# 几个关键变量说明
+# PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
+#                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
+# TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
+# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认不启用
+# ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
+#
+# COMMON_LIBS_PATH          公共第三方库路径
+# COMMON_INCLUDES           所有公共的 include 目录
+# COMMON_SOURCES            所有公共的源文件
+# COMMON_LIBS               所有公共的依赖库
+# PLATFORM_LIBS_PATH        平台相关第三方库路径
+# PLATFORM_INCLUDES         平台相关的 include 目录
+# PLATFORM_SOURCES          平台相关的源文件
+# PLATFORM_LIBS             平台相关的依赖库
+#
+# 输出的 target
+# ${PROJ_NAME}-shared       共享库
+# ${PROJ_NAME}-static       静态库
+#
+# 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以被引用工程所使用
+# ZNATIVE_INCLUDES   所有的include目录
+# ZNATIVE_SOURCES    所有的源文件
+# ZNATIVE_DEP_LIBS   所有的依赖库
+# ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
+#
+
+option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
+option(ZNATIVE_INSTALL_STATIC "Install static library" ON) # install shared library
+
+set(TARGET_SHARED ${PROJ_NAME}-shared)
+set(TARGET_STATIC ${PROJ_NAME}-static)
+add_library(${TARGET_SHARED} SHARED)
+add_library(${TARGET_STATIC} STATIC)
+
+set(ZNATIVE ON)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    set(ZANDROID ON)
     set(PLATFORM "android")
     set(TARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
+    set(ZOHOS ON)
     set(PLATFORM "harmony")
     set(TARGET_ARCH ${OHOS_ARCH})
-    # 增加宏定义 __HARMONYOS__
-    add_definitions(-D__HARMONYOS__)
 else ()
-    set(PLATFORM "local")
-    add_definitions(-D__LOCAL_OS__)
-    if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-        EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET_ARCH)
+    if (WIN32)
+        set(PLATFORM "local/win32")
+    elseif (APPLE)
+        set(PLATFORM "local/macos")
     else ()
-        if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
-                ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD" OR
-                ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
-            if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
-                set(TARGET_ARCH "x64")
-                add_definitions(-D_AMD64_)
-            else ()
-                set(TARGET_ARCH "x86")
-                add_definitions(-D_X86_)
-            endif ()
-        elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
-            if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
-                set(TARGET_ARCH "arm64")
-                add_definitions(-D_ARM64_)
-            else ()
-                set(TARGET_ARCH "armv7")
-                add_definitions(-D_ARM_)
-            endif ()
+        set(PLATFORM "local/linux")
+    endif ()
+
+    if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
+            ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD" OR
+            ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
+        if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
+            set(TARGET_ARCH "x64")
         else ()
-            message(WARNING "Unknown arch: ${CMAKE_SYSTEM_PROCESSOR}")
+            set(TARGET_ARCH "x86")
+        endif ()
+    elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
+        if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
+            set(TARGET_ARCH "arm64")
+        else ()
+            set(TARGET_ARCH "arm")
+        endif ()
+    else ()
+        if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
+            EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET_ARCH)
+        else ()
+            message(FATAL_ERROR "Unknown arch: ${CMAKE_SYSTEM_PROCESSOR}")
             set(TARGET_ARCH ${CMAKE_SYSTEM_PROCESSOR})
         endif ()
     endif ()
 endif ()
 
-#option(ZNATIVE_BUILD_SHARED_LIB "Build shared library" OFF)
-option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" ON) # use opencv library
-
-#message(STATUS "ZNATIVE_BUILD_SHARED_LIB: ${ZNATIVE_BUILD_SHARED_LIB}")
 message(STATUS "ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
 message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
 # 公共第三方库路径
-set(COM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/common)
+set(COMMON_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/common)
+set(COMMON_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/common)
 # 平台相关第三方库路径
 set(PLATFORM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/${PLATFORM})
+set(PLATFORM_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/${PLATFORM})
 
-# message(STATUS "Platform libs path: ${PLATFORM_LIBS_PATH}")
-set(ALL_INCLUDES
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    # tinyformat
-    ${COM_LIBS_PATH}/tinyformat
-    # json
-    ${COM_LIBS_PATH}/json
-    # eventpp
-    ${COM_LIBS_PATH}/eventpp-0.1.3/include
-    # cppfs
-    ${COM_LIBS_PATH}/source/cppfs/include
-)
+set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install/${PLATFORM}/${CMAKE_BUILD_TYPE})
+set(ZNATIVE_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/znative)
+set(THIRDPARTY_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/thirdparty)
+set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+
+set(CMAKE_INSTALL_INCLUDEDIR ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+set(CMAKE_INSTALL_LIBDIR ${LIBRARY_INSTALL_DIR})
 
 # eventpp
-add_subdirectory(${COM_LIBS_PATH}/eventpp-0.1.3)
+add_subdirectory(${COMMON_LIBS_PATH}/eventpp-0.1.3)
 
 # cppfs
 set(BUILD_SHARED_LIBS OFF)
 set(OPTION_BUILD_TESTS OFF)
-add_subdirectory(${COM_LIBS_PATH}/cppfs-1.2.0)
+add_subdirectory(${COMMON_LIBS_PATH}/cppfs-1.2.0)
 
-set(THIRD_PARTY_LIBS eventpp cppfs)
+set(COMMON_LIBS eventpp cppfs)
+set(COMMON_INCLUDES
+        # tinyformat
+        ${COMMON_LIBS_PATH}/tinyformat
+        # json
+        ${COMMON_LIBS_PATH}/json
+        # eventpp
+        ${COMMON_LIBS_PATH}/eventpp-0.1.3/include
+        # cppfs
+        ${COMMON_LIBS_PATH}/source/cppfs/include
+)
+
+if (ZANDROID)
+    include(cmake/Android.cmake)
+elseif (ZOHOS)
+    include(cmake/HarmonyOS.cmake)
+else ()
+    include(cmake/Local.cmake)
+endif ()
 
 # OpenCV
 if (${ZNATIVE_OPENCV_ENABLE})
     message(STATUS "Use OpenCV")
-    add_definitions(-D__OPENCV__)
+    add_definitions(-D__ZNATIVE_WITH_OPENCV__)
 
-    if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
-        set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.3.0/sdk/native/jni)
-    elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
-        set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.9.0/${OHOS_ARCH}/lib/cmake/opencv4)
-    endif ()
-    if (WIN32)
-        # Windows 上使用 Visual Studio 工具链时，编译的 opencv 静态库时，注意将 BUILD_WITH_STATIC_CRT 置为 OFF
-        # 同时需要编译两份，一份是 debug 版本，一份是 release 版本
-        if (MSVC)
-            if (${CMAKE_BUILD_TYPE} MATCHES "Debug")
-                set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/vc17-debug/x64/vc17/staticlib")
-            else ()
-                set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/vc17-release/x64/vc17/staticlib")
-            endif ()
-        else ()
-            # MINGW
-            set(OpenCV_DIR "${PLATFORM_LIBS_PATH}/win32/opencv-4.10.0/mingw-release/x64/mingw/staticlib")
-        endif ()
-    endif ()
     find_package(OpenCV REQUIRED)
     message(STATUS "OpenCV version: ${OpenCV_VERSION}")
-    set(ALL_INCLUDES ${ALL_INCLUDES} ${OpenCV_INCLUDE_DIRS})
-    set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} ${OpenCV_LIBS})
+    set(COMMON_LIBS ${COMMON_LIBS} ${OpenCV_LIBS})
+    set(COMMON_INCLUDES
+            ${COMMON_INCLUDES}
+            ${OpenCV_INCLUDE_DIRS}
+    )
 endif ()
 
-set(libyuv_path ${COM_LIBS_PATH}/libyuv-stable)
-set(ALL_INCLUDES ${ALL_INCLUDES} ${libyuv_path}/include)
-FILE(GLOB_RECURSE LIBYUV_SRCS ${libyuv_path}/source/*.cc)
+set(LIBYUV_PATH ${COMMON_LIBS_PATH}/libyuv-stable)
+FILE(GLOB_RECURSE LIBYUV_SRCS ${LIBYUV_PATH}/source/*.cc)
 set(COMMON_SOURCES
         ${LIBYUV_SRCS}
-        src/ZNative.cpp
-        src/common/Log.cpp
-        src/common/utils/YuvUtils.cpp
-        src/common/gles/GLUtil.cpp
-        src/common/media/ZMedia.cpp
+        ${CMAKE_SOURCE_DIR}/src/ZNative.cpp
+        ${COMMON_SRC_PATH}/Log.cpp
+        ${COMMON_SRC_PATH}/utils/YuvUtils.cpp
+        ${COMMON_SRC_PATH}/utils/FileUtils.cpp
+        ${COMMON_SRC_PATH}/egl/EGLCtx.cpp
+        ${COMMON_SRC_PATH}/egl/GLEngine.cpp
+        ${COMMON_SRC_PATH}/gles/GLUtil.cpp
+        ${COMMON_SRC_PATH}/media/ZMedia.cpp
+)
+set(COMMON_INCLUDES
+        ${COMMON_INCLUDES}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${LIBYUV_PATH}/include
 )
 
-if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
-    set(PLATFORM_SOURCES
-            # 对于 local 平台不需要
-            src/common/gles/EGLCtx.cpp
-            src/common/gles/GLEngine.cpp
-            src/android/AppContext.cpp
-            src/android/utils/JNIUtils.cpp
-            src/android/surface/NativeWindow.cpp
-            src/android/cam/CamManager.cpp
-            src/android/cam/CamUtils.cpp
-            src/android/cam/CamCharacteristics.cpp
-            src/android/cam/CamDevice.cpp
-            src/android/cam/CaptureSession.cpp
-            src/android/cam/CaptureRequest.cpp
-            src/android/image/ImageReader.cpp
-    )
-    set(PLATFORM_LIBS
-            android
-            log
-            z
-            jnigraphics
-            GLESv2
-            GLESv3
-            EGL
-            camera2ndk
-            mediandk
-    )
-elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
-    # 拿到 CMAKE_TOOLCHAIN_FILE 的文件夹路径
-    get_filename_component(CMAKE_TOOLCHAIN_DIR ${CMAKE_TOOLCHAIN_FILE} DIRECTORY)
-    set(HMS_SDK_PATH ${CMAKE_TOOLCHAIN_DIR}/../../../../hms)
-    set(ALL_INCLUDES ${ALL_INCLUDES} ${HMS_SDK_PATH}/native/sysroot/usr/include)
-    list(APPEND CMAKE_FIND_ROOT_PATH ${HMS_SDK_PATH}/native/sysroot/usr)
+include_directories(${COMMON_INCLUDES} ${PLATFORM_INCLUDES})
+message(STATUS "COMMON_INCLUDES: ${COMMON_INCLUDES}")
+message(STATUS "PLATFORM_INCLUDES: ${PLATFORM_INCLUDES}")
 
-    find_library(hiai_foundation-lib hiai_foundation)
-#    MESSAGE(STATUS "hiai_foundation-lib: ${hiai_foundation-lib} in ${HMS_SDK_PATH}/native/sysroot/usr/lib")
-    set(PLATFORM_SOURCES
-            # 对于 local 平台不需要
-            src/common/gles/EGLCtx.cpp
-            src/common/gles/GLEngine.cpp
-            src/harmony/Harmony.cpp
-            src/harmony/AppContext.cpp
-            src/harmony/utils/NapiUtils.cpp
-            src/harmony/xcomp/XComponent.cpp
-            src/harmony/xcomp/XCompGLBinder.cpp
-            src/harmony/cam/CamDevice.cpp
-            src/harmony/cam/CamInput.cpp
-            src/harmony/cam/CamManager.cpp
-            src/harmony/cam/CamUtils.cpp
-            src/harmony/cam/CaptureSession.cpp
-            src/harmony/cam/MetadataOutput.cpp
-            src/harmony/cam/PhotoOutput.cpp
-            src/harmony/cam/PreviewOutput.cpp
-            src/harmony/cam/VideoOutput.cpp
-            src/harmony/image/MDKImageReader.cpp
-            src/harmony/image/NativeImageReader.cpp
-            src/harmony/masset/MediaAssetMgr.cpp
-            src/harmony/media/audio/read/AudioReader.cpp
-            src/harmony/media/audio/AudioEncoder.cpp
-            src/harmony/media/video/VideoEncoder.cpp
-            src/harmony/sensor/SensorGravity.cpp
-            src/harmony/sensor/SensorMgr.cpp
-            src/harmony/mslite/MSLitePredictor.cpp
-            src/harmony/hiai/HiAI.cpp
-    )
-    set(PLATFORM_LIBS
-            libhilog_ndk.z.so
-            libace_napi.z.so
-            # mdk image receiver
-            libimage_ndk.z.so
-            libimage_receiver_ndk.z.so
-            libohcamera.so
-            libnative_buffer.so
-            # native image receciver
-            libimage_receiver.so
-            libohimage.so
-            libnative_image.so
-            libimage_source.so
-            libpixelmap.so
-            libimage_packer.so
-            libmedia_asset_manager.so
+target_sources(${TARGET_SHARED} PRIVATE ${COMMON_SOURCES} ${PLATFORM_SOURCES})
+target_sources(${TARGET_STATIC} PRIVATE ${COMMON_SOURCES} ${PLATFORM_SOURCES})
 
-            libEGL.so
-            libGLESv2.so
-            libGLESv3.so
-            libnative_window.so
-            libnative_buffer.so
+target_link_libraries(${TARGET_SHARED} PRIVATE ${PLATFORM_LIBS} ${COMMON_LIBS})
+target_link_libraries(${TARGET_STATIC} PRIVATE ${PLATFORM_LIBS} ${COMMON_LIBS})
 
-            # media
-            libnative_media_codecbase.so
-            libnative_media_core.so
-            libnative_media_venc.so
-            libnative_media_acodec.so
-            libnative_media_avmuxer.so
-            libnative_media_avdemuxer.so
-            libnative_media_avsource.so
-            libohaudio.so
-
-            libace_napi.z.so
-
-            librawfile.z.so
-            libohresmgr.so
-            libbundle_ndk.z.so
-            libohsensor.so
-            libpixelmap_ndk.z.so
-
-            mindspore_lite_ndk
-            ${hiai_foundation-lib}
-            libneural_network_core.so
-
-            ace_ndk.z
-            uv
-    )
-else ()
-    set(PLATFORM_SOURCES
-            src/local/AppContext.cpp
-    )
-    find_package(OpenGL REQUIRED)
-    set(THIRD_PARTY_LIBS ${THIRD_PARTY_LIBS} OpenGL::GL)
-
-    if(WIN32)
-        if (MSVC)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /utf-8")
-            add_compile_options("$<$<C_COMPILER_ID:MSVC>:/utf-8>")
-            add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
-        endif ()
-
-        set(GLEW_DIR "${PLATFORM_LIBS_PATH}/win32/glew-2.1.0")
-        add_subdirectory(${GLEW_DIR})
-
-        set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/win32/directshow_camera")
-        add_subdirectory(${DS_CAMERA_DIR})
-
-        set(THIRD_PARTY_LIBS
-                ${THIRD_PARTY_LIBS}
-                glew_s
-                directshow_camera
-        )
-        set(ALL_INCLUDES
-                ${ALL_INCLUDES}
-                ${GLEW_DIR}/include
-                ${DS_CAMERA_DIR}/src
-        )
-
-        set(PLATFORM_SOURCES
-                ${PLATFORM_SOURCES}
-                src/local/win32/dshow/DeviceEnumerator.cpp
-                src/local/win32/cam/CamDevice.cpp
-        )
-        set(PLATFORM_LIBS
-                ${PLATFORM_LIBS}
-                quartz
-                strmiids
-        )
-    endif ()
-endif ()
-
-include_directories(${ALL_INCLUDES})
+message(STATUS "COMMON_LIBS: ${COMMON_LIBS}")
+message(STATUS "PLATFORM_LIBS: ${PLATFORM_LIBS}")
 
 # install
-set(INSTALL_DIR ${CMAKE_SOURCE_DIR}/build/${PLATFORM}/install)
-install(FILES src/Namespace.h src/ZNative.h DESTINATION ${INSTALL_DIR}/include)
-install(DIRECTORY src/common DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY src/${PLATFORM} DESTINATION ${INSTALL_DIR}/include/ FILES_MATCHING PATTERN "*.h")
+install(FILES src/ZNamespace.h src/ZNative.h
+        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR})
+install(DIRECTORY src/common
+        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
+        FILES_MATCHING PATTERN "*.h")
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/${PLATFORM}
+        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
+        FILES_MATCHING PATTERN "*.h")
+# install third-party libs
+install(FILES ${COMMON_LIBS_PATH}/tinyformat/tinyformat.h
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+install(DIRECTORY ${COMMON_LIBS_PATH}/json/nlohmann
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+install(DIRECTORY ${COMMON_LIBS_PATH}/eventpp-0.1.3/include/eventpp
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+install(DIRECTORY ${COMMON_LIBS_PATH}/libyuv-stable/include/libyuv
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+install(FILES ${COMMON_LIBS_PATH}/libyuv-stable/include/libyuv.h
+        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
+
+if (${ZNATIVE_INSTALL_STATIC})
+    install(TARGETS ${TARGET_STATIC} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+else ()
+    install(TARGETS ${TARGET_SHARED} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+endif ()
+
+install(FILES cmake/ZNativeConfig.cmake DESTINATION ${CMAKE_INSTALL_PREFIX})
 
 ## 注意这些变量 cache string 一旦存储之后就不会改动了，所以不能依赖这个变量
-set(ZNATIVE_INCLUDES ${ALL_INCLUDES} CACHE STRING "all includes")
+set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE STRING "all includes")
 set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
-set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS} CACHE STRING "all depend libs")
+set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all depend libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 
-add_library(${PROJ_NAME}-shared SHARED ${COMMON_SOURCES} ${PLATFORM_SOURCES})
-add_library(${PROJ_NAME}-static STATIC ${COMMON_SOURCES} ${PLATFORM_SOURCES})
-
-install(TARGETS ${PROJ_NAME}-shared DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
-install(TARGETS ${PROJ_NAME}-static DESTINATION ${INSTALL_DIR}/${CMAKE_BUILD_TYPE}/libs/${TARGET_ARCH})
-
-target_link_libraries(${PROJ_NAME}-shared PUBLIC ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS})
-target_link_libraries(${PROJ_NAME}-static PUBLIC ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS})
-
-message(STATUS "dep libs: ${PLATFORM_LIBS} ${THIRD_PARTY_LIBS}")
-
-if (${PLATFORM} STREQUAL "local")
-    include_directories(
-            ${PLATFORM_LIBS_PATH}/glfw-3.4/include
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends
-            samples/local
-    )
-
-    set(GLFW_INSTALL OFF)
-    set(GLFW_BUILD_DOCS OFF)
-    set(GLFW_BUILD_TESTS OFF)
-    add_subdirectory(${PLATFORM_LIBS_PATH}/glfw-3.4)
-
-    set(IMGUI_SRC
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui.cpp
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_demo.cpp
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_draw.cpp
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_tables.cpp
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/imgui_widgets.cpp
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends/imgui_impl_glfw.cpp
-            ${PLATFORM_LIBS_PATH}/imgui-1.90.9/backends/imgui_impl_opengl3.cpp
-    )
-
-    if (${WIN32})
-        set(WIN32_SRC
-                samples/local/win32/WinCamTestWindow.cpp
-        )
-#        set(PLATFORM_LIBS ${PLATFORM_LIBS})
-    endif ()
-
-    add_definitions(-DLOCAL_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets")
-
-    add_executable(local-sample
-            ${IMGUI_SRC}
-            ${WIN32_SRC}
-            samples/local/main.cpp
-            samples/local/MainApp.cpp
-            samples/local/MainWindow.cpp
-            samples/local/gl/GLTestWindow.cpp
-            samples/local/test/TestZImage.cpp
-    )
-    target_link_libraries(local-sample PRIVATE
-            glfw
-            ${PLATFORM_LIBS}
-            ${THIRD_PARTY_LIBS}
-            ${PROJ_NAME}-static
-    )
+if (${PLATFORM} MATCHES "local")
+    include(samples/local/Local-sample.cmake)
 endif ()

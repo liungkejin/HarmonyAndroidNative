@@ -106,38 +106,6 @@ namespace DirectShowCamera
         }
 
         /**
-        * @brief Get frame
-        * @param[out] frame Frame
-        * @param[in] frameIndex Frame index
-        * @param[in] width Frame width
-        * @param[in] height Frame height
-        */
-        static void getFrame(
-            Frame& frame,
-            const unsigned long frameIndex,
-            const int width,
-            const int height
-        )
-        {
-            // Size
-            const int numOfBytes = width * height * 3;
-
-            // Import data
-            frame.ImportData(
-                numOfBytes,
-                width,
-                height,
-                MEDIASUBTYPE_RGB24, 
-                FrameSettings(),
-                [frameIndex, width, height](unsigned char* data, unsigned long& frameIndexTobeSet) {
-                    frameIndexTobeSet = frameIndex;
-                    int frameSizeHasBeenSet = 0;
-                    getFrame(data, frameSizeHasBeenSet, frameIndex, width, height);
-                }
-            );
-        }
-
-        /**
          * @brief Get default frame. It will be generated based on the frame index value.
          * @param[out] frame Frame bytes
          * @param[out] numOfBytes Number of bytes of this frame

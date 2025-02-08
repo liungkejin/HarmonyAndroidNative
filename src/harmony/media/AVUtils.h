@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include <multimedia/player_framework/native_averrors.h>
 
 NAMESPACE_DEFAULT

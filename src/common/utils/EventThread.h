@@ -9,7 +9,7 @@
 
 #include "eventpp/eventqueue.h"
 #include "eventpp/callbacklist.h"
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Log.h"
 #include <thread>
 

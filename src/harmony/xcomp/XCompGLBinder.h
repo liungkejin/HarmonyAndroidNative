@@ -4,10 +4,10 @@
 
 #pragma once
 
-#include "Namespace.h"
-#include "common/Object.h"
-#include "common/gles/GLEngine.h"
-#include "harmony/xcomp/XComponent.h"
+#include <ZNamespace.h>
+#include <common/Object.h>
+#include <common/egl/GLEngine.h>
+#include <harmony/xcomp/XComponent.h>
 
 NAMESPACE_DEFAULT
 

@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/utils/AssetsMgr.h"
 #ifdef __ANDROID__
 #include <jni.h>

@@ -117,11 +117,14 @@ namespace DirectShowCamera
          * @brief Open camera with the specific DirectShowVideoFormat.
          * @param[in] device The camera to be opened.
          * @param[in] videoFormat (Optional) Video format to be set. Default as nullopt which use the default video format.
+         * @param[in] convertOutputDataToRGB24IfSupported (Optional) If true, the output data will be converted to RGB24 if the format support it. Default as false.
          * @return Return true if success.
         */
         bool Open(
             const DirectShowCameraDevice& device,
-            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt
+            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt,
+            // If true, the output data will be converted to RGB24 if the format support it.
+            bool convertOutputDataToRGB24IfSupported = false
         );
 
         /**
@@ -307,13 +310,13 @@ namespace DirectShowCamera
          * @brief Get the available DirectShowCameraDevice list. It is a advance option. Suggest to use getCameras().
          * @return Return the available DirectShowCameraDevice list
         */
-        std::vector<DirectShowCameraDevice> getDirectShowCameras();
+        std::vector<DirectShowCameraDevice> getDirectShowCameras(bool filterInvalid = true);
 
         /**
          * @brief Get the available camera.
          * @return Return the available camera.
         */
-        std::vector<CameraDevice> getCameras();
+        std::vector<CameraDevice> getCameras(bool filterInvalid = true);
 
 #pragma endregion Camera
 
@@ -366,7 +369,9 @@ namespace DirectShowCamera
         */
         bool Open(
             IBaseFilter** directShowFilter,
-            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt
+            std::optional<const DirectShowVideoFormat> videoFormat = std::nullopt,
+            // If true, the output data will be converted to RGB24 if the format support it.
+            bool convertOutputDataToRGB24IfSupported = false
         );
 
         /**

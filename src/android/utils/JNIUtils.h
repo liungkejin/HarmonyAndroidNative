@@ -8,7 +8,7 @@
 #include <string>
 #include <jni.h>
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 
 NAMESPACE_DEFAULT
 

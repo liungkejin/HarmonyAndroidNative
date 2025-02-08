@@ -152,6 +152,13 @@ else()
     set(INSTALL_INIT      "misc")                   # ./misc
 endif()
 
+# 判断 INSTALL_LIB 是否存在
+if(ZNATIVE)
+    set(INSTALL_SHARED "libs/${TARGET_ARCH}")                    # ./lib
+    set(INSTALL_LIB    "libs/${TARGET_ARCH}")
+    set(INSTALL_INCLUDE "include/thirdparty")                # ./include
+endif()
+
 # Set runtime path
 set(CMAKE_SKIP_BUILD_RPATH            FALSE) # Add absolute path to all dependencies for BUILD
 set(CMAKE_BUILD_WITH_INSTALL_RPATH    FALSE) # Use CMAKE_INSTALL_RPATH for INSTALL
@@ -180,13 +187,15 @@ add_subdirectory(deploy)
 # Deployment (global project files)
 #
 
-# Install version file
-install(FILES "${PROJECT_BINARY_DIR}/VERSION" DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+if (NOT ZNATIVE)
+    # Install version file
+    install(FILES "${PROJECT_BINARY_DIR}/VERSION" DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
 
-# Install cmake find script for the project
-install(FILES ${META_PROJECT_NAME}-config.cmake DESTINATION ${INSTALL_ROOT} COMPONENT dev)
+    # Install cmake find script for the project
+    install(FILES ${META_PROJECT_NAME}-config.cmake DESTINATION ${INSTALL_ROOT} COMPONENT dev)
 
-# Install the project meta files
-install(FILES AUTHORS   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
-install(FILES LICENSE   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
-install(FILES README.md DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+    # Install the project meta files
+    install(FILES AUTHORS   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+    install(FILES LICENSE   DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+    install(FILES README.md DESTINATION ${INSTALL_ROOT} COMPONENT runtime)
+endif()

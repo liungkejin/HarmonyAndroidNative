@@ -6,14 +6,15 @@
 
 
 #pragma once
-#include "Namespace.h"
+
+#include "ZNamespace.h"
+#include "common/Log.h"
 #include "common/Object.h"
 #include "common/utils/RawData.h"
 #include <cstddef>
 #include <cstdint>
-#include <cppfs/fs.h>
-#include <cppfs/FileHandle.h>
-#include <cppfs/FilePath.h>
+#include <string>
+#include <functional>
 
 NAMESPACE_DEFAULT
 
@@ -21,138 +22,44 @@ NAMESPACE_DEFAULT
 class FileUtils {
 public:
     // 文件的绝对路径
-    static std::string fullPath(const char *path) {
-        cppfs::FilePath p(path);
-        return p.fullPath();
-    }
+    static std::string fullPath(const char *path);
 
     // 带文件类型的文件名 "/dir/xxx.txt" 返回 "xxx.txt"
-    static std::string fileName(const char *path) {
-        cppfs::FilePath p(path);
-        return p.fileName();
-    }
+    static std::string fileName(const char *path);
 
     // 不带文件类型的文件名 "/dir/xxx.txt" 返回 "xxx"
-    static std::string fileBaseName(const char *path) {
-        cppfs::FilePath p(path);
-        return p.baseName();
-    }
+    static std::string fileBaseName(const char *path);
 
     // 文件的扩展名 "/dir/xxx.txt" 返回 ".txt"
-    static std::string fileExtension(const char *path) {
-        cppfs::FilePath p(path);
-        return p.extension();
-    }
+    static std::string fileExtension(const char *path);
 
     // 文件的父文件夹 "/dir/xxx.txt" 返回 "/dir"
-    static std::string fileParentDir(const char *path) {
-        cppfs::FilePath p(path);
-        return p.directoryPath();
-    }
+    static std::string fileParentDir(const char *path);
 
-    static size_t write(const char *filepath, const void *data, size_t len) {
-        std::FILE *file = std::fopen(filepath, "w+");
-        if (file) {
-            size_t written = fwrite(data, len, 1, file);
-            fclose(file);
-
-            return written;
-        } else {
-            _ERROR("write to file(%s) failed", filepath);
-        }
-        return 0;
-    }
+    static size_t write(const char *filepath, const void *data, size_t len);
     
-    static RawData read(const char *filepath) {
-        std::FILE *file = fopen(filepath, "r");
-        if (file == nullptr) {
-            return RawData();
-        }
-        std::fseek(file, 0, SEEK_END);
-        size_t len = std::ftell(file);
-        std::fseek(file, 0, SEEK_SET);
-        RawData data(len);
-        size_t readSize = std::fread(data.data(), 1, len, file);
-        _ERROR_IF(readSize != len, "read file(%s) error, file length(%d) != read size(%d)", filepath, len, readSize);
-        return data;
-    }
+    static RawData read(const char *filepath);
     
-    static size_t read(const char *filepath, uint8_t *out, size_t size, size_t offset = 0) {
-        std::FILE *file = std::fopen(filepath, "r");
-        if (file == nullptr) {
-            return 0;
-        }
-        if (offset > 0) {
-            std::fseek(file, offset, SEEK_SET);
-        }
-        int readCount = std::fread(out, 1, size, file);
-        std::fclose(file);
-        return readCount;
-    }
+    static size_t read(const char *filepath, uint8_t *out, size_t size, size_t offset = 0);
 
-    static size_t fileLength(const char *filepath) {
-        return cppfs::fs::open(filepath).size();
-    }
+    static size_t fileLength(const char *filepath);
 
-    static size_t fileLength(FILE *file) {
-        if (file) {
-            std::fseek(file, 0, SEEK_END);
-            size_t length = std::ftell(file);
-            std::rewind(file);
+    static size_t fileLength(FILE *file);
 
-            return length;
-        } else {
-            _WARN("get file length from FILE* failed");
-        }
-        return 0;
-    }
+    static bool deleteFile(const char *str);
 
-    static bool deleteFile(const char *str) {
-        bool success = cppfs::fs::open(str).remove();
-        _ERROR_IF(!success, "delete file(%s) failed", str);
-        return success;
-    }
+    static bool mkDir(const char *str);
 
-    static bool mkDir(const char *str, uint32_t mode = 777) {
-        if (isDirectory(str)) {
-            return true;
-        }
-        bool success = cppfs::fs::open(str).createDirectory();
-        _ERROR_IF(!success, "mkdir(%s) failed!", str);
-        return success;
-    }
-
-    static void remove(const char *dirOrFile) {
-        if (isDirectory(dirOrFile)) {
-            cppfs::fs::open(dirOrFile).removeDirectoryRec();
-        } else {
-            deleteFile(dirOrFile);
-        }
-    }
+    static void remove(const char *dirOrFile);
     
-    static bool exist(const char *path) {
-        return cppfs::fs::open(path).exists();
-    }
+    static bool exist(const char *path);
 
-    static bool isDirectory(const char *path) {
-        return cppfs::fs::open(path).isDirectory();
-    }
+    static bool isDirectory(const char *path);
 
-    static std::vector<std::string> listFiles(const char *path) {
-        return cppfs::fs::open(path).listFiles();
-    }
+    static std::vector<std::string> listFiles(const char *path);
 
     static std::vector<std::string> listFilesSort(const char *path,
-        const std::function<int(const std::string& a, const std::string& b)>& comp = nullptr) {
-        std::vector<std::string> files = cppfs::fs::open(path).listFiles();
-        // sort files by alpha
-        if (comp == nullptr) {
-            std::sort(files.begin(), files.end());
-        } else {
-            std::sort(files.begin(), files.end(), comp);
-        }
-        return files;
-    }
+        const std::function<int(const std::string& a, const std::string& b)>& comp = nullptr);
 };
 
 

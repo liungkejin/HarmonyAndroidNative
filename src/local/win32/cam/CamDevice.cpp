@@ -12,14 +12,13 @@ NAMESPACE_DEFAULT
 CamDevice CamDevice::getDevice(const std::string &id, const std::string &name, IBaseFilter *filter) {
     CamDevice device(id, name);
 
-    HRESULT hr = 0;
     IEnumPins *enumPins = nullptr;
     filter->EnumPins(&enumPins);
 
     enumPins->Reset();
     IPin *pin = nullptr;
     ULONG pinFetched = 0;
-    while (SUCCEEDED(hr = (enumPins->Next(1, &pin, &pinFetched))) && pinFetched && pin) {
+    while (SUCCEEDED(enumPins->Next(1, &pin, &pinFetched)) && pinFetched && pin) {
         IEnumMediaTypes *emt = nullptr;
         pin->EnumMediaTypes(&emt);
         emt->Reset();

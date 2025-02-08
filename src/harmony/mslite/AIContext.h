@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Log.h"
 #include "common/Object.h"
 #include "AITensor.h"

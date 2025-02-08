@@ -5,7 +5,7 @@
 #pragma once
 
 #include <media/NdkImageReader.h>
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 #include "IRImage.h"
 

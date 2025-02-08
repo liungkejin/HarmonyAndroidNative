@@ -6,10 +6,16 @@
 
 #include "directshow_camera/device/ds_camera_device.h"
 
+#include <algorithm>
+
 namespace DirectShowCamera
 {
 
 #pragma region Constructor and Destructor
+
+    DirectShowCameraDevice::DirectShowCameraDevice()
+    {
+    }
 
     DirectShowCameraDevice::DirectShowCameraDevice(
         const std::string friendlyName,
@@ -28,10 +34,57 @@ namespace DirectShowCamera
 
 #pragma region Getter
 
+    bool DirectShowCameraDevice::valid() const {
+        //不能判断path是否为空，因为有的设备没有path
+        for (auto &f : m_videoFormats) {
+            if (f.valid()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     std::vector<DirectShowVideoFormat> DirectShowCameraDevice::getDirectShowVideoFormats() const
     {
         return m_videoFormats;
     }
+
+    std::vector<DirectShowVideoFormat> DirectShowCameraDevice::getAllSupportedUniqueVideoFormats(bool filterInvalid) const {
+        std::vector<DirectShowVideoFormat> result;
+        for (auto &f : m_videoFormats) {
+            if (filterInvalid && !f.valid()) {
+                continue;
+            }
+            bool added = false;
+            for (auto &r : result) {
+                if (r.getVideoType() == f.getVideoType()) {
+                    added = true;
+                    break;
+                }
+            }
+            if (!added) {
+                result.push_back(f);
+            }
+        }
+        return result;
+    }
+
+    std::vector<DirectShowVideoFormat> DirectShowCameraDevice::getAllResolutionOfFormat(const GUID &videoFormat) const {
+        std::vector<DirectShowVideoFormat> result;
+        for (auto &f : m_videoFormats) {
+            if (f.getVideoType() == videoFormat) {
+                result.push_back(f);
+            }
+        }
+        // sort by width big to small
+        std::sort(result.begin(), result.end(), [](const DirectShowVideoFormat &a, const DirectShowVideoFormat &b) {
+            return a.getTotalSize() > b.getTotalSize();
+        });
+        return result;
+    }
+
+
 
     std::string DirectShowCameraDevice::getFriendlyName() const
     {

@@ -6,10 +6,10 @@
 
 #include <common/utils/YuvUtils.h>
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 #include "common/Log.h"
-#ifdef __OPENCV__
+#ifdef __ZNATIVE_WITH_OPENCV__
 #include <opencv2/core/mat.hpp>
 #include <opencv2/imgproc.hpp>
 #endif
@@ -128,7 +128,7 @@ public:
 
     int format() const { return m_format; }
 
-#ifdef __OPENCV__
+#ifdef __ZNATIVE_WITH_OPENCV__
     cv::Mat mat() {
         switch (m_format) {
             case F_RGBA:

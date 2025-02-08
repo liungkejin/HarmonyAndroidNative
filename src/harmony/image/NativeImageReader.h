@@ -8,7 +8,7 @@
 
 #include "NIRImage.h"
 #include "NNativeWindow.h"
-#include <Namespace.h>
+#include <ZNamespace.h>
 #include <multimedia/image_framework/image/image_common.h>
 #include <multimedia/image_framework/image/image_receiver_native.h>
 

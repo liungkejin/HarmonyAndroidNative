@@ -26,7 +26,6 @@ namespace DirectShowCamera
     class Frame
     {
     public:
-        typedef std::function<void(unsigned char* data, unsigned long& frameIndex)> ImportDataFunc;
         enum FrameType {
             None,
             Unknown,
@@ -68,24 +67,9 @@ namespace DirectShowCamera
 #pragma endregion Constructor and Destructor
 
 #pragma region Frame
+        void setInfo(int width, int height, const GUID &frameType);
 
-        /**
-        * @brief Import data
-        * @param[in] frameSize Frame size in bytes
-        * @param[in] width Frame width in pixel
-        * @param[in] height Frame height in pixel
-        * @param[in] frameType Frame type
-        * @param[in] frameSettings Frame settings
-        * @param[in] importDataFunc A function to import data. The function should be in the form of void(unsigned char* data, unsigned long& frameIndex)
-        */
-        void ImportData(
-            const long frameSize,
-            const int width,
-            const int height,
-            const GUID frameType,
-            const FrameSettings frameSettings,
-            ImportDataFunc importDataFunc
-        );
+        void putData(int frameIndex, const unsigned char *data, int dataSize);
 
         /**
          * @brief   Get frame data pointer. This is the data pointer in the Frame object which is in the order of pixel by pixel (BGR if color),
@@ -101,7 +85,7 @@ namespace DirectShowCamera
         * @param[out] numOfBytes   Number of bytes of the frame.
         * @return Return the frame in bytes
         */
-        std::shared_ptr<unsigned char[]> getFrameData(int& numOfBytes);
+        std::shared_ptr<unsigned char[]> getFrameData(int& numOfBytes, bool flipVertical, bool rgb2bgr);
 
         /**
         * @brief    Return a cloned frame 16 bit data. The data is in the order of pixel by pixel, row by row.
@@ -109,7 +93,7 @@ namespace DirectShowCamera
         * @param[out] numOfBytes   Number of bytes of the frame.
         * @return Return the frame in bytes
         */
-        std::shared_ptr<unsigned short[]> getFrame16bitData(int& numOfBytes);
+        std::shared_ptr<unsigned short[]> getFrame16bitData(int& numOfBytes, bool flipVertical);
 
 #pragma endregion Frame
 
@@ -168,7 +152,7 @@ namespace DirectShowCamera
          * @brief Get cv::Mat of the current frame
          * @return Return cv::Mat
         */
-        cv::Mat getMat();
+        cv::Mat getMat(bool flipVertical, bool rgb2bgr);
 
 #pragma endregion OpenCV
 #endif
@@ -184,14 +168,13 @@ namespace DirectShowCamera
             {
                 m_width = other.m_width;
                 m_height = other.m_height;
-                m_frameSize = other.m_frameSize;
+                m_dataSize = other.m_dataSize;
                 m_frameIndex = other.m_frameIndex;
                 m_frameType = other.m_frameType;
-                m_frameSettings = other.m_frameSettings;
                 if (other.m_data != nullptr)
                 {
-                    m_data = std::make_unique<unsigned char[]>(m_frameSize);
-                    memcpy(m_data.get(), other.m_data.get(), m_frameSize);
+                    m_data = std::make_unique<unsigned char[]>(m_dataSize);
+                    memcpy(m_data.get(), other.m_data.get(), m_dataSize);
                 }
             }
             return *this;
@@ -207,10 +190,9 @@ namespace DirectShowCamera
             {
                 m_width = other.m_width;
                 m_height = other.m_height;
-                m_frameSize = other.m_frameSize;
+                m_dataSize = other.m_dataSize;
                 m_frameIndex = other.m_frameIndex;
                 m_frameType = other.m_frameType;
-                m_frameSettings = other.m_frameSettings;
                 m_data = std::move(other.m_data);
             }
             return *this;
@@ -223,16 +205,15 @@ namespace DirectShowCamera
         {
             if (m_width != other.m_width) return false;
             if (m_height != other.m_height) return false;
-            if (m_frameSize != other.m_frameSize) return false;
+            if (m_dataSize != other.m_dataSize) return false;
             if (m_frameIndex != other.m_frameIndex) return false;
             if (m_frameType != other.m_frameType) return false;
-            if (m_frameSettings != other.m_frameSettings) return false;
 
             if (m_data == nullptr && other.m_data != nullptr) return false;
             if (m_data != nullptr && other.m_data == nullptr) return false;
             if (m_data != nullptr && other.m_data != nullptr)
             {
-                for (int i = 0; i < m_frameSize; i++)
+                for (int i = 0; i < m_dataSize; i++)
                 {
                     if (m_data[i] != other.m_data[i]) return false;
                 }
@@ -251,10 +232,10 @@ namespace DirectShowCamera
 #pragma endregion Operator
 
         /**
-        * @brief Save the frame to a image file. The Save function require running the GDI+ library which is running when the WinCamrea object exist.
-        * @param[in] path Path to save the image. Supported format are png, jpg, jpeg, bmp, tiff
-        * @param[in] (Optional) encoderParams Encoder parameters. default is NULL. See https://learn.microsoft.com/en-us/windows/win32/api/gdiplusimaging/nl-gdiplusimaging-encoderparameters
-        */
+         * @brief Save the frame to a image file. The Save function require running the GDI+ library which is running when the WinCamrea object exist.
+         * @param[in] path Path to save the image. Supported format are png, jpg, jpeg, bmp, tiff
+         * @param[in] (Optional) encoderParams Encoder parameters. default is NULL. See https://learn.microsoft.com/en-us/windows/win32/api/gdiplusimaging/nl-gdiplusimaging-encoderparameters
+         */
         void Save(
             const std::filesystem::path path,
             const Gdiplus::EncoderParameters* encoderParams = NULL
@@ -271,12 +252,12 @@ namespace DirectShowCamera
         * The raw data will be [9,8,7,4,5,6,1,2,3] and each number is 3 byte which is BGR.
         */
         std::unique_ptr<unsigned char[]> m_data = nullptr;
-        long m_frameSize = 0; // In number of byte
+        long m_dataCapacity = 0; // data capacity
+        long m_dataSize = 0; // each frame data size
 
         int m_width = -1;
         int m_height = -1;
         GUID m_frameType;
-        FrameSettings m_frameSettings;
 
         unsigned long m_frameIndex = 0;
 

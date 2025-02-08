@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/utils/Array.h"
 #include "common/utils/RawData.h"
 #include "common/Object.h"

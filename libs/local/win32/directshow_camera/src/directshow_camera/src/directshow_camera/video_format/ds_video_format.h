@@ -63,6 +63,8 @@ namespace DirectShowCamera
 
         // Getter
 
+        bool valid() const;
+
         /**
          * @brief Return true if this is empty.
          * @return Return true if this is empty.
@@ -97,7 +99,10 @@ namespace DirectShowCamera
          * @brief Return the video type.
          * @return Return the video type.
         */
-        GUID getVideoType() const;
+        const GUID& getVideoType() const;
+
+
+        std::string getVideoTypeString() const;
 
         // Operator
 

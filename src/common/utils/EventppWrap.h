@@ -7,7 +7,7 @@
 
 #pragma once
 #include "eventpp/callbacklist.h"
-#include "Namespace.h"
+#include "ZNamespace.h"
 
 NAMESPACE_DEFAULT
 

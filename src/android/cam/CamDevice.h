@@ -5,7 +5,7 @@
 #pragma once
 
 #include <camera/NdkCameraDevice.h>
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "common/Object.h"
 #include "CaptureRequest.h"
 #include "CaptureSession.h"

@@ -12,18 +12,13 @@
 #include "common/utils/Base.h"
 #include "common/Log.h"
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(__HARMONYOS__)
 #include <GLES3/gl3.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
-#elif defined(__HARMONYOS__)
-#include <GLES3/gl3.h>
-#include <EGL/egl.h>
-#include <EGL/eglext.h>
 #else
 #ifdef _WIN32
 #include <GL/glew.h>
 #else
+#define GL_DO_NOT_WARN_IF_MULTI_GL_VERSION_HEADERS_INCLUDED
 #include <OpenGL/gl.h>
 #include <OpenGL/gl3.h>
 #endif

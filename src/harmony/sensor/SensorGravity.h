@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "SensorMgr.h"
 
 NAMESPACE_DEFAULT

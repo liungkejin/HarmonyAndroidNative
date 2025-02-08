@@ -6,7 +6,7 @@
 
 
 #pragma once
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "harmony/media/Muxer.h"
 #include "harmony/media/audio/AudioEncoder.h"
 #include "RecordConfig.h"

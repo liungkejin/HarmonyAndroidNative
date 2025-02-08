@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include <Namespace.h>
+#include <ZNamespace.h>
 #include <common/Object.h>
 #include <common/Log.h>
 #include <multimedia/image_framework/image_mdk.h>

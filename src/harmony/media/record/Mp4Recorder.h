@@ -7,7 +7,7 @@
 
 #pragma once
 #include "common/Common.h"
-#include "Namespace.h"
+#include "ZNamespace.h"
 #include "harmony/media/Muxer.h"
 #include "harmony/media/video/VSurfaceEncoder.h"
 #include "RecordConfig.h"
