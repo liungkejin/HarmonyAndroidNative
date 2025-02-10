@@ -10,6 +10,10 @@
 #define DELETE_TO_NULL(ptr)  if (ptr) { delete ptr; ptr = nullptr; }
 #define DELETE_ARR_TO_NULL(ptr)  if (ptr) { delete [] ptr; ptr = nullptr; }
 
+#define LOCK_MUTEX(m) std::lock_guard<std::mutex> lock__(m)
+#define LOCK_MUTEX_BEGIN(m) { std::lock_guard<std::mutex> lock__(m);
+#define LOCK_MUTEX_END }
+
 NAMESPACE_DEFAULT
 
 class ZUtils {
