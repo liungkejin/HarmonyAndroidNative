@@ -100,20 +100,17 @@ bool DSCaptureMgr::setVideoConfig(const DSVideoConfig &config) {
             m_video_cfg.data_cb(frame);
         } else {
             // copy data
-            std::lock_guard<std::mutex> lock(m_video_mutex);
-            auto dst = m_frame_data.obtain<unsigned char>(size, false);
-            memcpy(dst, data, size);
-            m_latest_frame = {
+            m_video_frame_queue.pushFrame(
                 cfg.cx,
                 cfg.cy_abs,
                 (DSVideoFmt) cfg.format,
-                dst,
-                size,
                 cfg.frameInterval,
+                data,
+                size,
                 startTime,
                 stopTime,
                 rotation
-            };
+            );
         }
     };
     videoConfig.reactivateCallback = [this]() {
@@ -169,18 +166,7 @@ bool DSCaptureMgr::setAudioConfig(const DSAudioConfig &config) {
             m_audio_cfg.data_cb(sample);
         } else {
             // copy data
-            std::lock_guard<std::mutex> lock(m_audio_mutex);
-            auto dst = m_audio_data.obtain<unsigned char>(size, false);
-            memcpy(dst, data, size);
-            m_latest_sample = {
-                cfg.sampleRate,
-                cfg.channels,
-                (DSAudioFmt) cfg.format,
-                dst,
-                size,
-                startTime,
-                stopTime
-            };
+            m_audio_sample_queue.pushSample(cfg.sampleRate, cfg.channels, (DSAudioFmt) cfg.format, data, size, startTime, stopTime);
         }
     };
     audioConfig.useVideoDevice = config.use_video_device;
@@ -225,43 +211,13 @@ bool DSCaptureMgr::start() {
     return true;
 }
 
-const DSVideoFrame *DSCaptureMgr::getLatestVideoFrame(bool onlyNewFrame) {
-    std::lock_guard<std::mutex> lock(m_video_mutex);
-    if (onlyNewFrame) {
-        if (m_out_latest_frame.startTime == m_latest_frame.startTime) {
-            return nullptr;
-        }
-    } else {
-        if (m_out_latest_frame.startTime == m_latest_frame.startTime) {
-            return &m_out_latest_frame;
-        }
-    }
-    // copy data
-    auto dst = m_out_frame_data.obtain<unsigned char>(m_latest_frame.size, false);
-    memcpy(dst, m_latest_frame.data, m_latest_frame.size);
-    m_out_latest_frame = m_latest_frame;
-    m_out_latest_frame.data = dst;
-    return &m_out_latest_frame;
+const DSVideoFrame *DSCaptureMgr::obtainVideoFrame(bool requestNewest) {
+    return m_video_frame_queue.popFrame(requestNewest);
 }
 
 
-const DSAudioSample *DSCaptureMgr::getLatestAudioSample(bool onlyNewSample) {
-    std::lock_guard<std::mutex> lock(m_audio_mutex);
-    if (onlyNewSample) {
-        if (m_out_latest_sample.startTime == m_latest_sample.startTime) {
-            return nullptr;
-        }
-    } else {
-        if (m_out_latest_sample.startTime == m_latest_sample.startTime) {
-            return &m_out_latest_sample;
-        }
-    }
-    // copy data
-    auto dst = m_out_audio_data.obtain<unsigned char>(m_latest_sample.size, false);
-    memcpy(dst, m_latest_sample.data, m_latest_sample.size);
-    m_out_latest_sample = m_latest_sample;
-    m_out_latest_sample.data = dst;
-    return &m_out_latest_sample;
+const DSAudioSample *DSCaptureMgr::obtainAudioSample(bool requestNewest) {
+    return m_audio_sample_queue.popSample(requestNewest);
 }
 
 

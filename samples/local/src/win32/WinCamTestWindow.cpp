@@ -30,7 +30,7 @@ void WinCamTestWindow::onVisible(int width, int height) {
 
 void WinCamTestWindow::onPreRender(int width, int height) {
     if (cam_mgr.isOpened()) {
-        auto * frame = cam_mgr.getLatestFrame(true);
+        auto * frame = cam_mgr.obtainFrame(false);
         if (frame) {
             // _INFO("getNewFrame: Size(%dx%d), frameSize: %d, frameType: %d, raw frame type: %s",
             //     m_frame.getWidth(), m_frame.getHeight(), m_frame.getFrameSize(), m_frame.getFrameType(), DSUtils::videoTypeString(m_frame.getRawFrameType()));

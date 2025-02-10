@@ -253,6 +253,183 @@ struct DSAudioConfig {
     DSAudioMode mode = DSAudioMode::Capture;
 };
 
+class DSDataQueue {
+public:
+    explicit DSDataQueue(int size) : m_que_size(size) {}
+
+    void reset() {
+        LOCK_MUTEX(m_mutex);
+        m_front = 0;
+        m_back = -1;
+    }
+
+protected:
+    void frontForward() {
+        if (m_back < 0) {
+            m_back = m_front;
+        }
+
+        m_front += 1;
+        if (m_front - m_back >= m_que_size) {
+            m_back = (m_back + 1);
+        }
+        if (m_front > m_que_size && m_back > m_que_size) {
+            m_front -= m_que_size;
+            m_back -= m_que_size;
+        }
+    }
+
+    int frontIndex() {
+        return m_front % m_que_size;
+    }
+
+    int latestIndex() {
+        if (m_back < 0) return -1;
+        return (m_front - 1 + m_que_size) % m_que_size;
+    }
+
+    void backForward(bool toNewest) {
+        if (toNewest) {
+            m_back = -1;
+        } else {
+            m_back += 1;
+            if (m_back >= m_front) {
+                m_back = -1;
+            }
+        }
+    }
+
+    int backIndex(bool toNewest) {
+        if (toNewest) {
+            return latestIndex();
+        }
+        return m_back < 0 ? m_back : m_back % m_que_size;
+    }
+
+    std::mutex m_mutex;
+private:
+    const int m_que_size;
+
+    int m_front = 0;
+    int m_back = -1;
+};
+
+class DSVideoFrameQueue : public DSDataQueue {
+public:
+    explicit DSVideoFrameQueue(int size = 2) : DSDataQueue(size) {
+        m_frames = new DSVideoFrame[size];
+        m_data = new Array[size];
+    }
+
+    ~DSVideoFrameQueue() {
+        delete[] m_frames;
+        delete[] m_data;
+    }
+public:
+    void pushFrame(int width, int height, DSVideoFmt fmt, int64_t frame_interval,
+                  const uint8_t *data, size_t size, long long startTime, long long stopTime, long rotation) {
+        LOCK_MUTEX(m_mutex);
+        int index = frontIndex();
+        auto &frame = m_frames[index];
+        frame.width = width;
+        frame.height = height;
+        frame.fmt = fmt;
+        frame.frame_interval = frame_interval;
+        auto dst = m_data[index].obtain<uint8_t>(size, false);
+        memcpy(dst, data, size);
+        frame.data = dst;
+        frame.size = size;
+        frame.startTime = startTime;
+        frame.stopTime = stopTime;
+        frame.rotation = rotation;
+
+        DSDataQueue::frontForward();
+    }
+
+    const DSVideoFrame *popFrame(bool getNewest = false) {
+        LOCK_MUTEX(m_mutex);
+        int index = backIndex(getNewest);
+        if (index < 0) {
+            return nullptr;
+        }
+
+        auto &frame = m_frames[index];
+        // copy data
+        auto dst = m_output_data.obtain<uint8_t>(frame.size, false);
+        memcpy(dst, frame.data, frame.size);
+        m_output_frame = frame;
+        m_output_frame.data = dst;
+
+        DSDataQueue::backForward(getNewest);
+        return &m_output_frame;
+    }
+
+private:
+    DSVideoFrame *m_frames;
+    Array *m_data;
+
+    DSVideoFrame m_output_frame;
+    Array m_output_data;
+};
+
+class DSAudioSampleQueue : public DSDataQueue {
+public:
+    explicit DSAudioSampleQueue(int size = 5) : DSDataQueue(size) {
+        m_frames = new DSAudioSample[size];
+        m_data = new Array[size];
+    }
+
+    ~DSAudioSampleQueue() {
+        delete[] m_frames;
+        delete[] m_data;
+    }
+public:
+    void pushSample(int sampleRate, int channels, DSAudioFmt fmt,
+            const uint8_t *data, size_t size, long long startTime, long long stopTime) {
+        LOCK_MUTEX(m_mutex);
+
+        int index = frontIndex();
+        auto &frame = m_frames[index];
+        frame.sampleRate = sampleRate;
+        frame.channels = channels;
+        frame.fmt = fmt;
+        auto dst = m_data[index].obtain<uint8_t>(size, false);
+        memcpy(dst, data, size);
+        frame.data = dst;
+        frame.size = size;
+        frame.startTime = startTime;
+        frame.stopTime = stopTime;
+
+        DSDataQueue::frontForward();
+    }
+
+    const DSAudioSample *popSample(bool getNewest = false) {
+        LOCK_MUTEX(m_mutex);
+
+        int index = backIndex(getNewest);
+        if (index < 0) {
+            return nullptr;
+        }
+
+        auto &frame = m_frames[index];
+        // copy data
+        auto dst = m_output_data.obtain<uint8_t>(frame.size, false);
+        memcpy(dst, frame.data, frame.size);
+        m_output_frame = frame;
+        m_output_frame.data = dst;
+
+        DSDataQueue::backForward(getNewest);
+        return &m_output_frame;
+    }
+
+private:
+    DSAudioSample *m_frames;
+    Array *m_data;
+
+    DSAudioSample m_output_frame;
+    Array m_output_data;
+};
+
 class DSCaptureMgr {
 public:
     static std::vector<DSVideoDeviceInfo> enumVideoDevices();
@@ -282,12 +459,12 @@ public:
     }
 
     // 获取最新的视频帧, 只有在 config 中没有配置 data_cb 的时候才能使用
-    // @param onlyNewFrame 是否只获取新的帧 如果没有新的帧则返回空
-    const DSVideoFrame *getLatestVideoFrame(bool onlyNewFrame = true);
+    // @param requestNewest 是否忽略掉缓存的帧，只请求最新的帧
+    const DSVideoFrame *obtainVideoFrame(bool requestNewest = false);
 
     // 获取最新的音频帧, 只有在 config 中没有配置 data_cb 的时候才能使用
-    // @param onlyNewSample 是否只获取新的帧 如果没有新的帧则返回空
-    const DSAudioSample *getLatestAudioSample(bool onlyNewSample = true);
+    // @param requestNewest 是否忽略掉缓存的帧，只请求最新的帧
+    const DSAudioSample *obtainAudioSample(bool requestNewest = false);
 
     void stop();
 
@@ -303,17 +480,8 @@ private:
     void *m_context = nullptr;
     bool m_started = false;
 
-    std::mutex m_video_mutex;
-    Array m_frame_data;
-    DSVideoFrame m_latest_frame;
-    Array m_out_frame_data;
-    DSVideoFrame m_out_latest_frame;
-
-    std::mutex m_audio_mutex;
-    Array m_audio_data;
-    DSAudioSample m_latest_sample;
-    Array m_out_audio_data;
-    DSAudioSample m_out_latest_sample;
+    DSVideoFrameQueue m_video_frame_queue;
+    DSAudioSampleQueue m_audio_sample_queue;
 };
 
 class DSCamDeviceMgr {
@@ -500,9 +668,8 @@ public:
     }
 
     // 获取最新的视频帧, 只有在 config 中没有配置 data_cb 的时候才能使用
-    // @param onlyNewFrame 是否只获取新的帧 如果没有新的帧则返回空
-    const DSVideoFrame *getLatestFrame(bool onlyNewFrame = true) {
-        return capture_mgr ? capture_mgr->getLatestVideoFrame(onlyNewFrame) : nullptr;
+    const DSVideoFrame *obtainFrame(bool requestNewest = false) {
+        return capture_mgr ? capture_mgr->obtainVideoFrame(requestNewest) : nullptr;
     }
 
 private:
