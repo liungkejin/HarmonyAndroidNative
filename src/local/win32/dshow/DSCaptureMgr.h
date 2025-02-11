@@ -75,6 +75,10 @@ public:
         return width >= m_min_width && width <= m_max_width && height >= m_min_height && height <= m_max_height;
     }
 
+    int width() const { return m_max_width; }
+
+    int height() const { return m_max_height; }
+
     int minWidth() const { return m_min_width; }
 
     int minHeight() const { return m_min_height; }
@@ -597,8 +601,18 @@ public:
         m_video_cfg.frame_interval = interval;
     }
 
-    void setCfgInternalFmt(DSVideoFmt fmt) {
+    /**
+     * 设置内部格式
+     * @param fmt 内部格式
+     * @param outputRGB24IfSupport 如果内部格式支持转换未RGB24，那么设置desire_fmt为RGB24
+     */
+    void setCfgInternalFmt(DSVideoFmt fmt, bool outputRGB24IfSupport = true) {
         m_video_cfg.internal_fmt = fmt;
+        if (outputRGB24IfSupport && DSUtils::fmtSupportConvertToRGB24(fmt)) {
+            m_video_cfg.desire_fmt = DSVideoFmt::RGB24;
+        } else {
+            m_video_cfg.desire_fmt = fmt;
+        }
 
         auto streams = m_cur_device.getStreams(m_video_cfg.internal_fmt);
         // 判断分辨率是否支持

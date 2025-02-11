@@ -135,6 +135,30 @@ public:
         }
     }
 
+    static bool fmtSupportConvertToRGB24(DSVideoFmt fmt) {
+        switch (fmt) {
+            case DSVideoFmt::RGB24:
+            case DSVideoFmt::XRGB:
+            // case DSVideoFmt::RGB555:
+            // case DSVideoFmt::RGB565:
+            case DSVideoFmt::YUY2:
+            case DSVideoFmt::YVYU:
+            // case DSVideoFmt::YUYV:
+            // case DSVideoFmt::IYUV:
+            case DSVideoFmt::UYVY:
+            case DSVideoFmt::YV12:
+            // case DSVideoFmt::YVU9:
+            // case DSVideoFmt::Y411:
+            // case DSVideoFmt::Y41P:
+            // case DSVideoFmt::Y211:
+            // case DSVideoFmt::AYUV:
+            case DSVideoFmt::MJPEG:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     static std::string mediaTypeString(const GUID &guid) {
         if (guid == MEDIATYPE_Video) {
             return "MEDIATYPE_Video";
