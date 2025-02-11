@@ -84,7 +84,7 @@ bool DSCaptureMgr::setVideoConfig(const DSVideoConfig &config) {
 
     DShow::VideoConfig videoConfig;
     videoConfig.callback = [this](const DShow::VideoConfig &cfg, unsigned char *data, size_t size, long long startTime, long long stopTime, long rotation) {
-        _INFO("video frame callback: size=%d, startTime=%lld, stopTime=%lld, rotation=%ld", size, startTime, stopTime, rotation);
+        // _INFO("video frame callback: size=%d, startTime=%lld, stopTime=%lld, rotation=%ld", size, startTime, stopTime, rotation);
         if (m_video_cfg.data_cb) {
             DSVideoFrame frame = {
                 cfg.cx,
@@ -207,6 +207,8 @@ bool DSCaptureMgr::start() {
     if (device.Start() == DShow::Result::Error) {
         return false;
     }
+    m_video_frame_queue.reset();
+    m_audio_sample_queue.reset();
     m_started = true;
     return true;
 }
@@ -243,6 +245,9 @@ void DSCaptureMgr::release() {
 
         delete (DShow::Device *) m_context;
         m_context = nullptr;
+
+        m_video_frame_queue.release();
+        m_audio_sample_queue.release();
     }
 }
 

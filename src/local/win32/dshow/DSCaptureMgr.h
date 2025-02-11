@@ -306,6 +306,8 @@ protected:
         return m_back < 0 ? m_back : m_back % m_que_size;
     }
 
+    int queSize() const { return m_que_size; }
+
     std::mutex m_mutex;
 private:
     const int m_que_size;
@@ -364,6 +366,14 @@ public:
         return &m_output_frame;
     }
 
+    void release() {
+        LOCK_MUTEX(m_mutex);
+        for (int i = 0; i < queSize(); i++) {
+            m_data[i].free();
+        }
+        m_output_data.free();
+    }
+
 private:
     DSVideoFrame *m_frames;
     Array *m_data;
@@ -420,6 +430,14 @@ public:
 
         DSDataQueue::backForward(getNewest);
         return &m_output_frame;
+    }
+
+    void release() {
+        LOCK_MUTEX(m_mutex);
+        for (int i = 0; i < queSize(); i++) {
+            m_data[i].free();
+        }
+        m_output_data.free();
     }
 
 private:
