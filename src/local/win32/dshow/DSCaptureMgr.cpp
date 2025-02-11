@@ -85,32 +85,26 @@ bool DSCaptureMgr::setVideoConfig(const DSVideoConfig &config) {
     DShow::VideoConfig videoConfig;
     videoConfig.callback = [this](const DShow::VideoConfig &cfg, unsigned char *data, size_t size, long long startTime, long long stopTime, long rotation) {
         // _INFO("video frame callback: size=%d, startTime=%lld, stopTime=%lld, rotation=%ld", size, startTime, stopTime, rotation);
+        int64_t intervalUs = cfg.frameInterval / 10;
+        int64_t ptUs = startTime / 10;
+        /* RGB DIBs are bottom-up by default */
+        bool flip = cfg.format == DShow::VideoFormat::XRGB || cfg.format == DShow::VideoFormat::ARGB || cfg.format == DShow::VideoFormat::RGB24;
+        DSVideoFrame frame = {
+            cfg.cx,
+            cfg.cy_abs,
+            (DSVideoFmt) cfg.format,
+            data,
+            size,
+            flip,
+            intervalUs,
+            ptUs,
+            rotation
+        };
         if (m_video_cfg.data_cb) {
-            DSVideoFrame frame = {
-                cfg.cx,
-                cfg.cy_abs,
-                (DSVideoFmt) cfg.format,
-                data,
-                size,
-                cfg.frameInterval,
-                startTime,
-                stopTime,
-                rotation
-            };
             m_video_cfg.data_cb(frame);
         } else {
             // copy data
-            m_video_frame_queue.pushFrame(
-                cfg.cx,
-                cfg.cy_abs,
-                (DSVideoFmt) cfg.format,
-                cfg.frameInterval,
-                data,
-                size,
-                startTime,
-                stopTime,
-                rotation
-            );
+            m_video_frame_queue.pushFrame(frame);
         }
     };
     videoConfig.reactivateCallback = [this]() {
@@ -141,6 +135,9 @@ bool DSCaptureMgr::setVideoConfig(const DSVideoConfig &config) {
     m_video_cfg.frame_interval = videoConfig.frameInterval;
     m_video_cfg.internal_fmt = (DSVideoFmt) videoConfig.internalFormat;
     m_video_cfg.desire_fmt = (DSVideoFmt) videoConfig.format;
+    _INFO("set video config: size(%d x %d), flip: %d, interval: %lld, internal fmt: %s, desire fmt: %s",
+        m_video_cfg.width, m_video_cfg.height, m_video_cfg.flip, m_video_cfg.frame_interval,
+        DSUtils::videoFmtString((int)m_video_cfg.internal_fmt), DSUtils::videoFmtString((int)m_video_cfg.desire_fmt));
     return true;
 }
 
@@ -153,20 +150,20 @@ bool DSCaptureMgr::setAudioConfig(const DSAudioConfig &config) {
 
     DShow::AudioConfig audioConfig;
     audioConfig.callback = [this](const DShow::AudioConfig &cfg, unsigned char *data, size_t size, long long startTime, long long stopTime) {
+        int64_t ptUs = startTime / 10;
+        DSAudioSample sample = {
+            cfg.sampleRate,
+            cfg.channels,
+            (DSAudioFmt) cfg.format,
+            data,
+            size,
+            ptUs
+        };
         if (m_audio_cfg.data_cb) {
-            DSAudioSample sample = {
-                cfg.sampleRate,
-                cfg.channels,
-                (DSAudioFmt) cfg.format,
-                data,
-                size,
-                startTime,
-                stopTime
-            };
             m_audio_cfg.data_cb(sample);
         } else {
             // copy data
-            m_audio_sample_queue.pushSample(cfg.sampleRate, cfg.channels, (DSAudioFmt) cfg.format, data, size, startTime, stopTime);
+            m_audio_sample_queue.pushSample(sample);
         }
     };
     audioConfig.useVideoDevice = config.use_video_device;
@@ -186,6 +183,8 @@ bool DSCaptureMgr::setAudioConfig(const DSAudioConfig &config) {
     m_audio_cfg.sample_rate = audioConfig.sampleRate;
     m_audio_cfg.channels = audioConfig.channels;
     m_audio_cfg.format = (DSAudioFmt) audioConfig.format;
+    _INFO("set audio config: sample rate: %d, channels: %d, format: %s",
+        m_audio_cfg.sample_rate, m_audio_cfg.channels, DSUtils::audioFmtString((int)m_audio_cfg.format));
     return true;
 }
 

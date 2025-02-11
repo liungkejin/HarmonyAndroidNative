@@ -22,9 +22,9 @@ struct DSVideoFrame {
     unsigned char *data = nullptr;
     size_t size = 0;
 
-    int64_t frame_interval = 0;
-    int64_t startTime = 0;
-    int64_t stopTime = 0;
+    bool flip = false;
+    int64_t intervalUs = 0;
+    int64_t ptUs = 0;
     long rotation = 0;
 };
 
@@ -36,8 +36,7 @@ struct DSAudioSample {
     DSAudioFmt fmt = DSAudioFmt::Any;
     unsigned char *data = nullptr;
     size_t size = 0;
-    int64_t startTime = 0;
-    int64_t stopTime = 0;
+    int64_t ptUs = 0;
 };
 
 typedef std::function<void(DSAudioSample& sample)> DSAudioDataCallback;
@@ -333,22 +332,14 @@ public:
         delete[] m_data;
     }
 public:
-    void pushFrame(int width, int height, DSVideoFmt fmt, int64_t frame_interval,
-                  const uint8_t *data, size_t size, long long startTime, long long stopTime, long rotation) {
+    void pushFrame(const DSVideoFrame &ff) {
         LOCK_MUTEX(m_mutex);
         int index = frontIndex();
         auto &frame = m_frames[index];
-        frame.width = width;
-        frame.height = height;
-        frame.fmt = fmt;
-        frame.frame_interval = frame_interval;
-        auto dst = m_data[index].obtain<uint8_t>(size, false);
-        memcpy(dst, data, size);
+        frame = ff;
+        auto dst = m_data[index].obtain<uint8_t>(ff.size, false);
+        memcpy(dst, ff.data, ff.size);
         frame.data = dst;
-        frame.size = size;
-        frame.startTime = startTime;
-        frame.stopTime = stopTime;
-        frame.rotation = rotation;
 
         DSDataQueue::frontForward();
     }
@@ -399,21 +390,15 @@ public:
         delete[] m_data;
     }
 public:
-    void pushSample(int sampleRate, int channels, DSAudioFmt fmt,
-            const uint8_t *data, size_t size, long long startTime, long long stopTime) {
+    void pushSample(const DSAudioSample& ss) {
         LOCK_MUTEX(m_mutex);
 
         int index = frontIndex();
         auto &frame = m_frames[index];
-        frame.sampleRate = sampleRate;
-        frame.channels = channels;
-        frame.fmt = fmt;
-        auto dst = m_data[index].obtain<uint8_t>(size, false);
-        memcpy(dst, data, size);
+        frame = ss;
+        auto dst = m_data[index].obtain<uint8_t>(ss.size, false);
+        memcpy(dst, ss.data, ss.size);
         frame.data = dst;
-        frame.size = size;
-        frame.startTime = startTime;
-        frame.stopTime = stopTime;
 
         DSDataQueue::frontForward();
     }
@@ -565,7 +550,7 @@ public:
         return m_cur_device;
     }
 
-    void setDevice(const DSVideoDeviceInfo &device) {
+    void setDevice(const DSVideoDeviceInfo &device, bool outputRGB24IfSupport = true) {
         m_cur_device = device;
         // 更新配置, 如果当前配置不支持当前设备，那么选择第一个支持的配置
         m_video_cfg.name = device.name();
@@ -575,17 +560,7 @@ public:
         if (formats.empty()) {
             return;
         }
-        m_video_cfg.internal_fmt = formats[0];
-        m_video_cfg.desire_fmt = formats[0];
-        auto streams = device.getStreams(m_video_cfg.internal_fmt);
-        if (!streams.empty()) {
-            m_video_cfg.width = streams[0].minWidth();
-            m_video_cfg.height = streams[0].minHeight();
-            m_video_cfg.frame_interval = streams[0].minInterval();
-        } else {
-            m_video_cfg.width = 0;
-            m_video_cfg.height = 0;
-        }
+        setCfgInternalFmt(formats[0], outputRGB24IfSupport);
     }
 
     void setCfgSize(int width, int height) {
