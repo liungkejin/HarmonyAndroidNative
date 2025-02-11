@@ -1,4 +1,4 @@
-set(LOCAL_SAMPLE_DIR ${CMAKE_SOURCE_DIR}/samples/local)
+set(LOCAL_SAMPLE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/samples/local)
 set(SAMPLE_LIBS_DIR ${LOCAL_SAMPLE_DIR}/libs)
 set(SAMPLE_SRC_DIR ${LOCAL_SAMPLE_DIR}/src)
 
@@ -25,7 +25,7 @@ include_directories(
         ${SAMPLE_INCLUDES}
 )
 
-add_definitions(-DLOCAL_ASSETS_PATH="${CMAKE_SOURCE_DIR}/assets")
+add_definitions(-DLOCAL_ASSETS_PATH="${CMAKE_CURRENT_SOURCE_DIR}/assets")
 
 set(IMGUI_SRC
         ${SAMPLE_LIBS_DIR}/imgui-1.90.9/imgui.cpp

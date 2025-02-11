@@ -7,11 +7,9 @@
 #include <vector>
 #include <local/win32/cam/CamDevice.h>
 #include <local/win32/dshow/DSUtils.h>
-#include <camera/camera.h>
 #include <common/gles/Texture.h>
 #include <local/win32/dshow/DSCaptureMgr.h>
 
-using namespace DirectShowCamera;
 using namespace znative;
 
 DSCamDeviceMgr cam_mgr;
@@ -49,6 +47,8 @@ void WinCamTestWindow::onPreRender(int width, int height) {
 
             if (frame->fmt == DSVideoFmt::RGB24) {
                 m_img_tex.set(frame->data, frame->width, frame->height, GL_BGR);
+            } else if (frame->fmt == DSVideoFmt::NV12) {
+                m_img_tex.set(frame->data, frame->width, frame->height, GL_ALPHA);
             }
         }
     }

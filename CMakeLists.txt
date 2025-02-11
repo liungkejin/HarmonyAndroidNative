@@ -44,6 +44,7 @@ set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
 option(ZNATIVE_INSTALL_STATIC "Install static library" ON) # install shared library
+option(ZNATIVE_LOCAL_SAMPLE_ENABLE "Enable local sample" ON) # use local sample
 
 set(TARGET_SHARED ${PROJ_NAME}-shared)
 set(TARGET_STATIC ${PROJ_NAME}-static)
@@ -131,11 +132,11 @@ set(COMMON_INCLUDES
 )
 
 if (ZANDROID)
-    include(cmake/Android.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Android.cmake)
 elseif (ZOHOS)
-    include(cmake/HarmonyOS.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/HarmonyOS.cmake)
 else ()
-    include(cmake/Local.cmake)
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Local.cmake)
 endif ()
 
 # OpenCV
@@ -187,33 +188,7 @@ message(STATUS "COMMON_LIBS: ${COMMON_LIBS}")
 message(STATUS "PLATFORM_LIBS: ${PLATFORM_LIBS}")
 
 # install
-install(FILES src/ZNamespace.h src/ZNative.h
-        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR})
-install(DIRECTORY src/common
-        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
-        FILES_MATCHING PATTERN "*.h")
-install(DIRECTORY ${PLATFORM_SRC_PATH}
-        DESTINATION ${ZNATIVE_INCLUDE_INSTALL_DIR}
-        FILES_MATCHING PATTERN "*.h")
-# install third-party libs
-install(FILES ${COMMON_LIBS_PATH}/tinyformat/tinyformat.h
-        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
-install(DIRECTORY ${COMMON_LIBS_PATH}/json/nlohmann
-        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
-install(DIRECTORY ${COMMON_LIBS_PATH}/eventpp-0.1.3/include/eventpp
-        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
-install(DIRECTORY ${COMMON_LIBS_PATH}/libyuv-stable/include/libyuv
-        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
-install(FILES ${COMMON_LIBS_PATH}/libyuv-stable/include/libyuv.h
-        DESTINATION ${THIRDPARTY_INCLUDE_INSTALL_DIR})
-
-if (${ZNATIVE_INSTALL_STATIC})
-    install(TARGETS ${TARGET_STATIC} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
-else ()
-    install(TARGETS ${TARGET_SHARED} DESTINATION ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
-endif ()
-
-install(FILES cmake/ZNativeConfig.cmake DESTINATION ${CMAKE_INSTALL_PREFIX})
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Install.cmake)
 
 ## 注意这些变量 cache string 一旦存储之后就不会改动了，所以不能依赖这个变量
 set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE STRING "all includes")
@@ -222,6 +197,6 @@ set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all depend li
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 set(ZNATIVE_DEFINITIONS ${ALL_DEFINITIONS} CACHE STRING "all definitions")
 
-if (${PLATFORM} MATCHES "local")
-    include(samples/local/Local-sample.cmake)
+if (${ZNATIVE_LOCAL_SAMPLE_ENABLE} AND ${PLATFORM} MATCHES "local")
+    include(${CMAKE_CURRENT_SOURCE_DIR}/samples/local/Local-sample.cmake)
 endif ()

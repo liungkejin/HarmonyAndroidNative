@@ -1,3 +1,7 @@
+option(ZNATIVE_WIN32_GLEW_ENABLE "Enable glew library" ON) # use glew library
+option(ZNATIVE_WIN32_DS_CAMERA_ENABLE "Enable directshow camera library" OFF) # use directshow camera library
+option(ZNATIVE_WIN32_LIB_DS_CAPTURE_ENABLE "Enable libdshowcapture library" ON) # use libdshowcapture library
+
 if (${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
         ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD" OR
         ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
@@ -33,36 +37,55 @@ if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif ()
 
-set(GLEW_DIR "${PLATFORM_LIBS_PATH}/glew-2.1.0")
-add_subdirectory(${GLEW_DIR})
+if (${ZNATIVE_WIN32_GLEW_ENABLE})
+    set(GLEW_DIR "${PLATFORM_LIBS_PATH}/glew-2.1.0")
+    add_subdirectory(${GLEW_DIR})
 
-set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/directshow_camera")
-add_subdirectory(${DS_CAMERA_DIR})
+    set(PLATFORM_LIBS
+            ${PLATFORM_LIBS}
+            glew_s
+    )
+    set(PLATFORM_INCLUDES
+            ${PLATFORM_INCLUDES}
+            ${GLEW_DIR}/include
+    )
+endif ()
 
-set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/libdshowcapture")
-set(BUILD_SHARED_LIBS OFF)
-add_subdirectory(${LIB_DS_CAPTURE_DIR})
-message(STATUS "libdshowcapture include dir: ${libdshowcapture_HEADERS}")
+if (${ZNATIVE_WIN32_DS_CAMERA_ENABLE})
+    set(DS_CAMERA_DIR "${PLATFORM_LIBS_PATH}/directshow_camera")
+    add_subdirectory(${DS_CAMERA_DIR})
+    set(PLATFORM_LIBS
+            ${PLATFORM_LIBS}
+            directshow_camera
+    )
+    set(PLATFORM_INCLUDES
+            ${PLATFORM_INCLUDES}
+            ${DS_CAMERA_DIR}/src/directshow_camera/src
+    )
+endif ()
 
-set(PLATFORM_LIBS
-        ${PLATFORM_LIBS}
-        glew_s
-        directshow_camera
-        libdshowcapture
-        #                        win-dshow
-)
+if (${ZNATIVE_WIN32_LIB_DS_CAPTURE_ENABLE})
+    set(LIB_DS_CAPTURE_DIR "${PLATFORM_LIBS_PATH}/libdshowcapture")
+    set(BUILD_SHARED_LIBS OFF)
+    add_subdirectory(${LIB_DS_CAPTURE_DIR})
 
-set(PLATFORM_INCLUDES
-        ${PLATFORM_INCLUDES}
-        ${GLEW_DIR}/include
-        ${DS_CAMERA_DIR}/src/directshow_camera/src
-        ${LIB_DS_CAPTURE_DIR}
-)
+    set(PLATFORM_LIBS
+            ${PLATFORM_LIBS}
+            libdshowcapture
+    )
+    set(PLATFORM_INCLUDES
+            ${PLATFORM_INCLUDES}
+            ${LIB_DS_CAPTURE_DIR}
+    )
+    set(PLATFORM_SOURCES
+            ${PLATFORM_SOURCES}
+            ${PLATFORM_SRC_PATH}/dshow/DSCaptureMgr.cpp
+    )
+endif ()
 
 set(PLATFORM_SOURCES
         ${PLATFORM_SOURCES}
         ${PLATFORM_SRC_PATH}/dshow/DeviceEnumerator.cpp
-        ${PLATFORM_SRC_PATH}/dshow/DSCaptureMgr.cpp
         ${PLATFORM_SRC_PATH}/cam/CamDevice.cpp
 )
 set(PLATFORM_LIBS
