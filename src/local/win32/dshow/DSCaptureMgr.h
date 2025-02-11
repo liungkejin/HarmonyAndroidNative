@@ -87,9 +87,9 @@ public:
 
     int maxInterval() const { return m_max_interval; }
 
-    int minFPS() const { return m_min_interval == 0 ? 0 : (int) (10010000 / m_min_interval); }
+    int maxFPS() const { return m_min_interval == 0 ? 0 : (int) (10010000 / m_min_interval); }
 
-    int maxFPS() const { return m_max_interval == 0 ? 0 : (int) (10010000 / m_max_interval); }
+    int minFPS() const { return m_max_interval == 0 ? 0 : (int) (10010000 / m_max_interval); }
 
     DSVideoFmt format() const { return m_fmt; }
 
@@ -103,6 +103,7 @@ public:
         }
         ss << "granularity: " << m_granularity_x << "x" << m_granularity_y << ", ";
         ss << "frame interval: [" << m_min_interval << " - " << m_max_interval << "], ";
+        ss << "fps range: [" << minFPS() << " - " << maxFPS() << "], ";
         ss << "format: " << DSUtils::videoFmtString((int) m_fmt);
         ss << "}";
         return ss.str();
