@@ -583,7 +583,8 @@ public:
      */
     void setCfgInternalFmt(DSVideoFmt fmt, bool outputRGB24IfSupport = true) {
         m_video_cfg.internal_fmt = fmt;
-        if (outputRGB24IfSupport && DSUtils::fmtSupportConvertToRGB24(fmt)) {
+        bool isobs = m_video_cfg.name == "OBS Virtual Camera"; // obs虚拟摄像头不支持转换为RGB24
+        if (outputRGB24IfSupport && DSUtils::fmtSupportConvertToRGB24(fmt) && !isobs) {
             m_video_cfg.desire_fmt = DSVideoFmt::RGB24;
         } else {
             m_video_cfg.desire_fmt = fmt;
