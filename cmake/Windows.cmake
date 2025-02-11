@@ -1,4 +1,3 @@
-option(ZNATIVE_WIN32_GLEW_ENABLE "Enable glew library" ON) # use glew library
 option(ZNATIVE_WIN32_DS_CAMERA_ENABLE "Enable directshow camera library" OFF) # use directshow camera library
 option(ZNATIVE_WIN32_LIB_DS_CAPTURE_ENABLE "Enable libdshowcapture library" ON) # use libdshowcapture library
 
@@ -37,7 +36,7 @@ if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif ()
 
-if (${ZNATIVE_WIN32_GLEW_ENABLE})
+if (${ZNATIVE_GL_ENABLE})
     set(GLEW_DIR "${PLATFORM_LIBS_PATH}/glew-2.1.0")
     add_subdirectory(${GLEW_DIR})
 

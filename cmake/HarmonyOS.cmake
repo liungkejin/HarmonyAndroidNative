@@ -24,8 +24,6 @@ set(PLATFORM_SOURCES
         ${PLATFORM_SRC_PATH}/Harmony.cpp
         ${PLATFORM_SRC_PATH}/AppContext.cpp
         ${PLATFORM_SRC_PATH}/utils/NapiUtils.cpp
-        ${PLATFORM_SRC_PATH}/xcomp/XComponent.cpp
-        ${PLATFORM_SRC_PATH}/xcomp/XCompGLBinder.cpp
         ${PLATFORM_SRC_PATH}/cam/CamDevice.cpp
         ${PLATFORM_SRC_PATH}/cam/CamInput.cpp
         ${PLATFORM_SRC_PATH}/cam/CamManager.cpp
@@ -64,9 +62,6 @@ set(PLATFORM_LIBS
         libimage_packer.so
         libmedia_asset_manager.so
 
-        libEGL.so
-        libGLESv2.so
-        libGLESv3.so
         libnative_window.so
         libnative_buffer.so
 
@@ -95,3 +90,17 @@ set(PLATFORM_LIBS
         ace_ndk.z
         uv
 )
+
+if (${ZNATIVE_GL_ENABLE})
+    set(PLATFORM_SOURCES
+            ${PLATFORM_SOURCES}
+            ${PLATFORM_SRC_PATH}/xcomp/XComponent.cpp
+            ${PLATFORM_SRC_PATH}/xcomp/XCompGLBinder.cpp
+    )
+    set(PLATFORM_LIBS
+            ${PLATFORM_LIBS}
+            libEGL.so
+            libGLESv2.so
+            libGLESv3.so
+    )
+endif ()

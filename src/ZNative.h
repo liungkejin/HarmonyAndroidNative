@@ -7,7 +7,3 @@
 #pragma once
 
 #include "common/Common.h"
-
-#include "common/gles/GLUtil.h"
-#include "common/gles/filter/TextureFilter.h"
-#include "common/gles/filter/NV21Filter.h"

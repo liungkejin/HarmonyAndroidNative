@@ -4,7 +4,6 @@ set(OpenCV_DIR ${PLATFORM_LIBS_PATH}/opencv-4.3.0/sdk/native/jni)
 set(PLATFORM_SOURCES
         src/android/AppContext.cpp
         src/android/utils/JNIUtils.cpp
-        src/android/surface/NativeWindow.cpp
         src/android/cam/CamManager.cpp
         src/android/cam/CamUtils.cpp
         src/android/cam/CamCharacteristics.cpp
@@ -19,9 +18,19 @@ set(PLATFORM_LIBS
         log
         z
         jnigraphics
-        GLESv2
-        GLESv3
-        EGL
         camera2ndk
         mediandk
 )
+
+if (${ZNATIVE_GL_ENABLE})
+    set(PLATFORM_SOURCES
+            ${PLATFORM_SOURCES}
+            src/android/surface/NativeWindow.cpp
+    )
+    set(PLATFORM_LIBS
+            ${PLATFORM_LIBS}
+            GLESv2
+            GLESv3
+            EGL
+    )
+endif ()

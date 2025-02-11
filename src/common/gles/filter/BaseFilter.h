@@ -6,10 +6,10 @@
 
 
 #pragma once
-#include "common/gles/Framebuffer.h"
-#include "common/gles/GLCoord.h"
-#include "common/gles/Program.h"
-#include "common/gles/Viewport.h"
+#include "../Framebuffer.h"
+#include "../GLCoord.h"
+#include "../Program.h"
+#include "../Viewport.h"
 
 NAMESPACE_DEFAULT
 

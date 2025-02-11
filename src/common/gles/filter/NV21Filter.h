@@ -8,7 +8,7 @@
 #pragma once
 
 #include "BaseFilter.h"
-#include "common/gles/GLUtil.h"
+#include "../GLUtil.h"
 #include <cstdint>
 #include <mutex>
 

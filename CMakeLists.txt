@@ -18,8 +18,11 @@ set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 # PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
 #                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
 # TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
-# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认不启用
-# ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
+# ZNATIVE_OPENCV_ENABLE       是否启用 opencv 默认不启用
+# ZNATIVE_INSTALL_STATIC      是否安装静态库，默认安装静态库
+# ZNATIVE_LOCAL_SAMPLE_ENABLE 是否启用本地示例，默认启用
+# ZNATIVE_GL_ENABLE           是否启用 EGL/OpenGL 默认启用
+#
 #
 # COMMON_LIBS_PATH          公共第三方库路径
 # COMMON_INCLUDES           所有公共的 include 目录
@@ -44,7 +47,8 @@ set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
 option(ZNATIVE_INSTALL_STATIC "Install static library" ON) # install shared library
-option(ZNATIVE_LOCAL_SAMPLE_ENABLE "Enable local sample" ON) # use local sample
+option(ZNATIVE_LOCAL_SAMPLE_ENABLE "Enable local sample" ON) # enable local sample
+option(ZNATIVE_GL_ENABLE "Enable EGL/OpenGL" ON) # enable OpenGL
 
 set(TARGET_SHARED ${PROJ_NAME}-shared)
 set(TARGET_STATIC ${PROJ_NAME}-static)
@@ -93,7 +97,11 @@ else ()
     endif ()
 endif ()
 
-message(STATUS "ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
+message(STATUS "option ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
+message(STATUS "option ZNATIVE_INSTALL_STATIC: ${ZNATIVE_INSTALL_STATIC}")
+message(STATUS "option ZNATIVE_LOCAL_SAMPLE_ENABLE: ${ZNATIVE_LOCAL_SAMPLE_ENABLE}")
+message(STATUS "option ZNATIVE_GL_ENABLE: ${ZNATIVE_GL_ENABLE}")
+
 message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
 # 公共第三方库路径
@@ -161,9 +169,6 @@ set(COMMON_SOURCES
         ${COMMON_SRC_PATH}/Log.cpp
         ${COMMON_SRC_PATH}/utils/YuvUtils.cpp
         ${COMMON_SRC_PATH}/utils/FileUtils.cpp
-        ${COMMON_SRC_PATH}/egl/EGLCtx.cpp
-        ${COMMON_SRC_PATH}/egl/GLEngine.cpp
-        ${COMMON_SRC_PATH}/gles/GLUtil.cpp
         ${COMMON_SRC_PATH}/media/ZMedia.cpp
 )
 set(COMMON_INCLUDES
@@ -171,6 +176,15 @@ set(COMMON_INCLUDES
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${LIBYUV_PATH}/include
 )
+
+if (${ZNATIVE_GL_ENABLE})
+    set(COMMON_SOURCES
+            ${COMMON_SOURCES}
+            ${COMMON_SRC_PATH}/egl/EGLCtx.cpp
+            ${COMMON_SRC_PATH}/egl/GLEngine.cpp
+            ${COMMON_SRC_PATH}/gles/GLUtil.cpp
+    )
+endif ()
 
 add_definitions(${ALL_DEFINITIONS})
 
