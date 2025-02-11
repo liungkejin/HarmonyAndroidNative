@@ -63,7 +63,8 @@ build/                   # 构建目录
    |_ local/             # 本地构建目录
         |_ debug/        # 本地 Debug 构建目录
         |_ release/      # 本地 Release 构建目录
-   |_ install/           # 安装目录
+
+install/           # 安装目录
    
 libs/                    # 依赖库目录
     |_ android/          # Android 依赖库目录
@@ -96,19 +97,21 @@ CMakeLists.txt           # 项目 CMakeLists.txt
 
 ```cmake
 #
-# 两个 option:
-# ZNATIVE_OPENCV_ENABLE     是否启用 opencv 默认不启用
-# ZNATIVE_INSTALL_STATIC    是否安装静态库，默认安装静态库
+# 几个 option:
+# ZNATIVE_OPENCV_ENABLE       是否启用 opencv 默认不启用
+# ZNATIVE_INSTALL_STATIC      是否安装静态库，默认安装静态库
+# ZNATIVE_LOCAL_SAMPLE_ENABLE 是否启用本地示例，默认启用
+# ZNATIVE_GL_ENABLE           是否启用 OpenGL 默认启用
 #
 # 输出的 target:
 # ${PROJ_NAME}-shared       共享库
 # ${PROJ_NAME}-static       静态库
 #
 # 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以被引用工程所使用
-# ZNATIVE_INCLUDES   所有的include目录
-# ZNATIVE_SOURCES    所有的源文件
-# ZNATIVE_DEP_LIBS   所有的依赖库
-# ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
+# ZNATIVE_INCLUDES    所有的include目录
+# ZNATIVE_SOURCES     所有的源文件
+# ZNATIVE_DEP_LIBS    所有的依赖库
+# ZNATIVE_OPENCV_DIR  如果启用 opencv 的话，输出 opencv 的路径
 # ZNATIVE_DEFINITIONS 所有的宏定义
 #
 
