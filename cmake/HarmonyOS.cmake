@@ -40,6 +40,7 @@ set(PLATFORM_SOURCES
         ${PLATFORM_SRC_PATH}/media/audio/AudioEncoder.cpp
         ${PLATFORM_SRC_PATH}/media/video/VideoEncoder.cpp
         ${PLATFORM_SRC_PATH}/sensor/SensorGravity.cpp
+        ${PLATFORM_SRC_PATH}/sensor/SensorAccelerometer.cpp
         ${PLATFORM_SRC_PATH}/sensor/SensorMgr.cpp
         ${PLATFORM_SRC_PATH}/mslite/MSLitePredictor.cpp
         ${PLATFORM_SRC_PATH}/hiai/HiAI.cpp
@@ -76,6 +77,7 @@ set(PLATFORM_LIBS
         libohaudio.so
 
         libace_napi.z.so
+        libdeviceinfo_ndk.z.so
 
         librawfile.z.so
         libohresmgr.so

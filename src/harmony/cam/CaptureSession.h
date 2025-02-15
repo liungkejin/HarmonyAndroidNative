@@ -93,14 +93,14 @@ public:
 
     inline bool isStarted() const { return m_started; }
 
-    CamErrorCode start();
+    CamErrorCode start(bool force = false);
 
     CamErrorCode stop();
 
 public:
     // flash
     bool hasFlash() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, false, "IllegalStateError: m_session == nullptr")
 
         bool hasFlash = false;
         CamErrorCode error = OH_CaptureSession_HasFlash(m_session, &hasFlash);
@@ -110,7 +110,7 @@ public:
     }
 
     bool isFlashModeSupported(Camera_FlashMode mode) const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, false, "IllegalStateError: m_session == nullptr")
 
         bool isSupported = false;
         CamErrorCode error = OH_CaptureSession_IsFlashModeSupported(m_session, mode, &isSupported);
@@ -119,7 +119,7 @@ public:
     }
 
     Camera_FlashMode getFlashMode() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, FLASH_MODE_CLOSE, "IllegalStateError: m_session == nullptr")
 
         Camera_FlashMode mode = Camera_FlashMode::FLASH_MODE_CLOSE;
         CamErrorCode error = OH_CaptureSession_GetFlashMode(m_session, &mode);
@@ -128,7 +128,7 @@ public:
     }
 
     CamErrorCode setFlashMode(Camera_FlashMode mode) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_SetFlashMode(m_session, mode);
         _WARN_IF(error, "SetFlashMode(%s) failed: %s", CamUtils::flashModeStr(mode), CamUtils::errString(error));
@@ -138,7 +138,7 @@ public:
 
     // exposure mode
     bool isExposureModeSupported(Camera_ExposureMode mode) const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, false, "IllegalStateError: m_session == nullptr")
 
         bool supported = false;
         CamErrorCode error = OH_CaptureSession_IsExposureModeSupported(m_session, mode, &supported);
@@ -148,7 +148,7 @@ public:
     }
 
     Camera_ExposureMode getExposureMode() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, Camera_ExposureMode::EXPOSURE_MODE_AUTO, "IllegalStateError: m_session == nullptr")
 
         Camera_ExposureMode result = Camera_ExposureMode::EXPOSURE_MODE_AUTO;
         CamErrorCode error = OH_CaptureSession_GetExposureMode(m_session, &result);
@@ -157,7 +157,7 @@ public:
     }
 
     CamErrorCode setExposureMode(Camera_ExposureMode mode) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_SetExposureMode(m_session, mode);
         _WARN_IF(error, "SetExposureMode(%s) failed: %s", CamUtils::exposureModeStr(mode), CamUtils::errString(error));
@@ -166,17 +166,19 @@ public:
 
     // metering
     CamErrorCode setMeteringPoint(double x, double y) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         Camera_Point p = {x, y};
-        CamErrorCode error = OH_CaptureSession_SetFocusPoint(m_session, p);
-        _WARN_IF(error, "SetFocusPoint(%f, %f) failed: %s", x, y, CamUtils::errString(error));
+        CamErrorCode error = OH_CaptureSession_SetMeteringPoint(m_session, p);
+        _WARN_IF(error, "setMeteringPoint(%f, %f) failed: %s", x, y, CamUtils::errString(error));
+        OH_CaptureSession_GetMeteringPoint(m_session, &p);
+        _INFO("Set metering point(%.2lf, %.2lf) get(%.2lf, %.2lf)", x, y, p.x, p.y);
         return error;
     }
 
     // exposure bias
     CamErrorCode getExposureBiasRange(float &min, float &max, float &step) const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_GetExposureBiasRange(m_session, &min, &max, &step);
         if (error) {
@@ -187,7 +189,7 @@ public:
     }
 
     CamErrorCode setExposureBias(float bias) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_SetExposureBias(m_session, bias);
         _WARN_IF(error, "SetExposureBias(%f) failed: %s", bias, CamUtils::errString(error));
@@ -195,7 +197,7 @@ public:
     }
 
     float getExposureBias() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, 0, "IllegalStateError: m_session == nullptr")
 
         float bias = 0;
         CamErrorCode error = OH_CaptureSession_GetExposureBias(m_session, &bias);
@@ -205,7 +207,7 @@ public:
 
     // focus mode
     bool isFocusModeSupported(Camera_FocusMode mode) const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, false, "IllegalStateError: m_session == nullptr")
 
         bool supported = false;
         CamErrorCode error = OH_CaptureSession_IsFocusModeSupported(m_session, mode, &supported);
@@ -215,7 +217,7 @@ public:
     }
 
     Camera_FocusMode getFocusMode() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, FOCUS_MODE_AUTO, "IllegalStateError: m_session == nullptr")
         Camera_FocusMode mode = FOCUS_MODE_AUTO;
         CamErrorCode error = OH_CaptureSession_GetFocusMode(m_session, &mode);
         _WARN_IF(error, "GetFocusMode() failed: %s", CamUtils::errString(error));
@@ -223,7 +225,7 @@ public:
     }
 
     CamErrorCode setFocusMode(Camera_FocusMode mode) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
         CamErrorCode error = OH_CaptureSession_SetFocusMode(m_session, mode);
         _WARN_IF(error, "SetFocusMode(%s) failed: %s", CamUtils::focusModeStr(mode), CamUtils::errString(error));
         return error;
@@ -238,17 +240,19 @@ public:
      * (0,1)-------------(1,1)
      */
     CamErrorCode setFocusPoint(double x, double y) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         Camera_Point point = {x, y};
         CamErrorCode error = OH_CaptureSession_SetFocusPoint(m_session, point);
         _WARN_IF(error, "SetFocusPoint(%f, %f) failed: %s", x, y, CamUtils::errString(error));
+        OH_CaptureSession_GetFocusPoint(m_session, &point);
+        _INFO("set focus point(%.2lf, %.2lf) get(%.2lf, %.2lf)", x, y, point.x, point.y);
         return error;
     }
 
     // zoom
     CamErrorCode getZoomRange(float &min, float &max) const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_GetZoomRatioRange(m_session, &min, &max);
         _WARN_IF(error, "GetZoomRange() failed: %s", CamUtils::errString(error));
@@ -256,7 +260,7 @@ public:
     }
 
     float getZoom() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session  == nullptr")
+        _ERROR_RETURN_IF(!m_session, 0, "IllegalStateError: m_session  == nullptr")
 
         float value = 0.0f;
         CamErrorCode error = OH_CaptureSession_GetZoomRatio(m_session, &value);
@@ -265,7 +269,7 @@ public:
     }
 
     CamErrorCode setZoom(float value) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_SetZoomRatio(m_session, value);
         _WARN_IF(error, "SetZoomRatio(%f) failed: %s", value, CamUtils::errString(error));
@@ -274,7 +278,7 @@ public:
 
     // Video stabilization mode
     bool isVideoStabilizationModeSupported(Camera_VideoStabilizationMode mode) const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, false, "IllegalStateError: m_session == nullptr")
 
         bool isSupported = false;
         CamErrorCode error = OH_CaptureSession_IsVideoStabilizationModeSupported(m_session, mode, &isSupported);
@@ -284,7 +288,7 @@ public:
     }
 
     Camera_VideoStabilizationMode getVideoStabilizationMode() const {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, STABILIZATION_MODE_OFF, "IllegalStateError: m_session == nullptr")
 
         Camera_VideoStabilizationMode mode = STABILIZATION_MODE_OFF;
         CamErrorCode error = OH_CaptureSession_GetVideoStabilizationMode(m_session, &mode);
@@ -293,7 +297,7 @@ public:
     }
 
     CamErrorCode setVideoStabilizationMode(Camera_VideoStabilizationMode mode) {
-        _FATAL_IF(m_session == nullptr, "IllegalStateError: m_session == nullptr")
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
 
         CamErrorCode error = OH_CaptureSession_SetVideoStabilizationMode(m_session, mode);
         _WARN_IF(error, "SetVideoStabilizationMode(%s) failed: %s", CamUtils::videoStabModeStr(mode),

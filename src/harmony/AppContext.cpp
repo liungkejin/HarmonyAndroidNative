@@ -4,6 +4,7 @@
 
 #include "common/AppContext.h"
 #include "harmony/utils/AssetsMgrHarmony.h"
+#include "utils/DeviceInfo.h"
 #include <bundle/native_interface_bundle.h>
 #include <rawfile/raw_file_manager.h>
 
@@ -37,6 +38,10 @@ void AppContext::initialize(napi_env env, napi_value jsResMgr,
 
     g_context.files_dir = dirFiles;
     g_context.cache_dir = dirCache;
+    
+    _INFO("AppContext initialized, files dir: %s, cache dir: %s", dirFiles, dirCache);
+    std::string devInfo = DeviceInfo::dump();
+    _INFO("%s", devInfo);
 }
 
 NativeResourceManager *AppContext::rawAssetsManager() {

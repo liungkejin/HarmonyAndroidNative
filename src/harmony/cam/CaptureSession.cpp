@@ -352,9 +352,9 @@ CamErrorCode CaptureSession::removeMetadataOutput(const MetadataOutput *output) 
     return CAMERA_OK;
 }
 
-CamErrorCode CaptureSession::start() {
+CamErrorCode CaptureSession::start(bool force) {
     _FATAL_IF(m_session == nullptr, "CaptureSession::start failed: m_session == nullptr")
-    if (m_started) {
+    if (m_started && !force) {
         return CAMERA_OK;
     }
 

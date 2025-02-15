@@ -67,7 +67,7 @@ public:
     
     virtual void onPhotoAvailable(PhotoOutput &output, NativePhoto& photo) {}
     
-    virtual void onPhotoAssetAvailable(PhotoOutput &output, MediaAsset *asset) {}
+    virtual void onPhotoAssetAvailable(PhotoOutput &output, OH_MediaAsset *masset) {}
 };
 
 typedef Camera_PhotoCaptureSetting PhotoCaptureSetting;

@@ -81,13 +81,12 @@ static void onPhotoAvailable(Camera_PhotoOutput *output, OH_PhotoNative *photo) 
     }
 }
 
-static void onPhotoAssetAvailable(Camera_PhotoOutput *output, OH_MediaAsset *asset) {
+static void onPhotoAssetAvailable(Camera_PhotoOutput *output, OH_MediaAsset *masset) {
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "callback onEstimatedCaptureDuration output(%p) not found", output);
     
-    MediaAsset *mediaAsset = new MediaAsset(asset);
     for (auto &cb : *it) {
-        cb.second->onPhotoAssetAvailable(cb.first, mediaAsset);
+        cb.second->onPhotoAssetAvailable(cb.first, masset);
     }
 }
 

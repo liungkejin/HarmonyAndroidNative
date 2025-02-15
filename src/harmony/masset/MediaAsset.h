@@ -9,6 +9,7 @@
 
 #include "common/Object.h"
 #include "MAssetUtils.h"
+#include "utils/DeviceInfo.h"
 #include <cstdint>
 #include <multimedia/media_library/media_access_helper_capi.h>
 #include <multimedia/media_library/media_asset_base_capi.h>
@@ -46,6 +47,31 @@ public:
 
         return error;
     }
+        
+    inline ML_ErrorCode addImageUri(const char *uri) {
+        return addResourceWithUri(MEDIA_LIBRARY_IMAGE_RESOURCE, uri);
+    }
+    
+    inline ML_ErrorCode addVideoUri(char *uri) {
+        return addResourceWithUri(MEDIA_LIBRARY_VIDEO_RESOURCE, uri);
+    }
+
+    ML_ErrorCode addResourceWithUri(MediaLibrary_ResourceType resourceType, const char *path) {
+        _FATAL_IF(m_request == nullptr, "m_request is null")
+        
+        if (DeviceInfo::sdkApiVersion() < 13) {
+            auto rawData = FileUtils::read(path);
+            return addResourceWithBuffer(resourceType, rawData.data(), rawData.size());
+        }
+        
+        char * mypath = new char[strlen(path) + 1];
+        strcpy(mypath, path);
+        ML_ErrorCode error = OH_MediaAssetChangeRequest_AddResourceWithUri(m_request, resourceType, mypath);
+        delete [] mypath;
+        _ERROR_RETURN_IF(error, error, "AddResourceWithUri(%s) failed: %s", path, MAssetUtils::errString(error));
+        
+        return error;
+    }
 
     ML_ErrorCode saveCameraPhoto(MediaLibrary_ImageFileType fileType = MEDIA_LIBRARY_IMAGE_JPEG) {
         _FATAL_IF(m_request == nullptr, "m_request is null")
@@ -78,7 +104,7 @@ class MediaAsset : Object {
 public:
     MediaAsset(OH_MediaAsset *asset, bool own = true) : m_asset(asset), m_own(own) {}
 
-    MediaAsset(const MediaAsset &o) : m_asset(o.m_asset), m_own(o.m_own), Object(o) {}
+    MediaAsset(const MediaAsset &o) : Object(o), m_asset(o.m_asset), m_own(o.m_own) {}
 
     ~MediaAsset() {
         if (m_own && no_reference() && m_asset) {
@@ -98,6 +124,7 @@ public:
     void discard() {
         MediaAssetChangeRequest request = changeRequest();
         request.discardCameraPhoto();
+        request.applyChanges();
     }
 
 public:
