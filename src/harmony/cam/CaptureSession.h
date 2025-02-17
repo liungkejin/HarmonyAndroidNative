@@ -30,6 +30,21 @@ public:
 
 typedef std::function<CamErrorCode(CaptureSession &session)> ConfigRunnable;
 
+struct CaptureSessionState {
+    Camera_FlashMode flash_mode = Camera_FlashMode::FLASH_MODE_AUTO;
+    Camera_ExposureMode exposure_mode = Camera_ExposureMode::EXPOSURE_MODE_AUTO;
+    float exposure_bias = 0;
+    
+    double metering_px = 0;
+    double metering_py = 0;
+    
+    Camera_FocusMode focus_mode = Camera_FocusMode::FOCUS_MODE_AUTO;
+    double focus_px = 0;
+    double focus_py = 0;
+    
+    float zoom = 0;
+};
+
 // 封装 Camera_CaptureSession
 class CaptureSession {
 public:
@@ -98,6 +113,45 @@ public:
     CamErrorCode stop();
 
 public:
+    CaptureSessionState getState() {
+        CaptureSessionState state;
+        state.flash_mode = getFlashMode();
+        state.exposure_mode = getExposureMode();
+        state.exposure_bias = getExposureBias();
+        auto mp = getMeteringPoint();
+        state.metering_px = mp.x;
+        state.metering_py = mp.y;
+        state.focus_mode = getFocusMode();
+        auto fp = getFocusPoint();
+        state.focus_px = fp.x;
+        state.focus_py = fp.y;
+        state.zoom = getZoom();
+        return state;
+    }
+    
+    void applyState(const CaptureSessionState &state, bool applyExposure) {
+        if (isFlashModeSupported(state.flash_mode)) {
+            setFlashMode(state.flash_mode);
+        }
+        if (isExposureModeSupported(state.exposure_mode)) {
+            setExposureMode(state.exposure_mode);
+        }
+        if (applyExposure) {
+            // 打开时直接设置曝光表现和预览时拉曝光效果不一样，而且会导致异常情况
+            float minBias = 0, maxBias = 0, stepBias;
+            getExposureBiasRange(minBias, maxBias, stepBias);
+            if (state.exposure_bias >= minBias && state.exposure_bias <= maxBias) {
+                setExposureBias(state.exposure_bias);
+            }
+        }
+        setMeteringPoint(state.metering_px, state.metering_py);
+        if (isFocusModeSupported(state.focus_mode)) {
+            setFocusMode(state.focus_mode);
+        }
+        setFocusPoint(state.focus_px, state.focus_py);
+        setZoom(state.zoom);
+    }
+    
     // flash
     bool hasFlash() const {
         _ERROR_RETURN_IF(!m_session, false, "IllegalStateError: m_session == nullptr")
@@ -175,6 +229,13 @@ public:
         _INFO("Set metering point(%.2lf, %.2lf) get(%.2lf, %.2lf)", x, y, p.x, p.y);
         return error;
     }
+    
+    Camera_Point getMeteringPoint() {
+        Camera_Point p = {0, 0};
+        _ERROR_RETURN_IF(!m_session, p, "IllegalStateError: m_session == nullptr")
+        OH_CaptureSession_GetMeteringPoint(m_session, &p);
+        return p;
+    }
 
     // exposure bias
     CamErrorCode getExposureBiasRange(float &min, float &max, float &step) const {
@@ -250,6 +311,13 @@ public:
         return error;
     }
 
+    Camera_Point getFocusPoint() {
+        Camera_Point p = {0, 0};
+        _ERROR_RETURN_IF(!m_session, p, "IllegalStateError: m_session == nullptr")
+        OH_CaptureSession_GetFocusPoint(m_session, &p);
+        return p;
+    }
+    
     // zoom
     CamErrorCode getZoomRange(float &min, float &max) const {
         _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")

@@ -76,7 +76,9 @@ class PhotoOutput {
     friend class CaptureSession;
 
 public:
-    PhotoOutput(Camera_PhotoOutput *p, const CamProfile *profile) : m_output(p), m_profile(*profile) {}
+    PhotoOutput(Camera_PhotoOutput *p, const CamProfile *profile) : m_output(p), m_profile(*profile) {
+        _INFO("PhotoOutput(%p) create profile: %s", p, profile->toString());
+    }
     PhotoOutput(const PhotoOutput &other) : m_output(other.m_output), m_profile(other.m_profile) {}
     ~PhotoOutput() { release(); }
     
@@ -95,6 +97,13 @@ public:
     void setPhotoAssetCallbackEnable(bool enable);
 
     CamErrorCode capture(const PhotoCaptureSetting *settings = nullptr);
+    
+    bool isCapturing() const { return m_capturing_count > 0; }
+    
+    void onCaptureFinish() {
+        m_capturing_count -= 1;
+        _INFO("PhotoOutput(%p) capture finish, capturing count: %d", m_output, m_capturing_count);
+    }
 
     bool isMirrorSupported();
 
@@ -104,6 +113,7 @@ private:
 private:
     CamProfile m_profile;
     Camera_PhotoOutput *m_output;
+    int m_capturing_count = 0;
 };
 
 NAMESPACE_END

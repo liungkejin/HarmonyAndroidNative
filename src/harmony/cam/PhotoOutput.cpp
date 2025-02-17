@@ -16,6 +16,7 @@ static void onFrameStart(Camera_PhotoOutput* output) {
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "PhotoCallback::onFrameStart output(%p) not found", output);
     
+    _INFO("PhotoOutput(%p) onFrameStart", output);
     for (auto &cb : *it) {
         cb.second->onFrameStart(cb.first);
     }
@@ -25,6 +26,7 @@ static void onFrameShutter(Camera_PhotoOutput* output, Camera_FrameShutterInfo *
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "PhotoCallback::onFrameShutter output(%p) not found", output);
     
+    _INFO("PhotoOutput(%p) onFrameShutter(id: %d, timestamp: %lld", output, info->captureId, info->timestamp);
     for (auto &cb : *it) {
         cb.second->onFrameShutter(cb.first, info);
     }
@@ -34,6 +36,7 @@ static void onFrameEnd(Camera_PhotoOutput* output, int32_t frameCount) {
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "PhotoCallback::onFrameEnd output(%p) not found", output);
     
+    _INFO("PhotoOutput(%p) onFrameEnd(frame count: %d)", output, frameCount);
     for (auto &cb : *it) {
         cb.second->onFrameEnd(cb.first, frameCount);
     }
@@ -43,6 +46,7 @@ static void onError(Camera_PhotoOutput* output, Camera_ErrorCode err) {
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "PhotoCallback::onError output(%p) not found", output);
     
+    _ERROR("PhotoOutput(%p) onError(%s)", output, CamUtils::errString(err));
     for (auto &cb : *it) {
         cb.second->onError(cb.first, err);
     }
@@ -58,6 +62,8 @@ static PhotoOutput_Callbacks g_callbacks = {
 static void onCaptureReady(Camera_PhotoOutput *output) {
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "callback onCaptureReady output(%p) not found", output);
+    
+    _INFO("PhotoOutput(%p) onCaptureReady", output);
     for (auto &cb : *it) {
         cb.second->onCaptureReady(cb.first);
     }
@@ -66,6 +72,8 @@ static void onCaptureReady(Camera_PhotoOutput *output) {
 static void onEstimatedCaptureDuration(Camera_PhotoOutput *output, int64_t duration) {
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "callback onEstimatedCaptureDuration output(%p) not found", output);
+    
+    _INFO("PhotoOutput(%p) onEstimatedCaptureDuration(%lld)", output, duration);
     for (auto &cb : *it) {
         cb.second->onEstimatedCaptureDuration(cb.first, duration);
     }
@@ -75,9 +83,11 @@ static void onPhotoAvailable(Camera_PhotoOutput *output, OH_PhotoNative *photo) 
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "callback onPhotoAvailable output(%p) not found", output);
     
+    _INFO("PhotoOutput(%p) onPhotoAvailable(%p)", output, photo);
     NativePhoto nativePhoto(photo, false);
     for (auto &cb : *it) {
         cb.second->onPhotoAvailable(cb.first, nativePhoto);
+        cb.first.onCaptureFinish();
     }
 }
 
@@ -85,8 +95,10 @@ static void onPhotoAssetAvailable(Camera_PhotoOutput *output, OH_MediaAsset *mas
     auto *it = g_callback_mgr.findCallback((void *)output);
     _WARN_RETURN_IF(it == nullptr, void(), "callback onEstimatedCaptureDuration output(%p) not found", output);
     
+    _INFO("PhotoOutput(%p) onPhotoAssetAvailable(%p)", output, masset);
     for (auto &cb : *it) {
         cb.second->onPhotoAssetAvailable(cb.first, masset);
+        cb.first.onCaptureFinish();
     }
 }
 
@@ -161,6 +173,8 @@ CamErrorCode PhotoOutput::capture(const PhotoCaptureSetting *setting) {
         _ERROR_RETURN_IF(err, err, "Camera_PhotoOutput_CaptureWithSetting failed: %d", err);
     }
     
+    m_capturing_count += 1;
+    _INFO("PhotoOutput(%p) capture start, capturing count: %d", m_output, m_capturing_count);
     return CAMERA_OK;
 }
 
@@ -179,10 +193,11 @@ CamErrorCode PhotoOutput::release() {
 
     setCallback(nullptr);
     
+    auto poutput = m_output;
     auto err = OH_PhotoOutput_Release(m_output);
     m_output = nullptr;
     _WARN_RETURN_IF(err, err, "Camera_PhotoOutput_Release failed: %d", err);
-    _INFO("photo output released successfully");
+    _INFO("PhotoOutput(%p) released successfully", poutput);
     
     return CAMERA_OK;
 }
