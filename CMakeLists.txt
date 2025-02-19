@@ -18,8 +18,8 @@ set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 # PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
 #                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
 # TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
+# ZNATIVE_BUILD_STATIC        是否构建出静态库
 # ZNATIVE_OPENCV_ENABLE       是否启用 opencv 默认不启用
-# ZNATIVE_INSTALL_STATIC      是否安装静态库，默认安装静态库
 # ZNATIVE_LOCAL_SAMPLE_ENABLE 是否启用本地示例，默认启用
 # ZNATIVE_GL_ENABLE           是否启用 EGL/OpenGL 默认启用
 #
@@ -40,20 +40,23 @@ set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 # 几个 CACHE 变量, 如果是使用 add_subdirectory 的方式引入的话，这些变量可以被引用工程所使用
 # ZNATIVE_INCLUDES   所有的include目录
 # ZNATIVE_SOURCES    所有的源文件
-# ZNATIVE_DEP_LIBS   所有的依赖库
+# ZNATIVE_LIBS       znative 和 所有的依赖库
 # ZNATIVE_OPENCV_DIR 如果启用 opencv 的话，输出 opencv 的路径
 # ZNATIVE_DEFINITIONS 所有的宏定义
 #
 
+option(ZNATIVE_BUILD_STATIC "Build static library" ON) # build static library
 option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
-option(ZNATIVE_INSTALL_STATIC "Install static library" ON) # install shared library
 option(ZNATIVE_LOCAL_SAMPLE_ENABLE "Enable local sample" ON) # enable local sample
 option(ZNATIVE_GL_ENABLE "Enable EGL/OpenGL" ON) # enable OpenGL
 
-set(TARGET_SHARED ${PROJ_NAME}-shared)
-set(TARGET_STATIC ${PROJ_NAME}-static)
-add_library(${TARGET_SHARED} SHARED)
-add_library(${TARGET_STATIC} STATIC)
+if (${ZNATIVE_BUILD_STATIC})
+    set(ZNATIVE_TARGET ${PROJ_NAME}-static)
+    add_library(${ZNATIVE_TARGET} STATIC)
+else()
+    set(ZNATIVE_TARGET ${PROJ_NAME}-shared)
+    add_library(${ZNATIVE_TARGET} SHARED)
+endif()
 
 set(ZNATIVE ON)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
@@ -97,8 +100,8 @@ else ()
     endif ()
 endif ()
 
+message(STATUS "option ZNATIVE_BUILD_STATIC: ${ZNATIVE_BUILD_STATIC}")
 message(STATUS "option ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
-message(STATUS "option ZNATIVE_INSTALL_STATIC: ${ZNATIVE_INSTALL_STATIC}")
 message(STATUS "option ZNATIVE_LOCAL_SAMPLE_ENABLE: ${ZNATIVE_LOCAL_SAMPLE_ENABLE}")
 message(STATUS "option ZNATIVE_GL_ENABLE: ${ZNATIVE_GL_ENABLE}")
 
@@ -192,11 +195,8 @@ include_directories(${COMMON_INCLUDES} ${PLATFORM_INCLUDES})
 message(STATUS "COMMON_INCLUDES: ${COMMON_INCLUDES}")
 message(STATUS "PLATFORM_INCLUDES: ${PLATFORM_INCLUDES}")
 
-target_sources(${TARGET_SHARED} PRIVATE ${COMMON_SOURCES} ${PLATFORM_SOURCES})
-target_sources(${TARGET_STATIC} PRIVATE ${COMMON_SOURCES} ${PLATFORM_SOURCES})
-
-target_link_libraries(${TARGET_SHARED} PRIVATE ${PLATFORM_LIBS} ${COMMON_LIBS})
-target_link_libraries(${TARGET_STATIC} PRIVATE ${PLATFORM_LIBS} ${COMMON_LIBS})
+target_sources(${ZNATIVE_TARGET} PRIVATE ${COMMON_SOURCES} ${PLATFORM_SOURCES})
+target_link_libraries(${ZNATIVE_TARGET} PRIVATE ${PLATFORM_LIBS} ${COMMON_LIBS})
 
 message(STATUS "COMMON_LIBS: ${COMMON_LIBS}")
 message(STATUS "PLATFORM_LIBS: ${PLATFORM_LIBS}")
@@ -207,7 +207,7 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Install.cmake)
 ## 注意这些变量 cache string 一旦存储之后就不会改动了，所以不能依赖这个变量
 set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE STRING "all includes")
 set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
-set(ZNATIVE_DEP_LIBS ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all depend libs")
+set(ZNATIVE_LIBS ${ZNATIVE_TARGET} ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all libs")
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
 set(ZNATIVE_DEFINITIONS ${ALL_DEFINITIONS} CACHE STRING "all definitions")
 

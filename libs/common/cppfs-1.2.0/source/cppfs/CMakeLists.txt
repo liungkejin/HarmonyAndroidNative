@@ -282,7 +282,7 @@ perform_health_checks(
 #
 
 # Library
-if (NOT ZNATIVE OR (ZNATIVE AND ${ZNATIVE_INSTALL_STATIC}))
+if (NOT ZNATIVE OR (ZNATIVE AND ${ZNATIVE_BUILD_STATIC}))
     install(TARGETS ${target}
         EXPORT  "${target}-export"            COMPONENT dev
         RUNTIME DESTINATION ${INSTALL_BIN}    COMPONENT runtime
