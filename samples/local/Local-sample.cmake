@@ -12,6 +12,7 @@ if (WIN32)
     include(${LOCAL_SAMPLE_DIR}/Windows-sample.cmake)
 endif ()
 
+# sample 需要使用 opencv
 if (NOT ${ZNATIVE_OPENCV_ENABLE})
     find_package(OpenCV REQUIRED)
     set(SAMPLE_INCLUDES ${SAMPLE_INCLUDES} ${OpenCV_INCLUDE_DIRS})
@@ -54,6 +55,6 @@ add_executable(local-sample
 target_link_libraries(local-sample PRIVATE
         ${COMMON_LIBS}
         ${PLATFORM_LIBS}
-        ${TARGET_STATIC}
+        ${ZNATIVE_TARGET}
         ${SAMPLE_LIBS}
 )
