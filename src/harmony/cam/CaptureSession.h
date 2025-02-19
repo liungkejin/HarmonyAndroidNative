@@ -13,6 +13,7 @@
 #include "PreviewOutput.h"
 #include "VideoOutput.h"
 #include <functional>
+#include <native_buffer/buffer_common.h>
 #include <ohcamera/capture_session.h>
 
 NAMESPACE_DEFAULT
@@ -372,6 +373,63 @@ public:
                  CamUtils::errString(error));
         return error;
     }
+    
+    std::vector<OH_NativeBuffer_ColorSpace> getSupportedColorSpaces() const {
+        std::vector<OH_NativeBuffer_ColorSpace> spaces;
+        _ERROR_RETURN_IF(!m_session, spaces, "IllegalStateError: m_session == nullptr")
+
+        OH_NativeBuffer_ColorSpace* p = nullptr;
+        uint32_t osize = 0;
+        CamErrorCode error = OH_CaptureSession_GetSupportedColorSpaces(m_session, &p, &osize);
+        _WARN_IF(error, "GetSupportedColorSpaces failed: %s", CamUtils::errString(error));
+        if (!error) {
+            for (int i = 0; i < osize; ++i) {
+                spaces.push_back(p[i]);
+            }
+        }
+        if (p) {
+            OH_CaptureSession_DeleteColorSpaces(m_session, p);
+        }
+        return spaces;
+    }
+    
+    bool isColorSpaceSupport(OH_NativeBuffer_ColorSpace p) const {
+        auto spaces = getSupportedColorSpaces();
+        for (auto s : spaces) {
+            if (s == p) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    OH_NativeBuffer_ColorSpace getColorSpace() const {
+        _ERROR_RETURN_IF(!m_session, OH_COLORSPACE_NONE, "IllegalStateError: m_session == nullptr")
+
+        OH_NativeBuffer_ColorSpace space = OH_COLORSPACE_NONE;
+        CamErrorCode error = OH_CaptureSession_GetActiveColorSpace(m_session, &space);
+        _WARN_IF(error, "GetActiveColorSpace failed: %s", CamUtils::errString(error));
+        return space;
+    }
+    
+    CamErrorCode setColorSpace(OH_NativeBuffer_ColorSpace space) {
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
+
+        CamErrorCode error = OH_CaptureSession_SetActiveColorSpace(m_session, space);
+        _WARN_IF(error, "SetActiveColorSpace(%s) failed: %s", CamUtils::colorSpaceStr(space), CamUtils::errString(error));
+        return error;
+    }
+    
+    CamErrorCode setQualityPrioritization(Camera_QualityPrioritization p) {
+        _ERROR_RETURN_IF(!m_session, WT_CAM_ERROR_NULL, "IllegalStateError: m_session == nullptr")
+        
+        if (DeviceInfo::sdkApiVersion() < 14) {
+            return WT_CAM_ERROR_UNSUPPORTED;
+        }
+        CamErrorCode error = OH_CaptureSession_SetQualityPrioritization(m_session, p);
+        _WARN_IF(error, "setQualityPrioritization(%d) failed: %s", p, CamUtils::errString(error));
+        return error;
+    }
 
     std::string toString() const {
         std::stringstream ss;
@@ -433,7 +491,18 @@ public:
                 ss << CamUtils::videoStabModeStr((Camera_VideoStabilizationMode)i);
             }
         }
+        auto allSupportedColorSpaces = getSupportedColorSpaces();
+        ss << "    ]\n";
+        ss << "    cur color space: " << CamUtils::colorSpaceStr(getColorSpace()) << "\n";
+        ss << "    supported color spaces: [";
+        for (int i = 0, j = 0; i < allSupportedColorSpaces.size(); ++i) {
+            if (j++ > 0) {
+                ss << ", ";
+            }
+            ss << CamUtils::colorSpaceStr(allSupportedColorSpaces[i]);
+        }
         ss << "]\n";
+        return ss.str();
         ss << "}";
         return ss.str();
     }

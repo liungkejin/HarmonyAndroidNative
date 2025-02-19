@@ -184,6 +184,76 @@ std::string CamUtils::videoStabModeStr(Camera_VideoStabilizationMode m) {
     return std::string("STABILIZATION_MODE(") + std::to_string(m) + ")";
 }
 
+std::string CamUtils::colorSpaceStr(OH_NativeBuffer_ColorSpace s) {
+    switch(s) {
+    case OH_COLORSPACE_NONE:
+        return "NONE";
+    case OH_COLORSPACE_BT601_EBU_FULL:
+        return "BT601_EBU_FULL";
+    case OH_COLORSPACE_BT601_SMPTE_C_FULL:
+        return "BT601_SMPTE_C_FULL";
+    case OH_COLORSPACE_BT709_FULL:
+        return "BT709_FUL";
+    case OH_COLORSPACE_BT2020_HLG_FULL:
+        return "BT2020_HLG_FULL";
+    case OH_COLORSPACE_BT2020_PQ_FULL:
+        return "BT2020_PQ_FULL";
+    case OH_COLORSPACE_BT601_EBU_LIMIT:
+        return "BT601_EBU_LIMIT";
+    case OH_COLORSPACE_BT601_SMPTE_C_LIMIT:
+        return "BT601_SMPTE_C_LIMIT";
+    case OH_COLORSPACE_BT709_LIMIT:
+        return "BT709_LIMIT";
+    case OH_COLORSPACE_BT2020_HLG_LIMIT:
+        return "BT2020_HLG_LIMIT";
+    case OH_COLORSPACE_BT2020_PQ_LIMIT:
+        return "BT2020_PQ_LIMIT";
+    case OH_COLORSPACE_SRGB_FULL:
+        return "SRGB_FULL";
+    case OH_COLORSPACE_P3_FULL:
+        return "P3_FULL";
+    case OH_COLORSPACE_P3_HLG_FULL:
+        return "P3_HLG_FULL";
+    case OH_COLORSPACE_P3_PQ_FULL:
+        return "P3_PQ_FULL";
+    case OH_COLORSPACE_ADOBERGB_FULL:
+        return "ADOBERGB_FULL";
+    case OH_COLORSPACE_SRGB_LIMIT:
+        return "SRGB_LIMIT";
+    case OH_COLORSPACE_P3_LIMIT:
+        return "P3_LIMIT";
+    case OH_COLORSPACE_P3_HLG_LIMIT:
+        return "P3_HLG_LIMIT";
+    case OH_COLORSPACE_P3_PQ_LIMIT:
+        return "P3_PQ_LIMIT";
+    case OH_COLORSPACE_ADOBERGB_LIMIT:
+        return "ADOBERGB_LIMIT";
+    case OH_COLORSPACE_LINEAR_SRGB:
+        return "LINEAR_SRGB";
+    case OH_COLORSPACE_LINEAR_BT709:
+        return "LINEAR_BT709";
+    case OH_COLORSPACE_LINEAR_P3:
+        return "LINEAR_P3";
+    case OH_COLORSPACE_LINEAR_BT2020:
+        return "LINEAR_BT2020";
+    case OH_COLORSPACE_DISPLAY_SRGB:
+        return "DISPLAY_SRGB";
+    case OH_COLORSPACE_DISPLAY_P3_SRGB:
+        return "DISPLAY_P3_SRGB";
+    case OH_COLORSPACE_DISPLAY_P3_HLG:
+        return "DISPLAY_P3_HLG";
+    case OH_COLORSPACE_DISPLAY_P3_PQ:
+        return "DISPLAY_P3_PQ";
+    case OH_COLORSPACE_DISPLAY_BT2020_SRGB:
+        return "DISPLAY_BT2020_SRGB";
+    case OH_COLORSPACE_DISPLAY_BT2020_HLG:
+        return "DISPLAY_BT2020_HLG";
+    case OH_COLORSPACE_DISPLAY_BT2020_PQ:
+        return "DISPLAY_BT2020_PQ";
+    }
+    return std::string("COLORSPACE(") + std::to_string(s) + ")";
+}
+
 std::string CamUtils::imageRotationStr(Camera_ImageRotation r) {
     switch (r) {
         case IAMGE_ROTATION_0 :

@@ -8,6 +8,7 @@
 
 #include "ZNamespace.h"
 #include "common/Log.h"
+#include <native_buffer/buffer_common.h>
 #include <ohcamera/camera.h>
 
 NAMESPACE_DEFAULT
@@ -17,6 +18,7 @@ typedef int CamErrorCode;
 #define WT_CAM_ERROR_UNKNOWN (-1101)
 #define WT_CAM_ERROR_NULL (-1102)
 #define WT_CAM_ERROR_WRANING (-1103)
+#define WT_CAM_ERROR_UNSUPPORTED (-1104)
 
 class CamUtils {
 public:
@@ -31,6 +33,7 @@ public:
     static std::string focusModeStr(Camera_FocusMode f);
     static std::string focusStateStr(Camera_FocusState f);
     static std::string videoStabModeStr(Camera_VideoStabilizationMode m);
+    static std::string colorSpaceStr(OH_NativeBuffer_ColorSpace s);
     static std::string imageRotationStr(Camera_ImageRotation r);
     static std::string qualityLevelStr(Camera_QualityLevel q);
     static std::string metadataObjectType(Camera_MetadataObjectType t);
