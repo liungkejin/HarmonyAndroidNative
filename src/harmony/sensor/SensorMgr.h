@@ -27,7 +27,7 @@ public:
         _FATAL_IF(m_id == nullptr, "OH_Sensor_CreateSubscriptionId failed")
     }
 
-    SubscriptionId(const SubscriptionId &o) : m_id(o.m_id), m_type(o.m_type), Object(o) {}
+    SubscriptionId(const SubscriptionId &o) : Object(o), m_type(o.m_type), m_id(o.m_id) {}
 
     ~SubscriptionId() {
         if (no_reference() && m_id) {
@@ -59,7 +59,7 @@ public:
         _FATAL_IF(m_id == nullptr, "OH_Sensor_CreateSubscriptionAttribute failed")
     }
 
-    SubscriptionAttribute(const SubscriptionAttribute &o) : m_id(o.m_id), Object(o) {}
+    SubscriptionAttribute(const SubscriptionAttribute &o) : Object(o), m_id(o.m_id) {}
 
     ~SubscriptionAttribute() {
         if (no_reference() && m_id) {
@@ -85,7 +85,7 @@ class SensorEvent : Object {
 public:
     explicit SensorEvent(Sensor_Event *e) : m_event(e) {}
 
-    SensorEvent(const SensorEvent &o) : m_event(o.m_event), Object(o) {}
+    SensorEvent(const SensorEvent &o) : Object(o), m_event(o.m_event) {}
 
 public:
     Sensor_Type type() {
