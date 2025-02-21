@@ -7,6 +7,7 @@
 
 #include <cstdio>
 #include <common/gles/GLUtil.h>
+#include <common/utils/ThreadPool.h>
 
 #include "gl/GLTestWindow.h"
 
@@ -21,6 +22,8 @@ std::vector<IWindow *> g_all_windows;
 
 static bool g_show_demo_window = false;
 static ImVec4 g_background_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+
+static znative::ThreadPool g_thread_pool(4);
 
 void MainWindow::onInit(int width, int height) {
     std::string version = znative::GLUtil::glVersion();
@@ -58,6 +61,16 @@ void MainWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     ImGui::Checkbox("显示 demo window", &g_show_demo_window);
     ImGui::ColorEdit3("背景颜色", (float *) &g_background_color); // Edit 3 floats representing a color
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+
+    if (ImGui::Button("test thread pool")) {
+        static int id = 0;
+        _INFO("test thread pool, id: %d", id);
+        int test_id = id++;
+        g_thread_pool.enqueue([test_id]() {
+            znative::TimeUtils::sleepMs(1000);
+            _INFO("post thread[%d], id: %d", std::this_thread::get_id(), test_id);
+        });
+    }
 
     for (auto *p: g_all_windows) {
         ImGui::Checkbox(p->name().c_str(), &p->m_gui_checked);

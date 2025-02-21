@@ -99,7 +99,7 @@ public:
         }
         _INFO("thread(%s) start quit!", m_name.c_str());
         if (clearPending) {
-            m_event_queue.emptyQueue();
+            m_event_queue.clearEvents();
         }
         sync([this]() {
             m_running_flag = false;
