@@ -42,6 +42,18 @@ public:
         scaleTo(dst.data(), dst.width(), dst.height(), filterType);
     }
     
+    void scaleFrom(const uint8_t *src, int srcW, int srcH, int dstW, int dstH, int filterType = 1) {
+        m_width = dstW;
+        m_height = dstH;
+        uint8_t *dst = m_data.obtain<uint8_t>(dstW*dstH*3/2);
+        uint8_t *tmp = m_temp.obtain<uint8_t>(m_width * m_height / 2 + srcW * srcH / 2 + 100);
+        YuvUtils::scaleNV21(src, srcW, srcH, dst, dstW, dstH, tmp, filterType);
+    }
+    
+    void scaleFrom(NV21Image &src, int dstW, int dstH, int filterType = 1) {
+        scaleFrom(src.data(), src.width(), src.height(), dstW, dstH, filterType);
+    }
+    
     void put(uint8_t *src, int width, int height) {
         m_width = width;
         m_height = height;
@@ -59,6 +71,13 @@ public:
     inline int height() const { return m_height; }
     
     inline uint8_t *data() { return m_data.obtain<uint8_t>(0); }
+    
+    inline int dataSize() const { return m_width * m_height * 3 / 2; }
+    
+    void release() {
+        m_data.free();
+        m_temp.free();
+    }
     
 private:
     int m_width = 0;

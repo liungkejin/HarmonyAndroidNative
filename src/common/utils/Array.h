@@ -37,7 +37,7 @@ public:
      */
     size_t capacity() const { return m_capacity; }
 
-    const uint8_t *bytes(int index = 0) { return m_data + index; }
+    const uint8_t *bytes(int index = 0) const { return m_data + index; }
 
     /**
      * @param index 偏移量
@@ -69,7 +69,9 @@ public:
     int put(const T *src, size_t size, bool strict = false) {
         size_t unitSize = sizeof(T);
         uint8_t *dst = obtainBytes(size * unitSize, strict);
-        memcpy(dst, src, size * unitSize);
+        if (src) {
+            memcpy(dst, src, size * unitSize);
+        }
         m_put_size = size * unitSize;
 
         return m_put_size / sizeof(T);
