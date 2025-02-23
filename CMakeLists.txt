@@ -5,23 +5,16 @@ project(${PROJ_NAME} VERSION 0.1.1)
 
 set(CMAKE_CXX_STANDARD 17)
 
-set(ALL_DEFINITIONS "")
-# debug 时增加宏定义 __DEBUG__
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-    set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-D__DEBUG__")
-endif()
-
-set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
-
 #
 # 几个关键变量说明
 # PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
 #                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
 # TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
 # ZNATIVE_BUILD_STATIC        是否构建出静态库
-# ZNATIVE_OPENCV_ENABLE       是否启用 opencv 默认不启用
-# ZNATIVE_LOCAL_SAMPLE_ENABLE 是否启用本地示例，默认启用
-# ZNATIVE_GL_ENABLE           是否启用 EGL/OpenGL 默认启用
+# ZNATIVE_BUILD_LOCAL_SAMPLE  是否构建本地示例，默认启用
+# ZNATIVE_ENABLE_OPENCV       是否启用 opencv 默认不启用
+# ZNATIVE_ENABLE_GL           是否启用 EGL/OpenGL 默认启用
+# ZNATIVE_ENABLE_DEBUG        是否启用 debug级别 日志输出, 默认 Debug 模式开启
 #
 #
 # COMMON_LIBS_PATH          公共第三方库路径
@@ -46,9 +39,18 @@ set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-DSTRICT_MODE=false")
 #
 
 option(ZNATIVE_BUILD_STATIC "Build static library" ON) # build static library
-option(ZNATIVE_OPENCV_ENABLE "Enable opencv library" OFF) # use opencv library
-option(ZNATIVE_LOCAL_SAMPLE_ENABLE "Enable local sample" ON) # enable local sample
-option(ZNATIVE_GL_ENABLE "Enable EGL/OpenGL" ON) # enable OpenGL
+option(ZNATIVE_BUILD_LOCAL_SAMPLE "Build local sample" ON) # enable local sample
+option(ZNATIVE_ENABLE_OPENCV "Enable opencv library" OFF) # use opencv library
+option(ZNATIVE_ENABLE_GL "Enable EGL/OpenGL" ON) # enable OpenGL
+if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+    option(ZNATIVE_ENABLE_DEBUG "Enable debug" ON)
+else()
+    option(ZNATIVE_ENABLE_DEBUG "Enable debug" OFF)
+endif()
+if (${ZNATIVE_ENABLE_DEBUG})
+    set(ALL_DEFINITIONS "-D__DEBUG__")
+endif()
+add_definitions(-DSTRICT_MODE=false)
 
 if (${ZNATIVE_BUILD_STATIC})
     set(ZNATIVE_TARGET ${PROJ_NAME}-static)
@@ -101,9 +103,9 @@ else ()
 endif ()
 
 message(STATUS "option ZNATIVE_BUILD_STATIC: ${ZNATIVE_BUILD_STATIC}")
-message(STATUS "option ZNATIVE_OPENCV_ENABLE: ${ZNATIVE_OPENCV_ENABLE}")
-message(STATUS "option ZNATIVE_LOCAL_SAMPLE_ENABLE: ${ZNATIVE_LOCAL_SAMPLE_ENABLE}")
-message(STATUS "option ZNATIVE_GL_ENABLE: ${ZNATIVE_GL_ENABLE}")
+message(STATUS "option ZNATIVE_ENABLE_OPENCV: ${ZNATIVE_ENABLE_OPENCV}")
+message(STATUS "option ZNATIVE_BUILD_LOCAL_SAMPLE: ${ZNATIVE_BUILD_LOCAL_SAMPLE}")
+message(STATUS "option ZNATIVE_ENABLE_GL: ${ZNATIVE_ENABLE_GL}")
 
 message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
@@ -151,7 +153,7 @@ else ()
 endif ()
 
 # OpenCV
-if (${ZNATIVE_OPENCV_ENABLE})
+if (${ZNATIVE_ENABLE_OPENCV})
     message(STATUS "Use OpenCV")
     set(ALL_DEFINITIONS ${ALL_DEFINITIONS} "-D__ZNATIVE_WITH_OPENCV__")
 
@@ -180,7 +182,7 @@ set(COMMON_INCLUDES
         ${LIBYUV_PATH}/include
 )
 
-if (${ZNATIVE_GL_ENABLE})
+if (${ZNATIVE_ENABLE_GL})
     set(COMMON_SOURCES
             ${COMMON_SOURCES}
             ${COMMON_SRC_PATH}/egl/EGLCtx.cpp
@@ -205,12 +207,12 @@ message(STATUS "PLATFORM_LIBS: ${PLATFORM_LIBS}")
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Install.cmake)
 
 ## 注意这些变量 cache string 一旦存储之后就不会改动了，所以不能依赖这个变量
-set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE STRING "all includes")
-set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE STRING "all sources")
-set(ZNATIVE_LIBS ${ZNATIVE_TARGET} ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE STRING "all libs")
-set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE STRING "opencv dir")
-set(ZNATIVE_DEFINITIONS ${ALL_DEFINITIONS} CACHE STRING "all definitions")
+set(ZNATIVE_INCLUDES ${COMMON_INCLUDES} ${PLATFORM_INCLUDES} CACHE INTERNAL "all includes")
+set(ZNATIVE_SOURCES ${COMMON_SOURCES} ${PLATFORM_SOURCES} CACHE INTERNAL "all sources")
+set(ZNATIVE_LIBS ${ZNATIVE_TARGET} ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE INTERNAL "all libs")
+set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE INTERNAL "opencv dir")
+set(ZNATIVE_DEFINITIONS ${ALL_DEFINITIONS} CACHE INTERNAL "all definitions")
 
-if (${ZNATIVE_LOCAL_SAMPLE_ENABLE} AND ${PLATFORM} MATCHES "local")
+if (${ZNATIVE_BUILD_LOCAL_SAMPLE} AND ${PLATFORM} MATCHES "local")
     include(${CMAKE_CURRENT_SOURCE_DIR}/samples/local/Local-sample.cmake)
 endif ()

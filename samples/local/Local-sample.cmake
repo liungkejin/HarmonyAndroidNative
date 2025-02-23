@@ -13,7 +13,7 @@ if (WIN32)
 endif ()
 
 # sample 需要使用 opencv
-if (NOT ${ZNATIVE_OPENCV_ENABLE})
+if (NOT ${ZNATIVE_ENABLE_OPENCV})
     find_package(OpenCV REQUIRED)
     set(SAMPLE_INCLUDES ${SAMPLE_INCLUDES} ${OpenCV_INCLUDE_DIRS})
     set(SAMPLE_LIBS ${SAMPLE_LIBS} ${OpenCV_LIBS})

@@ -98,10 +98,11 @@ CMakeLists.txt           # 项目 CMakeLists.txt
 ```cmake
 #
 # 几个 option:
-# ZNATIVE_OPENCV_ENABLE       是否启用 opencv 默认不启用
-# ZNATIVE_BUILD_STATIC        是否构建静态库，默认静态库
-# ZNATIVE_LOCAL_SAMPLE_ENABLE 是否启用本地示例，默认启用
-# ZNATIVE_GL_ENABLE           是否启用 OpenGL 默认启用
+# ZNATIVE_BUILD_STATIC        是否构建出静态库
+# ZNATIVE_BUILD_LOCAL_SAMPLE  是否构建本地示例，默认启用
+# ZNATIVE_ENABLE_OPENCV       是否启用 opencv 默认不启用
+# ZNATIVE_ENABLE_GL           是否启用 EGL/OpenGL 默认启用
+# ZNATIVE_ENABLE_DEBUG        是否启用 debug级别 日志输出, 默认 Debug 模式开启
 #
 # 输出的 target:
 # znative-shared       共享库
@@ -116,11 +117,12 @@ CMakeLists.txt           # 项目 CMakeLists.txt
 #
 
 set(ZNATIVE_BUILD_STATIC ON)
-set(ZNATIVE_OPENCV_ENABLE ON)
+set(ZNATIVE_ENABLE_OPENCV ON)
+set(ZNATIVE_ENABLE_GL ON)
 add_subdirectory(${LIBS_PATH}/znative)
 include_directories(${ZNATIVE_INCLUDES})
 add_definitions(${ZNATIVE_DEFINITIONS})
-if (${ZNATIVE_OPENCV_ENABLE})
+if (${ZNATIVE_ENABLE_OPENCV})
     set(OpenCV_DIR ${ZNATIVE_OPENCV_DIR})
     find_package(OpenCV REQUIRED)
 endif()

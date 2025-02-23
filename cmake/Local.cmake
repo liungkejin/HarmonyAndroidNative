@@ -2,7 +2,7 @@ set(PLATFORM_SOURCES
         ${PLATFORM_SRC_PATH}/AppContext.cpp
 )
 
-if (NOT WIN32 AND ZNATIVE_GL_ENABLE)
+if (NOT WIN32 AND ZNATIVE_ENABLE_GL)
     find_package(OpenGL REQUIRED)
     set(PLATFORM_LIBS OpenGL::GL)
 endif ()

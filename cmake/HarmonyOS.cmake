@@ -93,7 +93,7 @@ set(PLATFORM_LIBS
         uv
 )
 
-if (${ZNATIVE_GL_ENABLE})
+if (${ZNATIVE_ENABLE_GL})
     set(PLATFORM_SOURCES
             ${PLATFORM_SOURCES}
             ${PLATFORM_SRC_PATH}/xcomp/XComponent.cpp
