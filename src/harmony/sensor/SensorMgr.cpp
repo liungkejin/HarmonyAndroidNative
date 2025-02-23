@@ -35,7 +35,7 @@ static std::vector<SensorInfo> &getAllSensors() {
     for (int i = 0; i < realCount; ++i) {
         SensorInfoWrap wrap(sensors[i]);
         std::string s = wrap.toString();
-        _INFO("sensor[%d]: %s", i, s);
+//        _INFO("sensor[%d]: %s", i, s);
         g_all_sensors.emplace_back(wrap);
     }
 

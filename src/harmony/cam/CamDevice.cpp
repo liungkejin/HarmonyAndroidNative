@@ -98,32 +98,52 @@ bool CamOutputCapability::isMetadataSupported(Camera_MetadataObjectType type) {
 }
 
 void CamOutputCapability::dump() const {
-    _INFO("preview profile size: %d", m_preview_profiles.size());
-    int index = 0;
-    for (auto &profile : m_preview_profiles) {
-        _INFO("preview profile[%d]: format(%s) size(%dx%d)", index, 
-            CamUtils::formatStr(profile.format), profile.width, profile.height);
-        index += 1;
+    {
+        std::stringstream ss;
+        ss << "camera preview profiles(" << m_preview_profiles.size() << "){\n";
+        int index = 0;
+        for (auto &profile : m_preview_profiles) {
+            ss << "    [" << index << "]: format(" << CamUtils::formatStr(profile.format) << ") size(" << profile.width
+               << "x" << profile.height << ")\n";
+            index += 1;
+        }
+        ss << "}";
+        _INFO("%s", ss.str());
     }
-    _INFO("photo profile size: %d", m_photo_profiles.size());
-    index = 0;
-    for (auto &profile : m_photo_profiles) {
-        _INFO("photo profile[%d]: format(%s) size(%dx%d)", index,
-            CamUtils::formatStr(profile.format), profile.width, profile.height);
-        index += 1;
+    {
+        std::stringstream ss;
+        ss << "camera photo profiles(" << m_photo_profiles.size() << "){\n";
+        int index = 0;
+        for (auto &profile : m_photo_profiles) {
+            ss << "    [" << index << "]: format(" << CamUtils::formatStr(profile.format) << ") size(" << profile.width
+               << "x" << profile.height << ")\n";
+            index += 1;
+        }
+        ss << "}";
+        _INFO("%s", ss.str());
     }
-    _INFO("video profile size: %d", m_video_profiles.size());
-    index = 0;
-    for (auto &profile : m_video_profiles) {
-        _INFO("video profile[%d]: format(%s) size(%dx%d) fps-range[%d,%d]", index,
-              CamUtils::formatStr(profile.format), profile.width, profile.height, profile.minFps, profile.maxFps);
-        index += 1;
+    {
+        std::stringstream ss;
+        ss << "camera video profiles(" << m_video_profiles.size() << "){\n";
+        int index = 0;
+        for (auto &profile : m_video_profiles) {
+            ss << "    [" << index << "]: format(" << CamUtils::formatStr(profile.format) << ") size(" << profile.width
+               << "x" << profile.height << ") fps-range[" << profile.minFps << "," << profile.maxFps << "]\n";
+            index += 1;
+        }
+        ss << "}";
+        _INFO("%s", ss.str());
     }
-    _INFO("metadata profile size: %d", m_metadata_types.size());
-    index = 0;
-    for (auto &type : m_metadata_types) {
-        _INFO("metadata profile[%d]: type(%s)", index, CamUtils::metadataObjectType(type));
-        index += 1;
+    {
+        std::stringstream ss;
+        ss << "camera metadata profiles(" << m_metadata_types.size() << "){\n";
+        int index = 0;
+        for (auto &type : m_metadata_types) {
+            ss << "    [" << index << "]: type(" << CamUtils::metadataObjectType(type) << ")\n";
+            index += 1;
+        }
+        ss << "}";
+        _INFO("%s", ss.str());
     }
 }
 
