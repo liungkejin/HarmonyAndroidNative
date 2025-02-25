@@ -38,7 +38,9 @@ void main() {
     }
 
     std::string fragmentShader() override {
-        std::string fs = R"(
+        std::string fs;
+        if (m_standard == BT601) {
+            fs = R"(
 precision highp float;
 varying highp vec2 textureCoordinate;
 uniform sampler2D yTexture;
@@ -50,13 +52,49 @@ void main() {
     float u = uv.a - 0.5;
     float v = uv.r - 0.5;
 
-    float r = y + 1.370705 * v;
-    float g = y - 0.337633 * u - 0.698001 * v;
-    float b = y + 1.732446 * u;
+    float r = y + 1.402 * v;
+    float g = y - 0.344136 * u - 0.714136 * v;
+    float b = y + 1.772 * u;
 
     gl_FragColor = vec4(r, g, b, 1.0);
 }
-        )";
+)";
+        } else if (m_standard == BT2020) {
+            fs = R"(
+precision highp float;
+varying highp vec2 textureCoordinate;
+uniform sampler2D yTexture;
+uniform sampler2D uvTexture;
+
+void main() {
+    vec4 uv = texture2D(uvTexture, textureCoordinate);
+    float y = texture2D(yTexture, textureCoordinate).r;
+    float u = uv.a - 0.5;
+    float v = uv.r - 0.5;
+    float r = y + 1.4746 * v;
+    float g = y - 0.164553 * u - 0.571353 * v;
+    float b = y + 1.8814 * u;
+    gl_FragColor = vec4(r, g, b, 1.0);
+)";
+        } else {
+            fs = R"(
+precision highp float;
+varying highp vec2 textureCoordinate;
+uniform sampler2D yTexture;
+uniform sampler2D uvTexture;
+
+void main() {
+    vec4 uv = texture2D(uvTexture, textureCoordinate);
+    float y = texture2D(yTexture, textureCoordinate).r;
+    float u = uv.a - 0.5;
+    float v = uv.r - 0.5;
+    float r = y + 1.402 * v;
+    float g = y - 0.344136 * u - 0.714136 * v;
+    float b = y + 1.772 * u;
+    gl_FragColor = vec4(r, g, b, 1.0);
+}
+)";
+        }
         return CORRECT_FRAGMENT_SHADER(fs);
     }
 
@@ -70,13 +108,21 @@ void main() {
         setTextureCoord(orientation, flipH, flipV);
     }
 
-    void putData(const uint8_t *nv21, int width, int height) {
+    void putData(const uint8_t *nv21, int width, int height, YuvStandard standard = YuvStandard::BT709) {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_width = width;
         m_height = height;
         int dstSize = width * height * 3 / 2;
         uint8_t *dst = m_nv21_buffer.obtain<uint8_t>(dstSize);
         memcpy(dst, nv21, dstSize);
+        m_next_std = standard;
+    }
+
+    void onPreRender(Framebuffer *output) override {
+        if (m_standard != m_next_std) {
+            m_standard = m_next_std;
+            m_program.release();
+        }
     }
 
     void onRender(Framebuffer *output) override {
@@ -135,8 +181,10 @@ private:
     Array m_nv21_buffer;
     int m_width = 0;
     int m_height = 0;
+    YuvStandard m_next_std = YuvStandard::BT601;
     std::mutex m_mutex;
 
+    YuvStandard m_standard = YuvStandard::BT709;
     Texture2D *m_y_texture = nullptr;
     Texture2D *m_uv_texture = nullptr;
 };

@@ -78,6 +78,7 @@ public:
     }
 
     void render(Framebuffer *output = nullptr) {
+        onPreRender(output);
         if (!m_program.valid()) {
             std::string vs = vertexShader();
             std::string fs = fragmentShader();
@@ -88,8 +89,11 @@ public:
         }
 
         if (output) {
+            if (!output->bind()) {
+                _ERROR("Couldn't bind output framebuffer");
+                return;
+            }
             output->ref();
-            output->bind();
         }
 
         onViewport();
@@ -128,6 +132,8 @@ protected:
 
     TextureCoord &textureCoord() { return m_texture_coords; }
 
+    virtual void onPreRender(Framebuffer *output) {}
+
     virtual void onProgramCreated() {}
 
     virtual void onViewport() { m_viewport.apply(); }
@@ -144,7 +150,7 @@ protected:
         glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
-private:
+protected:
     const std::string m_name;
 
     Viewport m_viewport = Viewport(0, 0);

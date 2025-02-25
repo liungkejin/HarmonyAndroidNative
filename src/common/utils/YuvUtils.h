@@ -12,6 +12,12 @@
 
 NAMESPACE_DEFAULT
 
+enum YuvStandard {
+    BT601,
+    BT709,
+    BT2020
+};
+
 class YuvUtils {
 public:
     static void rgbaToNV21(const uint8_t *src, int width, int height, uint8_t *dst);
