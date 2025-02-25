@@ -16,11 +16,12 @@ NAMESPACE_DEFAULT
 
 class NV21Filter : public BaseFilter {
 public:
-    NV21Filter() : BaseFilter("nv21") {
+    NV21Filter() : BaseFilter("yuv") {
         defAttribute("position", DataType::FLOAT_POINTER)->bind(vertexCoord());
         defAttribute("inputTextureCoordinate", DataType::FLOAT_POINTER)->bind(textureCoord());
         defUniform("yTexture", DataType::SAMPLER_2D);
-        defUniform("uvTexture", DataType::SAMPLER_2D);
+        defUniform("uTexture", DataType::SAMPLER_2D);
+        defUniform("vTexture", DataType::SAMPLER_2D);
     }
 
     std::string vertexShader() override {
@@ -42,28 +43,29 @@ void main() {
 precision highp float;
 varying highp vec2 textureCoordinate;
 uniform sampler2D yTexture;
-uniform sampler2D uvTexture;
+uniform sampler2D uTexture;
+uniform sampler2D vTexture;
 
 void main() {
     float y = texture2D(yTexture, textureCoordinate).r;
-    vec4 uv = texture2D(uvTexture, textureCoordinate);
-    float u = uv.a - 0.5;
-    float v = uv.r - 0.5;
+    float u = texture2D(uTexture, textureCoordinate).r - 0.5;
+    float v = texture2D(vTexture, textureCoordinate).r - 0.5;
 )";
         if (m_standard == BT601) {
-            fs = R"(
+            fs += R"(
     float r = y + 1.402 * v;
     float g = y - 0.344136 * u - 0.714136 * v;
     float b = y + 1.772 * u;
+}
 )";
         } else if (m_standard == BT2020) {
-            fs = R"(
+            fs += R"(
     float r = y + 1.4746 * v;
     float g = y - 0.164553 * u - 0.571353 * v;
     float b = y + 1.8814 * u;
 )";
         } else {
-            fs = R"(
+            fs += R"(
     float r = y + 1.402 * v;
     float g = y - 0.344136 * u - 0.714136 * v;
     float b = y + 1.772 * u;
@@ -86,13 +88,19 @@ void main() {
         setTextureCoord(orientation, flipH, flipV);
     }
 
-    void putData(const uint8_t *nv21, int width, int height, YuvStandard standard = YuvStandard::BT709) {
+    void putData(const uint8_t *y, const uint8_t *u, const uint8_t *v,
+                 int width, int height, YuvStandard standard = YuvStandard::BT709) {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_width = width;
         m_height = height;
         int dstSize = width * height * 3 / 2;
-        uint8_t *dst = m_nv21_buffer.obtain<uint8_t>(dstSize);
-        memcpy(dst, nv21, dstSize);
+        uint8_t *dst = m_yuv_buffer.obtain<uint8_t>(dstSize);
+        memcpy(dst, y, width * height);
+        int usize = width * height / 4;
+        memcpy(dst + width * height, u, usize);
+        int vsize = width * height / 4;
+        memcpy(dst + width * height + usize, v, vsize);
+
         m_next_std = standard;
     }
 
@@ -104,41 +112,48 @@ void main() {
     }
 
     void onRender(Framebuffer *output) override {
-        const uint8_t *nv21 = m_nv21_buffer.bytes();
-        if (nv21 == nullptr) {
+        const uint8_t *yuv = m_yuv_buffer.bytes();
+        if (yuv == nullptr) {
             return;
         }
         int width = m_width, height = m_height;
 
         {
             std::lock_guard<std::mutex> lock(m_mutex);
-            if (m_y_texture == nullptr || m_uv_texture == nullptr || m_y_texture->width() != width ||
-                m_y_texture->height() != height) {
-                if (m_y_texture) {
-                    m_y_texture->release();
-                    DELETE_TO_NULL(m_y_texture);
-                }
+            if (m_y_texture == nullptr || m_u_texture == nullptr || m_v_texture == nullptr
+                || m_y_texture->width() != width || m_y_texture->height() != height) {
 
-                if (m_uv_texture) {
-                    m_uv_texture->release();
-                    DELETE_TO_NULL(m_uv_texture);
+                if (m_y_texture != nullptr) {
+                    m_y_texture->release();
                 }
+                DELETE_TO_NULL(m_y_texture);
+                if (m_u_texture != nullptr) {
+                    m_u_texture->release();
+                }
+                DELETE_TO_NULL(m_u_texture);
+                if (m_v_texture != nullptr) {
+                    m_v_texture->release();
+                }
+                DELETE_TO_NULL(m_v_texture);
 
                 TexParams params;
                 params.internalFormat = GL_LUMINANCE;
                 params.format = GL_LUMINANCE;
                 m_y_texture = new Texture2D(width, height, params);
 
-                params.internalFormat = GL_LUMINANCE_ALPHA;
-                params.format = GL_LUMINANCE_ALPHA;
-                m_uv_texture = new Texture2D(width / 2, height / 2, params);
+                params.internalFormat = GL_LUMINANCE;
+                params.format = GL_LUMINANCE;
+                m_u_texture = new Texture2D(width / 2, height / 2, params);
+                m_v_texture = new Texture2D(width / 2, height / 2, params);
             }
-            m_y_texture->update((void *)nv21);
-            m_uv_texture->update((void *)(nv21 + width * height));
+            m_y_texture->update((void *)yuv);
+            m_u_texture->update((void *)(yuv + width * height));
+            m_v_texture->update((void *)(yuv + width * height + width * height / 4));
         }
 
         uniform("yTexture")->set((int)m_y_texture->id());
-        uniform("uvTexture")->set((int)m_uv_texture->id());
+        uniform("uTexture")->set((int)m_u_texture->id());
+        uniform("vTexture")->set((int)m_v_texture->id());
 
         BaseFilter::onRender(output);
     }
@@ -149,14 +164,18 @@ void main() {
             m_y_texture->release();
         }
         DELETE_TO_NULL(m_y_texture);
-        if (m_uv_texture != nullptr) {
-            m_uv_texture->release();
+        if (m_u_texture != nullptr) {
+            m_u_texture->release();
         }
-        DELETE_TO_NULL(m_uv_texture);
+        DELETE_TO_NULL(m_u_texture);
+        if (m_v_texture != nullptr) {
+            m_v_texture->release();
+        }
+        DELETE_TO_NULL(m_v_texture);
     }
 
 private:
-    Array m_nv21_buffer;
+    Array m_yuv_buffer;
     int m_width = 0;
     int m_height = 0;
     YuvStandard m_next_std = YuvStandard::BT709;
@@ -164,6 +183,7 @@ private:
 
     YuvStandard m_standard = YuvStandard::BT709;
     Texture2D *m_y_texture = nullptr;
-    Texture2D *m_uv_texture = nullptr;
+    Texture2D *m_u_texture = nullptr;
+    Texture2D *m_v_texture = nullptr;
 };
 NAMESPACE_END

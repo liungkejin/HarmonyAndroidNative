@@ -14,9 +14,9 @@
 
 NAMESPACE_DEFAULT
 
-class NV21Filter : public BaseFilter {
+class NV12Filter : public BaseFilter {
 public:
-    NV21Filter() : BaseFilter("nv21") {
+    NV12Filter() : BaseFilter("nv12") {
         defAttribute("position", DataType::FLOAT_POINTER)->bind(vertexCoord());
         defAttribute("inputTextureCoordinate", DataType::FLOAT_POINTER)->bind(textureCoord());
         defUniform("yTexture", DataType::SAMPLER_2D);
@@ -47,8 +47,8 @@ uniform sampler2D uvTexture;
 void main() {
     float y = texture2D(yTexture, textureCoordinate).r;
     vec4 uv = texture2D(uvTexture, textureCoordinate);
-    float u = uv.a - 0.5;
-    float v = uv.r - 0.5;
+    float v = uv.a - 0.5;
+    float u = uv.r - 0.5;
 )";
         if (m_standard == BT601) {
             fs = R"(
@@ -86,13 +86,13 @@ void main() {
         setTextureCoord(orientation, flipH, flipV);
     }
 
-    void putData(const uint8_t *nv21, int width, int height, YuvStandard standard = YuvStandard::BT709) {
+    void putData(const uint8_t *nv12, int width, int height, YuvStandard standard = YuvStandard::BT709) {
         std::lock_guard<std::mutex> lock(m_mutex);
         m_width = width;
         m_height = height;
         int dstSize = width * height * 3 / 2;
-        uint8_t *dst = m_nv21_buffer.obtain<uint8_t>(dstSize);
-        memcpy(dst, nv21, dstSize);
+        uint8_t *dst = m_nv12_buffer.obtain<uint8_t>(dstSize);
+        memcpy(dst, nv12, dstSize);
         m_next_std = standard;
     }
 
@@ -104,8 +104,8 @@ void main() {
     }
 
     void onRender(Framebuffer *output) override {
-        const uint8_t *nv21 = m_nv21_buffer.bytes();
-        if (nv21 == nullptr) {
+        const uint8_t *nv12 = m_nv12_buffer.bytes();
+        if (nv12 == nullptr) {
             return;
         }
         int width = m_width, height = m_height;
@@ -133,8 +133,8 @@ void main() {
                 params.format = GL_LUMINANCE_ALPHA;
                 m_uv_texture = new Texture2D(width / 2, height / 2, params);
             }
-            m_y_texture->update((void *)nv21);
-            m_uv_texture->update((void *)(nv21 + width * height));
+            m_y_texture->update((void *)nv12);
+            m_uv_texture->update((void *)(nv12 + width * height));
         }
 
         uniform("yTexture")->set((int)m_y_texture->id());
@@ -156,7 +156,7 @@ void main() {
     }
 
 private:
-    Array m_nv21_buffer;
+    Array m_nv12_buffer;
     int m_width = 0;
     int m_height = 0;
     YuvStandard m_next_std = YuvStandard::BT709;
