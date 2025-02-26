@@ -95,7 +95,7 @@ public:
     }
 
     int openFileDescriptor(int64_t *outStart, int64_t *outLength) override {
-        return AAsset_openFileDescriptor64(asset(), (off_t *) outStart, (off_t *) outLength);
+        return AAsset_openFileDescriptor(asset(), (off_t *) outStart, (off_t *) outLength);
     }
 
 private:
