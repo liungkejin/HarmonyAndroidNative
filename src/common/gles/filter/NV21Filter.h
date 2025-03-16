@@ -64,9 +64,9 @@ void main() {
 )";
         } else {
             fs = R"(
-    float r = y + 1.402 * v;
-    float g = y - 0.344136 * u - 0.714136 * v;
-    float b = y + 1.772 * u;
+    float r = y + 1.5748 * v;
+    float g = y - 0.187324 * u - 0.468124 * v;
+    float b = y + 1.8556 * u;
 )";
         }
         fs += R"(
