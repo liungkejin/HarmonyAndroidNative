@@ -139,7 +139,7 @@ set(COMMON_INCLUDES
         # eventpp
         ${COMMON_LIBS_PATH}/eventpp-0.1.3/include
         # cppfs
-        ${COMMON_LIBS_PATH}/source/cppfs/include
+        ${COMMON_LIBS_PATH}/cppfs-1.2.0/source/cppfs/include
 )
 
 if (ZANDROID)
