@@ -154,8 +154,8 @@ endif()
 
 # 判断 INSTALL_LIB 是否存在
 if(ZNATIVE)
-    set(INSTALL_SHARED "libs/${TARGET_ARCH}")                    # ./lib
-    set(INSTALL_LIB    "libs/${TARGET_ARCH}")
+    set(INSTALL_SHARED "libs/${ZTARGET_ARCH}")                    # ./lib
+    set(INSTALL_LIB    "libs/${ZTARGET_ARCH}")
     set(INSTALL_INCLUDE "include/thirdparty")                # ./include
 endif()
 

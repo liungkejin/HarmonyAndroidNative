@@ -7,9 +7,9 @@ set(CMAKE_CXX_STANDARD 17)
 
 #
 # 几个关键变量说明
-# PLATFORM                  平台名称 android | harmony | local (local 表示桌面平台，具体的平台可以是 win32 | linux | macos)
+# ZPLATFORM                 平台名称 (android | harmony | win32 | linux | macos)
 #                           为了方便判断平台，可以使用 ${ZANDROID} | ${ZOHOS} | ${ZLOCAL} | ${ZWINDOWS} | ${ZMACOS} | ${ZLINUX} 这几个变量
-# TARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
+# ZTARGET_ARCH               目标平台的架构 x86 | x64 | arm | arm64
 # ZNATIVE_BUILD_STATIC        是否构建出静态库
 # ZNATIVE_BUILD_LOCAL_SAMPLE  是否构建本地示例，默认启用
 # ZNATIVE_ENABLE_OPENCV       是否启用 opencv 默认不启用
@@ -63,41 +63,41 @@ endif()
 set(ZNATIVE ON)
 if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
     set(ZANDROID ON)
-    set(PLATFORM "android")
-    set(TARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
+    set(ZPLATFORM "android")
+    set(ZTARGET_ARCH ${CMAKE_ANDROID_ARCH_ABI})
 elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
     set(ZOHOS ON)
-    set(PLATFORM "harmony")
-    set(TARGET_ARCH ${OHOS_ARCH})
+    set(ZPLATFORM "harmony")
+    set(ZTARGET_ARCH ${OHOS_ARCH})
 else ()
     if (WIN32)
-        set(PLATFORM "local/win32")
+        set(ZPLATFORM "win32")
     elseif (APPLE)
-        set(PLATFORM "local/macos")
+        set(ZPLATFORM "macos")
     else ()
-        set(PLATFORM "local/linux")
+        set(ZPLATFORM "linux")
     endif ()
 
     if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "amd" OR
             ${CMAKE_SYSTEM_PROCESSOR} MATCHES "AMD" OR
             ${CMAKE_SYSTEM_PROCESSOR} MATCHES "x86")
         if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
-            set(TARGET_ARCH "x64")
+            set(ZTARGET_ARCH "x64")
         else ()
-            set(TARGET_ARCH "x86")
+            set(ZTARGET_ARCH "x86")
         endif ()
     elseif (${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
         if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "64")
-            set(TARGET_ARCH "arm64")
+            set(ZTARGET_ARCH "arm64")
         else ()
-            set(TARGET_ARCH "arm")
+            set(ZTARGET_ARCH "arm")
         endif ()
     else ()
         if(${CMAKE_SYSTEM_NAME} STREQUAL "Linux" OR ${CMAKE_SYSTEM_NAME} STREQUAL "Darwin")
-            EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE TARGET_ARCH)
+            EXECUTE_PROCESS( COMMAND uname -m COMMAND tr -d '\n' OUTPUT_VARIABLE ZTARGET_ARCH)
         else ()
             message(FATAL_ERROR "Unknown arch: ${CMAKE_SYSTEM_PROCESSOR}")
-            set(TARGET_ARCH ${CMAKE_SYSTEM_PROCESSOR})
+            set(ZTARGET_ARCH ${CMAKE_SYSTEM_PROCESSOR})
         endif ()
     endif ()
 endif ()
@@ -107,19 +107,19 @@ message(STATUS "option ZNATIVE_ENABLE_OPENCV: ${ZNATIVE_ENABLE_OPENCV}")
 message(STATUS "option ZNATIVE_BUILD_LOCAL_SAMPLE: ${ZNATIVE_BUILD_LOCAL_SAMPLE}")
 message(STATUS "option ZNATIVE_ENABLE_GL: ${ZNATIVE_ENABLE_GL}")
 
-message(STATUS "Build status: platform: ${PLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${TARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
+message(STATUS "Build status: platform: ${ZPLATFORM}, sys name: ${CMAKE_SYSTEM_NAME}, arch: ${ZTARGET_ARCH}, build type: ${CMAKE_BUILD_TYPE}, sys version: ${CMAKE_SYSTEM_VERSION}")
 
 # 公共第三方库路径
 set(COMMON_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/common)
 set(COMMON_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/common)
 # 平台相关第三方库路径
-set(PLATFORM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/${PLATFORM})
-set(PLATFORM_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/${PLATFORM})
+set(PLATFORM_LIBS_PATH ${CMAKE_CURRENT_SOURCE_DIR}/libs/${ZPLATFORM})
+set(PLATFORM_SRC_PATH ${CMAKE_CURRENT_SOURCE_DIR}/src/${ZPLATFORM})
 
-set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install/${PLATFORM}/${CMAKE_BUILD_TYPE})
+set(CMAKE_INSTALL_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/install/${ZPLATFORM}/${CMAKE_BUILD_TYPE})
 set(ZNATIVE_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/znative)
 set(THIRDPARTY_INCLUDE_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/include/thirdparty)
-set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/libs/${TARGET_ARCH})
+set(LIBRARY_INSTALL_DIR ${CMAKE_INSTALL_PREFIX}/libs/${ZTARGET_ARCH})
 
 set(CMAKE_INSTALL_INCLUDEDIR ${THIRDPARTY_INCLUDE_INSTALL_DIR})
 set(CMAKE_INSTALL_LIBDIR ${LIBRARY_INSTALL_DIR})
@@ -213,6 +213,8 @@ set(ZNATIVE_LIBS ${ZNATIVE_TARGET} ${PLATFORM_LIBS} ${COMMON_LIBS} CACHE INTERNA
 set(ZNATIVE_OPENCV_DIR ${OpenCV_DIR} CACHE INTERNAL "opencv dir")
 set(ZNATIVE_DEFINITIONS ${ALL_DEFINITIONS} CACHE INTERNAL "all definitions")
 
-if (${ZNATIVE_BUILD_LOCAL_SAMPLE} AND ${PLATFORM} MATCHES "local")
+if (${ZNATIVE_BUILD_LOCAL_SAMPLE} AND
+        (${ZPLATFORM} MATCHES "win32" OR ${ZPLATFORM} MATCHES "macos" OR ${ZPLATFORM} MATCHES "linux"))
+    message(STATUS "Build local sample")
     include(${CMAKE_CURRENT_SOURCE_DIR}/samples/local/Local-sample.cmake)
 endif ()

@@ -60,7 +60,7 @@ build/                   # 构建目录
             |_ arm64-v8a/ 
         |_ release/      # HarmonyOS Release 构建目录
             |_ arm64-v8a/ 
-   |_ local/             # 本地构建目录
+   |_ win32/             # 本地构建目录
         |_ debug/        # 本地 Debug 构建目录
         |_ release/      # 本地 Release 构建目录
 
@@ -69,19 +69,17 @@ install/           # 安装目录
 libs/                    # 依赖库目录
     |_ android/          # Android 依赖库目录
     |_ harmony/          # HarmonyOS 依赖库目录
-    |_ local/            # 本地依赖库目录
-        |_ win32
-        |_ linux
-        |_ macos
+    |_ win32             # 本地依赖库目录
+    |_ linux
+    |_ macos
     |_ common/           # 共享依赖库目录
     
 src/                     # 源码目录
     |_ android/          # Android 源码目录
     |_ harmony/          # HarmonyOS 源码目录
-    |_ local/            # 本地源码目录
-        |_ win32
-        |_ linux
-        |_ macos
+    |_ win32             # 本地源码目录
+    |_ linux
+    |_ macos
     |_ common/           # 共享源码目录
 
 samples/                 # 示例代码目录
