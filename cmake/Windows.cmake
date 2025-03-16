@@ -36,7 +36,7 @@ if (MSVC)
     add_compile_options("$<$<CXX_COMPILER_ID:MSVC>:/utf-8>")
 endif ()
 
-if (${ZNATIVE_GL_ENABLE})
+if (${ZNATIVE_ENABLE_GL})
     set(GLEW_DIR "${PLATFORM_LIBS_PATH}/glew-2.1.0")
     add_subdirectory(${GLEW_DIR})
 

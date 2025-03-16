@@ -117,6 +117,55 @@ public:
      * @since 10
      */
     static std::string osFullName(void) { return OH_GetOSFullName(); }
+    
+    /**
+     * 比如 OpenHarmony-5.0.2.126，返回 5 0 2 126
+     */
+    static void osVersionInfo(int& major, int& minor, int& micro, int &patch) {
+        major = minor = micro = patch = 0;
+        
+        std::string version = OH_GetOSFullName();
+        // OpenHarmony-5.0.2.126
+        int pos = version.find('-');
+        if (pos == std::string::npos) {
+            return;
+        }
+        std::string versionStr = version.substr(pos + 1);
+        pos = versionStr.find('.');
+        if (pos == std::string::npos) {
+            major = std::stoi(versionStr);
+            return;
+        }
+        std::string majorStr = versionStr.substr(0, pos);
+        major = std::stoi(majorStr);
+        
+        versionStr = versionStr.substr(pos + 1);
+        pos = versionStr.find('.');
+        if (pos == std::string::npos) {
+            minor = std::stoi(versionStr);
+            return;
+        }
+        std::string minorStr = versionStr.substr(0, pos);
+        minor = std::stoi(minorStr);
+        
+        versionStr = versionStr.substr(pos + 1);
+        pos = versionStr.find('.');
+        if (pos == std::string::npos) {
+            micro = std::stoi(versionStr);
+            return;
+        }
+        std::string microStr = versionStr.substr(0, pos);
+        micro = std::stoi(microStr);
+        
+        versionStr = versionStr.substr(pos + 1);
+        pos = versionStr.find('.');
+        if (pos == std::string::npos) {
+            patch = std::stoi(versionStr);
+            return;
+        }
+        std::string patchStr = versionStr.substr(0, pos);
+        patch = std::stoi(patchStr);
+    }
 
     /**
      * Obtains the SDK API version number.
@@ -227,6 +276,9 @@ public:
         ss << "  IncrementalVersion: " << incrementalVersion() << "\n";
         ss << "  OsReleaseType: " << osReleaseType() << "\n";
         ss << "  OsFullName: " << osFullName() << "\n";
+        int major, minor, micro, patch;
+        osVersionInfo(major, minor, micro, patch);
+        ss << "  OsVersionInfo: " << std::to_string(major) << "." << std::to_string(minor) << "." << std::to_string(micro) << "." << std::to_string(patch) << "\n";
         ss << "  SdkApiVersion: " << std::to_string(sdkApiVersion()) << "\n";
         ss << "  FirstApiVersion: " << std::to_string(firstApiVersion()) << "\n";
         ss << "  VersionId: " << versionId() << "\n";

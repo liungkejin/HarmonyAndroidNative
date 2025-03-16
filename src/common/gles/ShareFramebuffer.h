@@ -61,6 +61,13 @@ public:
         m_update_locker.unlock();
     }
     
+    void release() {
+        m_update_locker.lock();
+        m_framebuffer.release();
+        m_fence_syncer.release();
+        m_update_locker.unlock();
+    }
+    
 private:
     std::mutex m_update_locker;
     Framebuffer m_framebuffer;

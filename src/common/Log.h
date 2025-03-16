@@ -56,11 +56,7 @@
 
 // 严格模式，_ERROR直接抛出运行时异常
 #ifndef STRICT_MODE
-#ifdef __DEBUG__
-#define STRICT_MODE true
-#else
 #define STRICT_MODE false
-#endif
 #endif
 
 extern FILE *__g_logFile;

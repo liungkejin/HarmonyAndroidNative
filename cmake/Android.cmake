@@ -22,7 +22,7 @@ set(PLATFORM_LIBS
         mediandk
 )
 
-if (${ZNATIVE_GL_ENABLE})
+if (${ZNATIVE_ENABLE_GL})
     set(PLATFORM_SOURCES
             ${PLATFORM_SOURCES}
             src/android/surface/NativeWindow.cpp
