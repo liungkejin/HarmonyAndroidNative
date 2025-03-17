@@ -1,8 +1,8 @@
 build/
 install/
 libs/android/opencv*
-libs/local/win32/opencv-4.10.0/vc17-debug/
-libs/local/win32/opencv-4.10.0/vc17-release/
-libs/local/win32/opencv-4.10.0/mingw-release/
+libs/win32/opencv-4.10.0/vc17-debug/
+libs/win32/opencv-4.10.0/vc17-release/
+libs/win32/opencv-4.10.0/mingw-release/
 .idea/
 .DS_Store

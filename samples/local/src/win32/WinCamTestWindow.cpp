@@ -5,10 +5,10 @@
 #include "WinCamTestWindow.h"
 #include <windows.h>
 #include <vector>
-#include <local/win32/cam/CamDevice.h>
-#include <local/win32/dshow/DSUtils.h>
+#include <win32/cam/CamDevice.h>
+#include <win32/dshow/DSUtils.h>
 #include <common/gles/Texture.h>
-#include <local/win32/dshow/DSCaptureMgr.h>
+#include <win32/dshow/DSCaptureMgr.h>
 
 using namespace znative;
 

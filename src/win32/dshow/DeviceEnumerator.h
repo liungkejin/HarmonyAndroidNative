@@ -8,7 +8,7 @@
 #include <windows.h>
 #include <uuids.h>
 #include <strmif.h>
-#include <local/win32/WinUtils.h>
+#include <win32/WinUtils.h>
 
 NAMESPACE_DEFAULT
 
