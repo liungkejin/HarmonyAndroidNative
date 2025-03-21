@@ -5,7 +5,7 @@
 #include "CamDevice.h"
 
 #include <amvideo.h>
-#include <local/win32/dshow/DeviceEnumerator.h>
+#include <win32/dshow/DeviceEnumerator.h>
 
 NAMESPACE_DEFAULT
 
