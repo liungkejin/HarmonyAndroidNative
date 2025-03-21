@@ -148,11 +148,6 @@ static inline std::string __prettyMethodName(const std::string &prettyFunction) 
         return (retcode);                                                                                              \
     }
 
-#define _ERROR_RETURN(condition, retcode)                                                                              \
-    if (condition) {                                                                                                   \
-        return (retcode);                                                                                              \
-    }
-
 #define _ERROR_IF(condition, fmt, ...)                                                                                 \
     if (condition) {                                                                                                   \
         _ERROR(fmt, ##__VA_ARGS__);                                                                                    \
