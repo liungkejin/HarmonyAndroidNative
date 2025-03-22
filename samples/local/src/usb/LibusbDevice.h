@@ -14,6 +14,7 @@ NAMESPACE_DEFAULT
 class LibusbDevice {
 public:
     LibusbDevice(libusb_device* dev, const libusb_device_descriptor& desc) {
+        libusb_ref_device(dev);
         m_dev = dev;
         m_desc = desc;
         m_in_endpoint_address = 0;
@@ -24,15 +25,26 @@ public:
                                           m_handle(o.m_handle),
                                           m_in_endpoint_address(o.m_in_endpoint_address),
                                           m_out_endpoint_address(o.m_out_endpoint_address) {
+        libusb_ref_device(m_dev);
     }
 
     LibusbDevice& operator =(const LibusbDevice& o) {
+        if (m_dev) {
+            libusb_unref_device(m_dev);
+        }
         m_dev = o.m_dev;
+        libusb_ref_device(m_dev);
         m_desc = o.m_desc;
         m_handle = o.m_handle;
         m_in_endpoint_address = o.m_in_endpoint_address;
         m_out_endpoint_address = o.m_out_endpoint_address;
         return *this;
+    }
+
+    ~LibusbDevice() {
+        if (m_dev) {
+            libusb_unref_device(m_dev);
+        }
     }
 
     bool operator ==(const LibusbDevice& o) const {
@@ -58,10 +70,7 @@ public:
 
         int ret = libusb_kernel_driver_active(m_handle, interfaceNumber);
         if (ret != 0) {
-#ifdef WIN32
             ret = libusb_detach_kernel_driver(m_handle, interfaceNumber);
-#endif
-
             if (ret != 0) {
                 _ERROR("Failed to detach kernel driver: %s", LibusbUtils::errString(ret));
             }
@@ -126,27 +135,27 @@ public:
     std::string toString() const {
         std::stringstream ss;
         ss << "LibusbDevice(" << LibusbUtils::toHexString((uint64_t) m_dev) << ") {\n";
-        ss << "  DescType: " << LibusbUtils::descTypeToString(m_desc.bDescriptorType) << "\n";
-        ss << "  ProductID: " << LibusbUtils::toHexString(m_desc.idProduct) << "\n";
-        ss << "  VendorID: " << LibusbUtils::toHexString(m_desc.idVendor) << "\n";
-        ss << "  USBType: " << LibusbUtils::toHexString(m_desc.bcdUSB) << "\n";
-        ss << "  Class: " << LibusbUtils::toHexString(m_desc.bDeviceClass) << "\n";
-        ss << "  SubClass: " << LibusbUtils::toHexString(m_desc.bDeviceSubClass) << "\n";
-        ss << "  Protocol: " << LibusbUtils::toHexString(m_desc.bDeviceProtocol) << "\n";
-        ss << "  MaxPacketSize0: " << (int)m_desc.bMaxPacketSize0 << "\n";
-        ss << "  bcdDevice: " << (int)m_desc.bcdDevice << "\n";
+        ss << "  desc type : " << LibusbUtils::descTypeToString(m_desc.bDescriptorType) << "\n";
+        ss << "  product id: " << LibusbUtils::toHexString(m_desc.idProduct) << "\n";
+        ss << "  vendor id : " << LibusbUtils::toHexString(m_desc.idVendor) << "\n";
+        ss << "  usb type  : " << LibusbUtils::toHexString(m_desc.bcdUSB) << "\n";
+        ss << "  class     : " << LibusbUtils::toHexString(m_desc.bDeviceClass) << "\n";
+        ss << "  sub class : " << LibusbUtils::toHexString(m_desc.bDeviceSubClass) << "\n";
+        ss << "  protocol  : " << LibusbUtils::toHexString(m_desc.bDeviceProtocol) << "\n";
+        ss << "  max packet size: " << (int)m_desc.bMaxPacketSize0 << "\n";
+        ss << "  bcd device: " << (int)m_desc.bcdDevice << "\n";
         if (m_handle) {
-            ss << "  Manufacturer: " << manufacturerString() << "\n";
-            ss << "  Product: " << productString() << "\n";
-            ss << "  SerialNumber: " << serialNumberString() << "\n";
+            ss << "  manufacturer : " << manufacturerString() << "\n";
+            ss << "  product      : " << productString() << "\n";
+            ss << "  serial number: " << serialNumberString() << "\n";
         } else {
-            ss << "  Manufacturer: " << (int)m_desc.iManufacturer << "\n";
-            ss << "  Product: " << (int)m_desc.iProduct << "\n";
-            ss << "  SerialNumber: " << (int)m_desc.iSerialNumber << "\n";
+            ss <<"  manufacturer : "  << (int)m_desc.iManufacturer << "\n";
+            ss <<"  product      : " << (int)m_desc.iProduct << "\n";
+            ss <<"  serial number: "  << (int)m_desc.iSerialNumber << "\n";
         }
-        ss << "  NumConfigurations: " << (int)m_desc.bNumConfigurations << "\n";
-        ss << "  inEndpointAddress: " << (int)m_in_endpoint_address << "\n";
-        ss << "  outEndpointAddress: " << (int)m_out_endpoint_address << "\n";
+        ss << "  num configurations : " << (int)m_desc.bNumConfigurations << "\n";
+        ss << "  in  endpoint address: " << (int)m_in_endpoint_address << "\n";
+        ss << "  out endpoint address: " << (int)m_out_endpoint_address << "\n";
         ss << "}\n";
         return ss.str();
     }

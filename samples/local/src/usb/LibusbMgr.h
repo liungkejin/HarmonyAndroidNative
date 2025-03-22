@@ -10,7 +10,6 @@
 #include "LibusbUtils.h"
 
 NAMESPACE_DEFAULT
-
 class LibusbMgr {
 public:
     bool initialize();
@@ -21,6 +20,12 @@ public:
     int onDevicePlug(libusb_device* dev);
 
     int onDeviceUnplug(libusb_device* dev);
+
+public:
+    /**
+     * @return 实时列出所有设备列表
+     */
+    std::list<LibusbDevice> listDevices();
 
 private:
     libusb_context* m_usb_context = nullptr;
