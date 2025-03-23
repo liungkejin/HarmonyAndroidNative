@@ -69,8 +69,9 @@ int LibusbDevice::transCtrl(uint8_t reqType, uint8_t req,
                            uint16_t val, uint16_t index, uint8_t* data, uint16_t wLength, uint32_t timeout) const {
     _FATAL_IF(!m_handle, "Device is not open");
 
+    // 返回的是传输的字节数
     int ret = libusb_control_transfer(m_handle, reqType, req, val, index, data, wLength, timeout);
-    _ERROR_IF(ret != 0, "Failed to control transfer(type: %d, request: %d, value: %d, index: %d): %s",
+    _ERROR_IF(ret < 0, "Failed to control transfer(type: %d, request: %d, value: %d, index: %d): %s",
               reqType, req, val, index, LibusbUtils::errString(ret));
     return ret;
 }

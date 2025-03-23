@@ -73,7 +73,7 @@ bool AOAProtocol::connectAccessoryImpl(LibusbDevice& device, const AOAInfo& info
     }
 
     int aoaVersion = ioBuffer[1] << 8 | ioBuffer[0];
-    if (aoaVersion != 0 && aoaVersion != 1) {
+    if (aoaVersion != 1 && aoaVersion != 2) {
         _ERROR("wrong aoa version: %d", aoaVersion);
         return false;
     }
@@ -89,7 +89,7 @@ bool AOAProtocol::connectAccessoryImpl(LibusbDevice& device, const AOAInfo& info
     };
 
     for (int i = 0; i < 6; ++i) {
-        ret = device.transCtrl(0x40, 52, 0, i + 1, data[i], strlen((char*)data[i]), 500);
+        ret = device.transCtrl(0x40, 52, 0, i, data[i], strlen((char*)data[i]), 500);
         if (ret < 0) {
             _ERROR("Failed to send aoa info: %s", data[i]);
             return false;

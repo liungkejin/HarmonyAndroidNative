@@ -5,11 +5,22 @@
 #include "LibusbWindow.h"
 #include <libusb.h>
 
+#include "AOAProtocol.h"
 #include "LibusbMgr.h"
 
-znative::LibusbMgr usbMgr;
-std::list<znative::LibusbDevice> devices;
+using namespace znative;
+
+LibusbMgr usbMgr;
+std::list<LibusbDevice> devices;
 bool needRefreshDevices = false;
+AOAInfo aoaInfo = {
+    "AILive Inc.",
+    "AILive",
+    "AILive demo",
+    "1234567890",
+    "1.0",
+    "https://www.ailive.com"
+};
 
 void LibusbWindow::onAppInit(int width, int height) {
     usbMgr.setListener(this);
@@ -31,20 +42,38 @@ void LibusbWindow::onPreRender(int width, int height) {
 void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
     ImGui::Begin("LibusbWindow");
     // show devices list
-    ImGui::Text("All USB Devices:");
+    ImGui::Text("USB Device List:");
     ImGui::BeginChild("DevicesList", ImVec2(0, 100), true);
     for (auto& dev : devices) {
-        ImGui::Text("vid: 0x%x, pid: 0x%x", dev.vendorId(), dev.productId());
+        ImGui::Text("%s", dev.name().c_str());
+        ImGui::SameLine();
+        if (dev.isOpened()) {
+            if (ImGui::Button("Close")) {
+                dev.close();
+            }
+        } else if (ImGui::Button("Open")) {
+            dev.open();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Connect AOA")) {
+            if (AOAProtocol::isAccessory(dev)) {
+                AOAProtocol::openAccessory(dev);
+            } else {
+                if (AOAProtocol::connectAccessory(dev, aoaInfo)) {
+                    needRefreshDevices = true;
+                }
+            }
+        }
     }
     ImGui::EndChild();
     ImGui::End();
 }
 
-void LibusbWindow::onDevicePlug(znative::LibusbDevice& dev) {
+void LibusbWindow::onDevicePlug(LibusbDevice& dev) {
     needRefreshDevices = true;
 }
 
-void LibusbWindow::onDeviceUnplug(znative::LibusbDevice& dev) {
+void LibusbWindow::onDeviceUnplug(LibusbDevice& dev) {
     needRefreshDevices = true;
 }
 

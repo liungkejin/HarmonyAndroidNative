@@ -53,7 +53,7 @@ public:
     }
 
     bool isOutEndpoint() const {
-        return m_desc.bEndpointAddress & LIBUSB_ENDPOINT_OUT;
+        return !isInEndpoint();
     }
 
     uint16_t maxPacketSize() const {
@@ -160,17 +160,22 @@ public:
         return has_in && has_out;
     }
 
-    std::string toString() const {
-        std::stringstream ss;
-        ss << "{number: " << LibusbUtils::toHexString(number())
-            << "\n, class: " << LibusbUtils::toHexString(classId())
-            << "\n, subclass: " << LibusbUtils::toHexString(subclassId())
-            << "\n, protocol: " << LibusbUtils::toHexString(protocolId())
-            << "\n, endpoints: [\n";
-        for (const auto& endpoint : m_endpoints) {
-            ss << endpoint.toString() << ", \n";
+    std::string toString(int indent = 0) const {
+        std::string indent_str;
+        for (int i = 0; i < indent; ++i) {
+            indent_str += " ";
         }
-        ss << "]}";
+        std::stringstream ss;
+        ss << "{\n";
+        ss << indent_str << "number: " << LibusbUtils::toHexString(number()) << '\n'
+           << indent_str << "class: " << LibusbUtils::toHexString(classId()) << '\n'
+           << indent_str << "subclass: " << LibusbUtils::toHexString(subclassId()) << '\n'
+           << indent_str << "protocol: " << LibusbUtils::toHexString(protocolId()) << '\n'
+           << indent_str << "endpoints: [\n";
+        for (const auto& endpoint : m_endpoints) {
+            ss << indent_str << "  " << endpoint.toString() << ", \n";
+        }
+        ss << indent_str << "]}";
         return ss.str();
     }
 
@@ -235,13 +240,20 @@ public:
         return LibusbInterfaceSetting();
     }
 
-    std::string toString() const {
-        std::stringstream ss;
-        ss << "{settingSize: " << settingSize() << "\n, settings: [\n";
-        for (const auto& setting : m_settings) {
-            ss << setting.toString() << ", \n";
+    std::string toString(int indent = 0) const {
+        std::string indent_str;
+        for (int i = 0; i < indent; ++i) {
+            indent_str += " ";
         }
-        ss << "]}";
+        std::stringstream ss;
+        ss << "{\n";
+        ss << indent_str << "settingSize: " << (int) settingSize() << '\n';
+        ss << indent_str << "settings: [\n";
+        int i = 0;
+        for (const auto& setting : m_settings) {
+            ss << indent_str << "  [" << i++ << "]: " << setting.toString(indent + 4) << ", \n";
+        }
+        ss << indent_str << "]}";
         return ss.str();
     }
 
@@ -291,6 +303,20 @@ public:
             }
         }
         return LibusbInterfaceSetting();
+    }
+
+    std::string toString() const {
+        std::stringstream ss;
+        ss << "{\n";
+        ss << "interfaceSize: " << (int) interfaceSize() << "\n";
+        ss << "interfaces: [\n";
+        int i = 0;
+        for (const auto& interface : m_interfaces) {
+            ss << "  [" << i << "]: " << interface.toString(4) << ", \n";
+            i++;
+        }
+        ss << "]}";
+        return ss.str();
     }
 
 private:
@@ -405,6 +431,19 @@ public:
 
 public:
     const libusb_device* device() const { return m_dev; }
+
+    std::string name() const {
+        char buf[32] = {0};
+        std::string ps;
+        if (isOpened()) {
+            ps = productString();
+        }
+        if (ps.empty()) {
+            snprintf(buf, 32, "v:0x%x-p:0x%x", productId(), vendorId());
+            ps = buf;
+        }
+        return ps;
+    }
 
     std::list<LibusbConfig> getConfigs() const;
 

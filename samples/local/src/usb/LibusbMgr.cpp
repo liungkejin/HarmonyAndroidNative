@@ -49,8 +49,8 @@ bool LibusbMgr::initialize() {
     m_event_thread.post([this](){
         _INFO("LibusbMgr event thread started");
         while (m_is_listening) {
-            int rc = libusb_handle_events(m_usb_context);
-            _INFO("libusb_handle_events rc: %d", rc);
+            libusb_handle_events(m_usb_context);
+            // _INFO("libusb_handle_events rc: %d", rc);
         }
         _INFO("LibusbMgr event thread stopped");
     });
@@ -76,6 +76,12 @@ int LibusbMgr::onDevicePlug(libusb_device* dev) {
     m_devices.push_back(device);
     if (m_listener) {
         m_listener->onDevicePlug(device);
+    }
+    auto configs = device.getConfigs();
+    int i = 0;
+    for (auto& config : configs) {
+        _INFO("Device config[%d]: %s", i, config.toString());
+        ++i;
     }
 
     return LIBUSB_SUCCESS;

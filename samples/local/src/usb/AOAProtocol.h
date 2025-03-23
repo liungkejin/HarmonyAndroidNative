@@ -20,6 +20,10 @@ struct AOAInfo {
 
 class AOAProtocol {
 public:
+    static bool isAccessory(const LibusbDevice& device) {
+        return isAccessory(device.vendorId(), device.productId());
+    }
+
     /**
      * 判断当前设备是否是 Android Accessory
      * @param vid vendor id
