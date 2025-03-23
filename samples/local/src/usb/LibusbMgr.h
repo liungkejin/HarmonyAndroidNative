@@ -10,6 +10,13 @@
 #include "LibusbUtils.h"
 
 NAMESPACE_DEFAULT
+
+class LibusbDeviceListener {
+public:
+    virtual void onDevicePlug(LibusbDevice& dev) = 0;
+    virtual void onDeviceUnplug(LibusbDevice& dev) = 0;
+};
+
 class LibusbMgr {
 public:
     bool initialize();
@@ -17,6 +24,10 @@ public:
     void release();
 
 public:
+    void setListener(LibusbDeviceListener* listener) {
+        m_listener = listener;
+    }
+
     int onDevicePlug(libusb_device* dev);
 
     int onDeviceUnplug(libusb_device* dev);
@@ -35,6 +46,7 @@ private:
 
     std::mutex m_proc_lock;
     std::list<LibusbDevice> m_devices;
+    LibusbDeviceListener* m_listener = nullptr;
 };
 
 NAMESPACE_END

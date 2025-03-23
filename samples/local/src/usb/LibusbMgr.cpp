@@ -74,23 +74,32 @@ int LibusbMgr::onDevicePlug(libusb_device* dev) {
         }
     }
     m_devices.push_back(device);
+    if (m_listener) {
+        m_listener->onDevicePlug(device);
+    }
 
     return LIBUSB_SUCCESS;
 }
 
 int LibusbMgr::onDeviceUnplug(libusb_device* dev) {
     LOCK_MUTEX(m_proc_lock);
-    bool removed = false;
+    LibusbDevice device;
     // 从 m_devices 中删除 dev
     for (auto it = m_devices.begin(); it != m_devices.end(); ++it) {
         if (it->device() == dev) {
-            removed = true;
-            _INFO("device unplugged: %s", it->toString());
+            device = *it;
             m_devices.erase(it);
             break;
         }
     }
-    _ERROR_RETURN_IF(!removed, LIBUSB_ERROR_NOT_FOUND, "device not found: %p", dev);
+    if (device.valid()) {
+        _INFO("device unplugged: %s", device.toString());
+        if (m_listener) {
+            m_listener->onDeviceUnplug(device);
+        }
+    } else {
+        _INFO("device not found: %p", dev);
+    }
     return LIBUSB_SUCCESS;
 }
 

@@ -10,6 +10,7 @@
 #include "ZNamespace.h"
 
 NAMESPACE_DEFAULT
+
 class LibusbUtils {
 public:
     static std::string toHexString(const uint64_t val) {

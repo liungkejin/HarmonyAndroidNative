@@ -8,19 +8,46 @@
 #include "LibusbMgr.h"
 
 znative::LibusbMgr usbMgr;
+std::list<znative::LibusbDevice> devices;
+bool needRefreshDevices = false;
 
 void LibusbWindow::onAppInit(int width, int height) {
+    usbMgr.setListener(this);
     usbMgr.initialize();
+    devices = usbMgr.listDevices();
 }
 
 void LibusbWindow::onAppExit() {
     usbMgr.release();
 }
 
+void LibusbWindow::onPreRender(int width, int height) {
+    if (needRefreshDevices) {
+        devices = usbMgr.listDevices();
+        needRefreshDevices = false;
+    }
+}
+
 void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
     ImGui::Begin("LibusbWindow");
+    // show devices list
+    ImGui::Text("All USB Devices:");
+    ImGui::BeginChild("DevicesList", ImVec2(0, 100), true);
+    for (auto& dev : devices) {
+        ImGui::Text("vid: 0x%x, pid: 0x%x", dev.vendorId(), dev.productId());
+    }
+    ImGui::EndChild();
     ImGui::End();
 }
+
+void LibusbWindow::onDevicePlug(znative::LibusbDevice& dev) {
+    needRefreshDevices = true;
+}
+
+void LibusbWindow::onDeviceUnplug(znative::LibusbDevice& dev) {
+    needRefreshDevices = true;
+}
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -325,7 +352,7 @@ static int usb_setupAccessory(libusb_device *dev)
 
     printf("Accessory Identification sent\n");
 
-    //发送序号为53的USB报文，切换USB模式
+    // 发送序号为53的USB报文，切换USB模式
     if (usb_sendCtrl(handle, NULL, 53, 0) < 0) {
         goto EXIT;
     }
@@ -630,26 +657,4 @@ int usb_deinit(void)
     pthread_mutex_destroy(&gstUsbMngr.stLock);
     libusb_exit (NULL);
     return LIBUSB_SUCCESS;
-}
-
-int aaaa(int argc, char *argv[])
-{
-    int rc;
-    pthread_t tid;
-
-    rc = usb_init();
-    if (LIBUSB_SUCCESS != rc)
-    {
-        return -1;
-    }
-
-    pthread_create(&tid, NULL, usb_readProcess, NULL);
-
-    while (1)
-    {
-        sleep(1);
-    }
-
-    usb_deinit();
-    return EXIT_SUCCESS;
 }

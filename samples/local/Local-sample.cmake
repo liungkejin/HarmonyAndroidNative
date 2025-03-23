@@ -58,6 +58,8 @@ set(SAMPLE_SOURCES
         ${SAMPLE_SRC_DIR}/usb/LibusbWindow.cpp
         ${SAMPLE_SRC_DIR}/usb/LibusbDevice.cpp
         ${SAMPLE_SRC_DIR}/usb/LibusbMgr.cpp
+        ${SAMPLE_SRC_DIR}/usb/AOAProtocol.cpp
+        ${SAMPLE_SRC_DIR}/usb/LibusbAsyncTransfer.cpp
 )
 
 add_executable(local-sample
