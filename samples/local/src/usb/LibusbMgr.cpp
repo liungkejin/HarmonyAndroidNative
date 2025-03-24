@@ -235,7 +235,9 @@ void LibusbMgr::release() {
     LOCK_MUTEX(m_proc_lock);
 
     m_is_listening = false;
-    libusb_interrupt_event_handler(m_usb_context);
+    if (m_usb_context) {
+        libusb_interrupt_event_handler(m_usb_context);
+    }
     m_event_thread.quit();
     m_work_thread.quit();
 
