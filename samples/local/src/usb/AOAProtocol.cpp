@@ -83,9 +83,9 @@ bool AOAProtocol::connectAccessoryImpl(LibusbDevice& device, const AOAInfo& info
         (uint8_t*)info.manufacturer.c_str(),
         (uint8_t*)info.model.c_str(),
         (uint8_t*)info.description.c_str(),
-        (uint8_t*)info.serial.c_str(),
         (uint8_t*)info.version.c_str(),
         (uint8_t*)info.uri.c_str(),
+        (uint8_t*)info.serial.c_str(),
     };
 
     for (int i = 0; i < 6; ++i) {
