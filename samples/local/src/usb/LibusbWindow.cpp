@@ -3,6 +3,8 @@
 //
 
 #include "LibusbWindow.h"
+
+#include <imgui_internal.h>
 #include <libusb.h>
 
 #include "AOAProtocol.h"
@@ -52,37 +54,34 @@ void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
     // show devices list
     ImGui::Text("USB Device List:");
     ImGui::BeginChild("DevicesList", ImVec2(0, 100), true);
-    for (auto& dev : devices) {
-        const char *name = dev.product.c_str();
-        if (dev.is_opened) {
-            if (AOAProtocol::isAccessory(dev)) {
-                ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s [配件模式][已打开]", name);
-            } else {
-                ImGui::Text("%s [普通模式][已打开]", name);
-            }
-        } else {
-            if (AOAProtocol::isAccessory(dev)) {
-                ImGui::Text("%s [配件模式][关闭]", name);
-            } else {
-                ImGui::Text("%s [普通模式][关闭]", name);
-            }
+
+    int i = 0;
+    for (auto beg = devices.begin(); beg != devices.end(); ++beg) {
+        ImGui::PushID(i);
+        auto &dev = *beg;
+        ImGui::Text("[%d]: %s", i, dev.product.c_str());
+        if (AOAProtocol::isAccessory(dev)) {
+            ImGui::SameLine();
+            ImGui::Text("配件模式");
         }
-        ImGui::SameLine();
+        ImGui::SameLine(0, 20);
         if (AOAProtocol::isAccessory(dev)) {
             if (dev.is_opened) {
-                if (ImGui::Button("关闭")) {
+                if (ImGui::SmallButton("关闭")) {
                     usbMgr.closeDevice(dev);
                 }
             } else {
-                if (ImGui::Button("打开配件")) {
+                if (ImGui::SmallButton("打开配件")) {
                     usbMgr.openDevice(dev);
                 }
             }
         } else {
-            if (ImGui::Button("切换至配件模式")) {
+            if (ImGui::SmallButton("切换至配件模式")) {
                 usbMgr.setupDeviceToAccessory(dev, aoaInfo);
             }
         }
+        ImGui::PopID();
+        i += 1;
     }
     ImGui::EndChild();
     ImGui::End();
