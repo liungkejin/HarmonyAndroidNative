@@ -40,20 +40,24 @@ public:
         return m_desc.bEndpointAddress;
     }
 
-    uint8_t type() const {
+    uint8_t attributes() const {
         return m_desc.bmAttributes;
     }
 
-    bool isBulkType() const {
-        return type() == LIBUSB_TRANSFER_TYPE_BULK;
+    libusb_endpoint_transfer_type transferType() const {
+        return (libusb_endpoint_transfer_type) (m_desc.bmAttributes & LIBUSB_TRANSFER_TYPE_MASK);
+    }
+
+    libusb_endpoint_direction direction() const {
+        return (libusb_endpoint_direction) (m_desc.bEndpointAddress & LIBUSB_ENDPOINT_DIR_MASK);
     }
 
     bool isInEndpoint() const {
-        return m_desc.bEndpointAddress & LIBUSB_ENDPOINT_IN;
+        return direction() == LIBUSB_ENDPOINT_IN;
     }
 
     bool isOutEndpoint() const {
-        return !isInEndpoint();
+        return direction() == LIBUSB_ENDPOINT_OUT;
     }
 
     uint16_t maxPacketSize() const {
@@ -63,8 +67,8 @@ public:
     std::string toString() const {
         std::stringstream ss;
         ss << "{address: " << LibusbUtils::toHexString(address())
-            << ", type: " << LibusbUtils::toHexString(type())
-            << ", in: " << isInEndpoint() << ", out: " << isOutEndpoint()
+            << ", type: " << LibusbUtils::endpointTransferType(transferType())
+            << ", direction: " << LibusbUtils::endpointDirection(direction())
             << ", maxPacketSize: " << maxPacketSize() << "}";
         return ss.str();
     }
@@ -86,6 +90,8 @@ public:
     }
 
     LibusbInterfaceSetting(const LibusbInterfaceSetting& o) : m_desc(o.m_desc) {
+        m_active_in_endpoint = o.m_active_in_endpoint;
+        m_active_out_endpoint = o.m_active_out_endpoint;
         for (const auto& endpoint : o.m_endpoints) {
             m_endpoints.push_back(endpoint);
         }
@@ -93,6 +99,8 @@ public:
 
     LibusbInterfaceSetting& operator =(const LibusbInterfaceSetting& o) {
         m_desc = o.m_desc;
+        m_active_in_endpoint = o.m_active_in_endpoint;
+        m_active_out_endpoint = o.m_active_out_endpoint;
         m_endpoints.clear();
         for (const auto& endpoint : o.m_endpoints) {
             m_endpoints.push_back(endpoint);
@@ -125,18 +133,36 @@ public:
         return m_endpoints;
     }
 
-    LibusbEndpoint getInEndpoint(libusb_endpoint_transfer_type type) const {
+    bool activeInEndpoint(libusb_endpoint_transfer_type type) {
+        m_active_in_endpoint = findInEndpoint(type);
+        return m_active_in_endpoint.valid();
+    }
+
+    LibusbEndpoint getActiveInEndpoint() const {
+        return m_active_in_endpoint;
+    }
+
+    bool activeOutEndpoint(libusb_endpoint_transfer_type type) {
+        m_active_out_endpoint = findOutEndpoint(type);
+        return m_active_out_endpoint.valid();
+    }
+
+    LibusbEndpoint getActiveOutEndpoint() const {
+        return m_active_out_endpoint;
+    }
+
+    LibusbEndpoint findInEndpoint(libusb_endpoint_transfer_type type) const {
         for (const auto& endpoint : m_endpoints) {
-            if (endpoint.type() == type && endpoint.isInEndpoint()) {
+            if (endpoint.transferType() == type && endpoint.isInEndpoint()) {
                 return endpoint;
             }
         }
         return LibusbEndpoint();
     }
 
-    LibusbEndpoint getOutEndpoint(libusb_endpoint_transfer_type type) const {
+    LibusbEndpoint findOutEndpoint(libusb_endpoint_transfer_type type) const {
         for (const auto& endpoint : m_endpoints) {
-            if (endpoint.type() == type && endpoint.isOutEndpoint()) {
+            if (endpoint.transferType() == type && endpoint.isOutEndpoint()) {
                 return endpoint;
             }
         }
@@ -147,7 +173,7 @@ public:
         bool has_in = false;
         bool has_out = false;
         for (const auto& endpoint : m_endpoints) {
-            if (endpoint.type() != type) {
+            if (endpoint.transferType() != type) {
                 continue;
             }
             if (endpoint.isOutEndpoint()) {
@@ -167,11 +193,21 @@ public:
         }
         std::stringstream ss;
         ss << "{\n";
-        ss << indent_str << "number: " << LibusbUtils::toHexString(number()) << '\n'
-           << indent_str << "class: " << LibusbUtils::toHexString(classId()) << '\n'
-           << indent_str << "subclass: " << LibusbUtils::toHexString(subclassId()) << '\n'
-           << indent_str << "protocol: " << LibusbUtils::toHexString(protocolId()) << '\n'
-           << indent_str << "endpoints: [\n";
+        ss << indent_str << "number    : " << LibusbUtils::toHexString(number()) << '\n'
+           << indent_str << "class     : " << LibusbUtils::toHexString(classId()) << '\n'
+           << indent_str << "subclass  : " << LibusbUtils::toHexString(subclassId()) << '\n'
+           << indent_str << "protocol  : " << LibusbUtils::toHexString(protocolId()) << '\n';
+        if (m_active_in_endpoint.valid()) {
+            ss << indent_str << "active  in: " << m_active_in_endpoint.toString() << '\n';
+        } else {
+            ss << indent_str << "active  in: null\n";
+        }
+        if (m_active_out_endpoint.valid()) {
+            ss << indent_str << "active out: " << m_active_out_endpoint.toString() << '\n';
+        } else {
+            ss << indent_str << "active out: null\n";
+        }
+        ss << indent_str << "endpoints: [\n";
         for (const auto& endpoint : m_endpoints) {
             ss << indent_str << "  " << endpoint.toString() << ", \n";
         }
@@ -182,6 +218,9 @@ public:
 private:
     libusb_interface_descriptor m_desc;
     std::list<LibusbEndpoint> m_endpoints;
+
+    LibusbEndpoint m_active_in_endpoint;
+    LibusbEndpoint m_active_out_endpoint;
 };
 
 class LibusbInterface {
@@ -226,12 +265,12 @@ public:
                     }
                 }
                 else if (hasIn) {
-                    if (setting.getInEndpoint(transType).valid()) {
+                    if (setting.findInEndpoint(transType).valid()) {
                         return setting;
                     }
                 }
                 else if (hasOut) {
-                    if (setting.getOutEndpoint(transType).valid()) {
+                    if (setting.findOutEndpoint(transType).valid()) {
                         return setting;
                     }
                 }
@@ -305,17 +344,21 @@ public:
         return LibusbInterfaceSetting();
     }
 
-    std::string toString() const {
+    std::string toString(int indent = 0) const {
+        std::string indent_str;
+        for (int i = 0; i < indent; ++i) {
+            indent_str += " ";
+        }
         std::stringstream ss;
         ss << "{\n";
-        ss << "interfaceSize: " << (int) interfaceSize() << "\n";
-        ss << "interfaces: [\n";
+        ss << indent_str << "interfaceSize: " << (int) interfaceSize() << "\n";
+        ss << indent_str << "interfaces: [\n";
         int i = 0;
         for (const auto& interface : m_interfaces) {
-            ss << "  [" << i << "]: " << interface.toString(4) << ", \n";
+            ss << indent_str << "  [" << i << "]: " << interface.toString(indent + 4) << ", \n";
             i++;
         }
-        ss << "]}";
+        ss << indent_str << "]}";
         return ss.str();
     }
 
@@ -323,6 +366,39 @@ private:
     // 注意：不能使用结构体里面的指针
     libusb_config_descriptor m_desc;
     std::list<LibusbInterface> m_interfaces;
+};
+
+// 判断是否为配件通过 AOAProtocol::isAccessory(info) 判断
+struct LibusbDeviceInfo {
+    // 这个标记是为了解决在 plug 回调里面打开设备会导致失败等问题，出现 LIBUSB_DEVICE_BUSY 错误
+    bool is_prepared = false;
+    bool is_opened = false;
+
+    uint16_t vendor_id = 0;
+    uint16_t product_id = 0;
+    uint8_t class_id = 0;
+    uint8_t subclass_id = 0;
+    uint8_t protocol_id = 0;
+
+    std::string manufacturer;
+    std::string product;
+    std::string serial_number;
+
+    std::string toString() const {
+        std::stringstream ss;
+        ss << "{\n"
+           << "  is_opened: " << (is_opened ? "true" : "false") << "\n"
+           << "  vendor_id: " << LibusbUtils::toHexString(vendor_id) << "\n"
+           << "  product_id: " << LibusbUtils::toHexString(product_id) << "\n"
+           << "  class_id: " << LibusbUtils::toHexString(class_id) << "\n"
+           << "  subclass_id: " << LibusbUtils::toHexString(subclass_id) << "\n"
+           << "  protocol_id: " << LibusbUtils::toHexString(protocol_id) << "\n"
+           << "  manufacturer: " << manufacturer << "\n"
+           << "  product: " << product << "\n"
+           << "  serial_number: " << serial_number << "\n"
+           << "}";
+        return ss.str();
+    }
 };
 
 class LibusbDevice {
@@ -335,13 +411,17 @@ public:
         libusb_ref_device(dev);
         m_dev = dev;
         m_desc = desc;
+        m_info.vendor_id = desc.idVendor;
+        m_info.product_id = desc.idProduct;
+        m_info.class_id = desc.bDeviceClass;
+        m_info.subclass_id = desc.bDeviceSubClass;
+        m_info.protocol_id = desc.bDeviceProtocol;
     }
 
-    LibusbDevice(const LibusbDevice& o) : m_dev(o.m_dev), m_desc(o.m_desc), m_handle(o.m_handle),
+    LibusbDevice(const LibusbDevice& o) : m_dev(o.m_dev), m_handle(o.m_handle),
+                                          m_desc(o.m_desc), m_info(o.m_info),
                                           m_active_interface(o.m_active_interface) {
         libusb_ref_device(m_dev);
-        m_active_in_endpoint = o.m_active_in_endpoint;
-        m_active_out_endpoint = o.m_active_out_endpoint;
     }
 
     LibusbDevice& operator =(const LibusbDevice& o) {
@@ -352,9 +432,8 @@ public:
         libusb_ref_device(m_dev);
         m_desc = o.m_desc;
         m_handle = o.m_handle;
+        m_info = o.m_info;
         m_active_interface = o.m_active_interface;
-        m_active_in_endpoint = o.m_active_in_endpoint;
-        m_active_out_endpoint = o.m_active_out_endpoint;
         return *this;
     }
 
@@ -368,10 +447,23 @@ public:
         return o.m_dev == m_dev && m_desc.idProduct == o.m_desc.idProduct && m_desc.idVendor == o.m_desc.idVendor;
     }
 
+    bool operator ==(const LibusbDeviceInfo& o) const {
+        return m_desc.idProduct == o.product_id && m_desc.idVendor == o.vendor_id;
+    }
+
 public:
     bool valid() const {
-        return m_dev != nullptr;
+        return m_dev != nullptr && m_desc.bLength != 0;
     }
+
+    bool isPrepared() const {
+        return m_info.is_prepared;
+    }
+
+    /**
+     * 在设备插入时调用，获取设备信息
+     */
+    bool prepare();
 
     int open();
 
@@ -433,16 +525,12 @@ public:
     const libusb_device* device() const { return m_dev; }
 
     std::string name() const {
-        char buf[32] = {0};
-        std::string ps;
-        if (isOpened()) {
-            ps = productString();
+        if (m_info.product.empty()) {
+            char buf[32] = {0};
+            snprintf(buf, 32, "0x%x/0x%x", vendorId(), productId());
+            return buf;
         }
-        if (ps.empty()) {
-            snprintf(buf, 32, "v:0x%x-p:0x%x", productId(), vendorId());
-            ps = buf;
-        }
-        return ps;
+        return m_info.product;
     }
 
     std::list<LibusbConfig> getConfigs() const;
@@ -453,17 +541,9 @@ public:
 
     uint32_t vendorId() const { return m_desc.idVendor; }
 
-    std::string manufacturerString() const {
-        return getDescString(m_desc.iManufacturer);
-    }
+    const libusb_device_descriptor& desc() const { return m_desc; }
 
-    std::string productString() const {
-        return getDescString(m_desc.iProduct);
-    }
-
-    std::string serialNumberString() const {
-        return getDescString(m_desc.iSerialNumber);
-    }
+    const LibusbDeviceInfo& info() const { return m_info; }
 
     std::string getDescString(uint8_t index) const {
         _ERROR_RETURN_IF(!m_handle, "", "getDescString(%d) failed, Device is not open!", index);
@@ -473,34 +553,35 @@ public:
         if (bytes > 0) {
             return std::string((char*)buf);
         }
+        _WARN("getDescString(%d) failed, error=%s", index, LibusbUtils::errString(bytes));
         return std::string();
     }
 
     std::string toString() const {
         std::stringstream ss;
         ss << "LibusbDevice(" << LibusbUtils::toHexString((uint64_t)m_dev) << ") {\n";
-        // ss << "  desc type : " << LibusbUtils::descTypeToString(m_desc.bDescriptorType) << "\n";
-        ss << "  product id: " << LibusbUtils::toHexString(m_desc.idProduct) << "\n";
-        ss << "  vendor id : " << LibusbUtils::toHexString(m_desc.idVendor) << "\n";
-        ss << "  usb type  : " << LibusbUtils::toHexString(m_desc.bcdUSB) << "\n";
-        ss << "  class     : " << LibusbUtils::toHexString(m_desc.bDeviceClass) << "\n";
-        ss << "  sub class : " << LibusbUtils::toHexString(m_desc.bDeviceSubClass) << "\n";
-        ss << "  protocol  : " << LibusbUtils::toHexString(m_desc.bDeviceProtocol) << "\n";
+        ss << "  product    id: " << LibusbUtils::toHexString(m_desc.idProduct) << "\n";
+        ss << "  vendor    id : " << LibusbUtils::toHexString(m_desc.idVendor) << "\n";
+        ss << "  usb      type: " << LibusbUtils::toHexString(m_desc.bcdUSB) << "\n";
+        ss << "  class        : " << LibusbUtils::toHexString(m_desc.bDeviceClass) << "\n";
+        ss << "  sub    class : " << LibusbUtils::toHexString(m_desc.bDeviceSubClass) << "\n";
+        ss << "  protocol     : " << LibusbUtils::toHexString(m_desc.bDeviceProtocol) << "\n";
+        ss << "  bcd    device: " << (int)m_desc.bcdDevice << "\n";
+        ss << "  manufacturer : " << m_info.manufacturer << "\n";
+        ss << "  product      : " << m_info.product << "\n";
+        ss << "  serial number: " << m_info.serial_number << "\n";
         ss << "  max packet size: " << (int)m_desc.bMaxPacketSize0 << "\n";
-        ss << "  bcd device: " << (int)m_desc.bcdDevice << "\n";
-        if (m_handle) {
-            ss << "  manufacturer : " << manufacturerString() << "\n";
-            ss << "  product      : " << productString() << "\n";
-            ss << "  serial number: " << serialNumberString() << "\n";
+        ss << "  num configurations: " << (int)m_desc.bNumConfigurations << "\n";
+        auto configs = getConfigs();
+        int i = 0;
+        for (const auto& config : configs) {
+            ss << "  config[" << i << "]: " << config.toString(4) << ",\n";
+            i++;
         }
-        else {
-            ss << "  manufacturer : " << (int)m_desc.iManufacturer << "\n";
-            ss << "  product      : " << (int)m_desc.iProduct << "\n";
-            ss << "  serial number: " << (int)m_desc.iSerialNumber << "\n";
-        }
-        ss << "  num configurations : " << (int)m_desc.bNumConfigurations << "\n";
         if (m_active_interface.valid()) {
-            ss << "  active interface: " << m_active_interface.toString() << "\n";
+            ss << "  active interface: " << m_active_interface.toString(4) << "\n";
+        } else {
+            ss << "  active interface: null\n";
         }
         ss << "}\n";
         return ss.str();
@@ -508,14 +589,12 @@ public:
 
 private:
     libusb_device* m_dev = nullptr;
-    libusb_device_descriptor m_desc;
-
     libusb_device_handle* m_handle = nullptr;
 
+    libusb_device_descriptor m_desc;
+    LibusbDeviceInfo m_info;
+
     LibusbInterfaceSetting m_active_interface;
-    libusb_endpoint_transfer_type m_transfer_type = LIBUSB_ENDPOINT_TRANSFER_TYPE_BULK;
-    LibusbEndpoint m_active_in_endpoint;
-    LibusbEndpoint m_active_out_endpoint;
 };
 
 NAMESPACE_END

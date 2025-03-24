@@ -20,8 +20,8 @@ struct AOAInfo {
 
 class AOAProtocol {
 public:
-    static bool isAccessory(const LibusbDevice& device) {
-        return isAccessory(device.vendorId(), device.productId());
+    static bool isAccessory(const LibusbDeviceInfo& info) {
+        return isAccessory(info.vendor_id, info.product_id);
     }
 
     /**
@@ -33,12 +33,12 @@ public:
     static bool isAccessory(uint16_t vid, uint16_t pid);
 
     /**
-     * 连接 Android Accessory
+     * 设置设备为 Android Accessory
      * @param device 设备
      * @param info 信息
      * @return 是否连接成功
      */
-    static bool connectAccessory(LibusbDevice& device, const AOAInfo& info);
+    static bool setupDeviceToAccessory(LibusbDevice& device, const AOAInfo& info);
 
     /**
      * 打开 Android Accessory

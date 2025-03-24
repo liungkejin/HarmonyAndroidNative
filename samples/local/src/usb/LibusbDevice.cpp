@@ -21,9 +21,26 @@ std::list<LibusbConfig> LibusbDevice::getConfigs() const {
     return configs;
 }
 
+bool LibusbDevice::prepare() {
+    if (m_info.is_prepared) {
+        return true;
+    }
+    if (this->open() == LIBUSB_SUCCESS) {
+        this->m_info.manufacturer = this->getDescString(m_desc.iManufacturer);
+        this->m_info.product = this->getDescString(m_desc.iProduct);
+        this->m_info.serial_number = this->getDescString(m_desc.iSerialNumber);
+        this->close();
+        this->m_info.is_prepared = true;
+        return true;
+    }
+    _ERROR("Failed to prepare device: %s", this->toString());
+    return false;
+}
+
+
 int LibusbDevice::open() {
     if (m_handle) {
-        return 0;
+        return LIBUSB_SUCCESS;
     }
 
     int ret = libusb_open(m_dev, &m_handle);
@@ -31,7 +48,12 @@ int LibusbDevice::open() {
         _ERROR("Failed to open device: %s", LibusbUtils::errString(ret));
     }
     else {
-        _INFO("Device opened: %s", this->toString());
+        m_info.is_opened = true;
+        if (this->m_info.product.empty()) {
+            this->m_info.manufacturer = this->getDescString(m_desc.iManufacturer);
+            this->m_info.product = this->getDescString(m_desc.iProduct);
+            this->m_info.serial_number = this->getDescString(m_desc.iSerialNumber);
+        }
     }
 
     return ret;
@@ -52,17 +74,27 @@ int LibusbDevice::active(const int interfaceNumber) const {
 
 int LibusbDevice::claimInterface(const LibusbInterfaceSetting& setting, libusb_endpoint_transfer_type transType) {
     _FATAL_IF(!m_handle, "Device is not open");
-    int ret = libusb_claim_interface(m_handle, setting.number());
+    LibusbInterfaceSetting activeSetting = setting;
+    if (!activeSetting.activeInEndpoint(transType)) {
+        libusb_release_interface(m_handle, setting.number());
+        _ERROR("Interface[%d] does not have active in endpoint of transfer type: %s",
+            setting.number(), LibusbUtils::endpointTransferType(transType));
+        return -1;
+    }
+    if (!activeSetting.activeOutEndpoint(transType)) {
+        libusb_release_interface(m_handle, setting.number());
+        _ERROR("Interface[%d] does not have active out endpoint of transfer type: %s",
+            setting.number(), LibusbUtils::endpointTransferType(transType));
+        return -1;
+    }
+    int ret = libusb_claim_interface(m_handle, activeSetting.number());
     if (ret != 0) {
         _ERROR("Failed to claim interface: %s", LibusbUtils::errString(ret));
-    } else {
-        m_active_interface = setting;
-        m_transfer_type = transType;
-        m_active_in_endpoint = setting.getInEndpoint(transType);
-        m_active_out_endpoint = setting.getOutEndpoint(transType);
-        _INFO("Interface claimed: %s", setting.toString());
+        return ret;
     }
-    return ret;
+    m_active_interface = activeSetting;
+    _INFO("Interface claimed: %s", m_active_interface.toString());
+    return LIBUSB_SUCCESS;
 }
 
 int LibusbDevice::transCtrl(uint8_t reqType, uint8_t req,
@@ -80,7 +112,7 @@ int LibusbDevice::sendBulk(unsigned char* data, int length, int* actual_length, 
     _FATAL_IF(!m_handle, "Device is not open");
     _FATAL_IF(!m_active_interface.valid(), "Interface is not claimed");
 
-    uint8_t endpoint = m_active_out_endpoint.address();
+    uint8_t endpoint = m_active_interface.getActiveInEndpoint().address();
     int ret = libusb_bulk_transfer(m_handle, endpoint, data, length, actual_length, timeout);
     _ERROR_IF(ret != 0, "Failed to send bulk transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
@@ -90,7 +122,7 @@ int LibusbDevice::recvBulk(unsigned char* data, int length, int* actual_length, 
     _FATAL_IF(!m_handle, "Device is not open");
     _FATAL_IF(!m_active_interface.valid(), "Interface is not claimed");
 
-    uint8_t endpoint = m_active_in_endpoint.address();
+    uint8_t endpoint = m_active_interface.getActiveInEndpoint().address();
     int ret = libusb_bulk_transfer(m_handle, endpoint, data, length, actual_length, timeout);
     _ERROR_IF(ret != 0, "Failed to recv bulk transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
@@ -99,7 +131,8 @@ int LibusbDevice::recvBulk(unsigned char* data, int length, int* actual_length, 
 int LibusbDevice::sendInterrupt(unsigned char* data, int length, int* actual_length, unsigned int timeout) {
     _FATAL_IF(!m_handle, "Device is not open");
     _FATAL_IF(!m_active_interface.valid(), "Interface is not claimed");
-    uint8_t endpoint = m_active_out_endpoint.address();
+
+    uint8_t endpoint = m_active_interface.getActiveOutEndpoint().address();
     int ret = libusb_interrupt_transfer(m_handle, endpoint, data, length, actual_length, timeout);
     _ERROR_IF(ret!= 0, "Failed to send interrupt transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
@@ -108,7 +141,8 @@ int LibusbDevice::sendInterrupt(unsigned char* data, int length, int* actual_len
 int LibusbDevice::recvInterrupt(unsigned char* data, int length, int* actual_length, unsigned int timeout) {
     _FATAL_IF(!m_handle, "Device is not open");
     _FATAL_IF(!m_active_interface.valid(), "Interface is not claimed");
-    uint8_t endpoint = m_active_in_endpoint.address();
+
+    uint8_t endpoint = m_active_interface.getActiveOutEndpoint().address();
     int ret = libusb_interrupt_transfer(m_handle, endpoint, data, length, actual_length, timeout);
     _ERROR_IF(ret!= 0, "Failed to recv interrupt transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
@@ -121,6 +155,7 @@ void LibusbDevice::close() {
     if (m_handle) {
         libusb_close(m_handle);
         m_handle = nullptr;
+        m_info.is_opened = false;
     }
 }
 

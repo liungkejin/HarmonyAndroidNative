@@ -19,6 +19,47 @@ public:
         return std::string(buf);
     }
 
+    static std::string transferType(const libusb_transfer_type type) {
+        switch (type) {
+        case LIBUSB_TRANSFER_TYPE_CONTROL:
+            return "CONTROL";
+        case LIBUSB_TRANSFER_TYPE_ISOCHRONOUS:
+            return "ISOCHRONOUS";
+        case LIBUSB_TRANSFER_TYPE_BULK:
+            return "BULK";
+        case LIBUSB_TRANSFER_TYPE_INTERRUPT:
+            return "INTERRUPT";
+        default:
+            return std::string("Unknown type: ") + std::to_string(type);
+        }
+    }
+
+    static std::string endpointTransferType(const libusb_endpoint_transfer_type type) {
+        switch (type) {
+        case LIBUSB_ENDPOINT_TRANSFER_TYPE_CONTROL:
+            return "CONTROL";
+        case LIBUSB_ENDPOINT_TRANSFER_TYPE_BULK:
+            return "BULK";
+        case LIBUSB_ENDPOINT_TRANSFER_TYPE_INTERRUPT:
+            return "INTERRUPT";
+        case LIBUSB_ENDPOINT_TRANSFER_TYPE_ISOCHRONOUS:
+            return "ISOCHRONOUS";
+        default:
+            return std::string("Unknown type: ") + std::to_string(type);
+        }
+    }
+
+    static std::string endpointDirection(const libusb_endpoint_direction dir) {
+        switch (dir) {
+        case LIBUSB_ENDPOINT_IN:
+            return "IN";
+        case LIBUSB_ENDPOINT_OUT:
+            return "OUT";
+        default:
+            return std::string("Unknown dir: ") + std::to_string(dir);
+        }
+    }
+
     static std::string errString(const int err) {
         switch (err) {
         case LIBUSB_ERROR_IO:

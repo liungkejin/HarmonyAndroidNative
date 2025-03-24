@@ -17,13 +17,19 @@ public:
 
     void onAppExit() override;
 
+protected:
+    void onVisible(int width, int height) override;
+
+public:
     void onPreRender(int width, int height) override;
 
     void onRenderImgui(int width, int height, ImGuiIO &io) override;
 
 public:
-    void onDevicePlug(znative::LibusbDevice& dev) override;
+    void onDevicePlug(const znative::LibusbDeviceInfo& dev) override;
 
-    void onDeviceUnplug(znative::LibusbDevice& dev) override;
+    void onDeviceUnplug(const znative::LibusbDeviceInfo& dev) override;
+
+    void onDeviceListUpdate(std::list<znative::LibusbDeviceInfo> devList) override;
 };
 

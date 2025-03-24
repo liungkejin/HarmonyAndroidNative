@@ -11,8 +11,12 @@
 using namespace znative;
 
 LibusbMgr usbMgr;
-std::list<LibusbDevice> devices;
-bool needRefreshDevices = false;
+std::list<LibusbDeviceInfo> devices;
+
+bool needUpdateDeviceList = false;
+std::list<LibusbDeviceInfo> new_devices_list;
+std::mutex m_update_mutex;
+
 AOAInfo aoaInfo = {
     "AILive Inc.",
     "AILive",
@@ -24,18 +28,22 @@ AOAInfo aoaInfo = {
 
 void LibusbWindow::onAppInit(int width, int height) {
     usbMgr.setListener(this);
-    usbMgr.initialize();
-    devices = usbMgr.listDevices();
 }
 
 void LibusbWindow::onAppExit() {
     usbMgr.release();
 }
 
+void LibusbWindow::onVisible(int width, int height) {
+    usbMgr.initialize();
+    devices = usbMgr.getDeviceList();
+}
+
 void LibusbWindow::onPreRender(int width, int height) {
-    if (needRefreshDevices) {
-        devices = usbMgr.listDevices();
-        needRefreshDevices = false;
+    LOCK_MUTEX(m_update_mutex);
+    if (needUpdateDeviceList) {
+        devices = new_devices_list;
+        needUpdateDeviceList = false;
     }
 }
 
@@ -45,23 +53,34 @@ void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
     ImGui::Text("USB Device List:");
     ImGui::BeginChild("DevicesList", ImVec2(0, 100), true);
     for (auto& dev : devices) {
-        ImGui::Text("%s", dev.name().c_str());
-        ImGui::SameLine();
-        if (dev.isOpened()) {
-            if (ImGui::Button("Close")) {
-                dev.close();
+        const char *name = dev.product.c_str();
+        if (dev.is_opened) {
+            if (AOAProtocol::isAccessory(dev)) {
+                ImGui::TextColored(ImVec4(0, 1, 0, 1), "%s [配件模式][已打开]", name);
+            } else {
+                ImGui::Text("%s [普通模式][已打开]", name);
             }
-        } else if (ImGui::Button("Open")) {
-            dev.open();
+        } else {
+            if (AOAProtocol::isAccessory(dev)) {
+                ImGui::Text("%s [配件模式][关闭]", name);
+            } else {
+                ImGui::Text("%s [普通模式][关闭]", name);
+            }
         }
         ImGui::SameLine();
-        if (ImGui::Button("Connect AOA")) {
-            if (AOAProtocol::isAccessory(dev)) {
-                AOAProtocol::openAccessory(dev);
-            } else {
-                if (AOAProtocol::connectAccessory(dev, aoaInfo)) {
-                    needRefreshDevices = true;
+        if (AOAProtocol::isAccessory(dev)) {
+            if (dev.is_opened) {
+                if (ImGui::Button("关闭")) {
+                    usbMgr.closeDevice(dev);
                 }
+            } else {
+                if (ImGui::Button("打开配件")) {
+                    usbMgr.openDevice(dev);
+                }
+            }
+        } else {
+            if (ImGui::Button("切换至配件模式")) {
+                usbMgr.setupDeviceToAccessory(dev, aoaInfo);
             }
         }
     }
@@ -69,13 +88,21 @@ void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
     ImGui::End();
 }
 
-void LibusbWindow::onDevicePlug(LibusbDevice& dev) {
-    needRefreshDevices = true;
+void LibusbWindow::onDevicePlug(const LibusbDeviceInfo& dev) {
+    //
 }
 
-void LibusbWindow::onDeviceUnplug(LibusbDevice& dev) {
-    needRefreshDevices = true;
+void LibusbWindow::onDeviceUnplug(const LibusbDeviceInfo& dev) {
+    //
 }
+
+void LibusbWindow::onDeviceListUpdate(std::list<LibusbDeviceInfo> devList) {
+    LOCK_MUTEX(m_update_mutex);
+    new_devices_list = devList;
+    needUpdateDeviceList = true;
+}
+
+
 
 
 #include <stdio.h>
@@ -668,22 +695,5 @@ int usb_init(void)
     //开启事件处理线程
     pthread_create(&tid, NULL, usb_eventMonitorProcess, NULL);
 
-    return LIBUSB_SUCCESS;
-}
-
-int usb_deinit(void)
-{
-    if (gstUsbMngr.handle) {
-        libusb_release_interface(gstUsbMngr.handle, gstUsbMngr.bInterfaceNumber);
-        libusb_close (gstUsbMngr.handle);
-        gstUsbMngr.handle = NULL;
-    }
-
-    if (0 < gstUsbMngr.hotplugCbh) {
-        libusb_hotplug_deregister_callback(NULL, gstUsbMngr.hotplugCbh);
-    }
-
-    pthread_mutex_destroy(&gstUsbMngr.stLock);
-    libusb_exit (NULL);
     return LIBUSB_SUCCESS;
 }

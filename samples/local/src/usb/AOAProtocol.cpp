@@ -36,7 +36,7 @@ bool AOAProtocol::isAccessory(uint16_t vid, uint16_t pid) {
     return false;
 }
 
-bool AOAProtocol::connectAccessory(LibusbDevice& device, const AOAInfo& info) {
+bool AOAProtocol::setupDeviceToAccessory(LibusbDevice& device, const AOAInfo& info) {
     _INFO("start setup accessory mode, info: {\n"
        "    manufacturer: %s\n"
        "    model: %s\n"
@@ -47,11 +47,11 @@ bool AOAProtocol::connectAccessory(LibusbDevice& device, const AOAInfo& info) {
        info.manufacturer, info.model, info.description, info.serial, info.version, info.uri);
 
     if (!connectAccessoryImpl(device, info)) {
-        _ERROR("Failed to connect accessory, close device");
+        _ERROR("Failed to setup accessory, close device");
         device.close();
         return false;
     }
-    _INFO("accessory connected");
+    _INFO("accessory setup success");
     return true;
 }
 
@@ -63,7 +63,7 @@ bool AOAProtocol::connectAccessoryImpl(LibusbDevice& device, const AOAInfo& info
 
     ret = device.active(0);
     if (ret != LIBUSB_SUCCESS) {
-        return false;
+        // 不管是否激活成功，都继续执行
     }
 
     unsigned char ioBuffer[2] = {0};
