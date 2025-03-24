@@ -9,7 +9,11 @@ add_subdirectory(${SAMPLE_LIBS_DIR}/glfw-3.4)
 set(SAMPLE_LIBS glfw)
 
 set(LIBUSB_DIR ${SAMPLE_LIBS_DIR}/libusb-1.0.27)
-set(LIBUSB ${LIBUSB_DIR}/libs/${ZPLATFORM}/${ZTARGET_ARCH}/libusb-1.0.a)
+if(WIN32)
+    set(LIBUSB ${LIBUSB_DIR}/libs/${ZPLATFORM}/${ZTARGET_ARCH}/libusb-1.0.lib)
+else()
+    set(LIBUSB ${LIBUSB_DIR}/libs/${ZPLATFORM}/${ZTARGET_ARCH}/libusb-1.0.a)
+endif()
 set(SAMPLE_LIBS ${SAMPLE_LIBS} ${LIBUSB})
 
 if (WIN32)
