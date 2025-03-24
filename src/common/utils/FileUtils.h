@@ -21,6 +21,9 @@ NAMESPACE_DEFAULT
 /// deprecated , 使用 cppfs
 class FileUtils {
 public:
+    static bool test();
+
+public:
     // 文件的绝对路径
     static std::string fullPath(const char *path);
 
@@ -44,13 +47,14 @@ public:
 
     static size_t fileLength(const char *filepath);
 
+    // 注意 close
     static size_t fileLength(FILE *file);
 
     static bool deleteFile(const char *str);
 
     static bool mkDir(const char *str);
 
-    static void remove(const char *dirOrFile);
+    static bool remove(const char *dirOrFile);
     
     static bool exist(const char *path);
 

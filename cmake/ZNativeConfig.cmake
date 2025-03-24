@@ -54,16 +54,6 @@ if (${ZNative_LIBRARIES} STREQUAL "ZNative_LIBRARIES-NOTFOUND")
     )
 else ()
     set(IS_STATIC_ZNATIVE ON)
-    find_library(Cppfs_LIBRARIES
-            NAMES cppfs
-            PATHS ${ZNative_CONFIG_PATH}/libs/${ZSYSTEM_ARCH}
-    )
-    if (${Cppfs_LIBRARIES} STREQUAL "Cppfs_LIBRARIES-NOTFOUND")
-        find_library(Cppfs_LIBRARIES
-                NAMES cppfsd
-                PATHS ${ZNative_CONFIG_PATH}/libs/${ZSYSTEM_ARCH}
-        )
-    endif ()
     find_library(glew_LIBRARIES
             NAMES glew32
             PATHS ${ZNative_CONFIG_PATH}/libs/${ZSYSTEM_ARCH}
@@ -77,7 +67,6 @@ else ()
 
     set(ZNative_LIBRARIES
             ${ZNative_LIBRARIES}
-            ${Cppfs_LIBRARIES}
             ${glew_LIBRARIES}
     )
 endif ()

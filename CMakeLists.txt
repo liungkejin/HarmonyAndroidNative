@@ -127,12 +127,7 @@ set(CMAKE_INSTALL_LIBDIR ${LIBRARY_INSTALL_DIR})
 # eventpp
 add_subdirectory(${COMMON_LIBS_PATH}/eventpp-0.1.3)
 
-# cppfs
-set(BUILD_SHARED_LIBS OFF)
-set(OPTION_BUILD_TESTS OFF)
-add_subdirectory(${COMMON_LIBS_PATH}/cppfs-1.2.0)
-
-set(COMMON_LIBS eventpp cppfs)
+set(COMMON_LIBS eventpp)
 set(COMMON_INCLUDES
         # tinyformat
         ${COMMON_LIBS_PATH}/tinyformat
@@ -140,8 +135,6 @@ set(COMMON_INCLUDES
         ${COMMON_LIBS_PATH}/json
         # eventpp
         ${COMMON_LIBS_PATH}/eventpp-0.1.3/include
-        # cppfs
-        ${COMMON_LIBS_PATH}/cppfs-1.2.0/source/cppfs/include
 )
 
 if (ZANDROID)

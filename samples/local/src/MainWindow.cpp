@@ -65,7 +65,7 @@ void MainWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
     ImGui::ColorEdit3("背景颜色", (float *) &g_background_color); // Edit 3 floats representing a color
     ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 
-    if (ImGui::Button("test thread pool")) {
+    if (ImGui::Button("测试 thread pool")) {
         static int id = 0;
         _INFO("test thread pool, id: %d", id);
         int test_id = id++;
@@ -73,6 +73,11 @@ void MainWindow::onRenderImgui(int width, int height, ImGuiIO &io) {
             znative::TimeUtils::sleepMs(1000);
             _INFO("post thread[%d], id: %d", std::this_thread::get_id(), test_id);
         });
+    }
+
+    if (ImGui::Button("测试 FileUtils")) {
+        bool result = znative::FileUtils::test();
+        _INFO("测试 FileUtils 结果: %d", result);
     }
 
     for (auto *p: g_all_windows) {
