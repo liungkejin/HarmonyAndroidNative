@@ -233,29 +233,28 @@ void LibusbMgr::onDeviceListUpdate() {
 
 void LibusbMgr::release() {
     LOCK_MUTEX(m_proc_lock);
+    if (m_usb_context == nullptr) {
+        return;
+    }
 
     m_is_listening = false;
-    if (m_usb_context) {
-        libusb_interrupt_event_handler(m_usb_context);
-    }
-    m_event_thread.quit();
-    m_work_thread.quit();
-
     for (auto& device : m_devices) {
         device.close();
     }
     m_devices.clear();
+
+    libusb_interrupt_event_handler(m_usb_context);
+    m_event_thread.quit();
+    m_work_thread.quit();
 
     if (m_hotplug_cb_handle) {
         libusb_hotplug_deregister_callback(m_usb_context, m_hotplug_cb_handle);
         m_hotplug_cb_handle = 0;
     }
 
-    if (m_usb_context) {
-        libusb_exit(m_usb_context);
-        m_usb_context = nullptr;
-        _INFO("LibusbMgr released");
-    }
+    libusb_exit(m_usb_context);
+    m_usb_context = nullptr;
+    _INFO("LibusbMgr released");
 }
 
 
