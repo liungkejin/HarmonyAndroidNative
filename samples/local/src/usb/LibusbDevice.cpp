@@ -64,9 +64,11 @@ int LibusbDevice::active(const int interfaceNumber) const {
 
     int ret = libusb_kernel_driver_active(m_handle, interfaceNumber);
     if (ret != 0) {
-        ret = libusb_detach_kernel_driver(m_handle, interfaceNumber);
-        if (ret != 0) {
-            _ERROR("Failed to detach kernel driver: %s", LibusbUtils::errString(ret));
+        if (libusb_has_capability(LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER)) {
+            ret = libusb_detach_kernel_driver(m_handle, interfaceNumber);
+            if (ret != 0) {
+                _ERROR("Failed to detach kernel driver: %s", LibusbUtils::errString(ret));
+            }
         }
     }
     return ret;
