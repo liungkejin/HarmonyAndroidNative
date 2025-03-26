@@ -35,16 +35,16 @@ private:
 
     OH_AVErrCode prepare(const RecAConfig &config) {
         OH_AVErrCode error = m_encoder.createAAC();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "createAAC failed");
 
         AudioFormat format =
             m_encoder.createFormat(config.sampleRate, config.bitrate, config.channelLayout, config.sampleFormat);
 
         error = m_encoder.configure(format);
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "configure failed");
 
         error = m_muxer.addTrack(format, m_track_id);
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "addTrack failed");
 
         m_encoder.setOutputListener([this](AudioEncoder &encoder, AVBuffer &buffer) {
             onGotAudioPacket(encoder, buffer);
@@ -55,10 +55,10 @@ private:
 
     OH_AVErrCode start() {
         OH_AVErrCode error = m_encoder.prepare();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "prepare failed");
 
         error = m_encoder.start();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "start failed");
         return error;
     }
 
