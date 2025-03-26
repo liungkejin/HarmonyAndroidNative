@@ -421,6 +421,7 @@ CamErrorCode CaptureSession::release() {
 //    }
     m_metadata_outputs.clear();
 
+    // TODO 出现过一次卡死崩溃的情况
     CamErrorCode error = OH_CaptureSession_Release(m_session);
     m_session = nullptr;
 

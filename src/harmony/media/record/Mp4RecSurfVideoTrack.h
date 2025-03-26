@@ -31,7 +31,7 @@ private:
 
     OH_AVErrCode prepare(const RecVConfig &config) {
         OH_AVErrCode error = m_encoder.createH264();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "create H264 encoder failed");
 
         VideoFormat format = m_encoder.createFormat(config.width, config.height, config.pixelFormat);
         format.setFrameRate(config.frameRate);
@@ -40,10 +40,10 @@ private:
         format.setEncodeBitrateMode(config.bitrateMode);
 
         error = m_encoder.configure(format);
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "configure failed");
 
         error = m_muxer.addTrack(format, m_track_id);
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "addTrack failed");
 
         m_eof_received = false;
         m_encoder.setOutputListener(
@@ -53,10 +53,10 @@ private:
 
     OH_AVErrCode start() {
         OH_AVErrCode error = m_encoder.prepare();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "prepare failed");
 
         error = m_encoder.start();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "start failed");
         return error;
     }
 

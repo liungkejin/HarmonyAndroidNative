@@ -118,7 +118,7 @@ public:
 protected:
     OH_AVErrCode onPrepare(const RecordConfig &config) override {
         OH_AVErrCode error = m_video_track.prepare(config.vConfig);
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "video track prepare failed");
 
         error = m_audio_track.prepare(config.aConfig);
 
@@ -127,7 +127,7 @@ protected:
 
     OH_AVErrCode onStart() override {
         OH_AVErrCode error = m_video_track.start();
-        _ERROR_RETURN(error, error);
+        _ERROR_RETURN_IF(error, error, "video track start failed");
 
         error = m_audio_track.start();
         return error;
