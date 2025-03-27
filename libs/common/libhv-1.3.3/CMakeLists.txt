@@ -2,10 +2,10 @@ cmake_minimum_required(VERSION 3.6)
 
 project(hv VERSION 1.3.3)
 
-option(BUILD_SHARED "build shared library" ON)
+option(BUILD_SHARED "build shared library" OFF)
 option(BUILD_STATIC "build static library" ON)
 
-option(BUILD_EXAMPLES "build examples" ON)
+option(BUILD_EXAMPLES "build examples" OFF)
 option(BUILD_UNITTEST "build unittest" OFF)
 
 # see config.ini
@@ -176,6 +176,7 @@ endif()
 
 if(APPLE)
     set(LIBS ${LIBS} "-framework CoreFoundation" "-framework Security")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-declarations")
 endif()
 
 # see Makefile

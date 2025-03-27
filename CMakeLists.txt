@@ -140,14 +140,8 @@ set(COMMON_INCLUDES
 
 # libhv
 if (${ZNATIVE_ENABLE_LIBHV})
-    set(BUILD_SHARED OFF)
-    set(BUILD_EXAMPLES OFF)
     add_subdirectory(${COMMON_LIBS_PATH}/libhv-1.3.3)
     set(COMMON_LIBS ${COMMON_LIBS} ${HV_LIBRARIES})
-    set(COMMON_INCLUDES
-            ${COMMON_INCLUDES}
-            ${COMMON_LIBS_PATH}/libhv-1.3.3/include
-    )
 endif ()
 
 if (ZANDROID)
