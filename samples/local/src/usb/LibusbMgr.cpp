@@ -49,7 +49,14 @@ bool LibusbMgr::initialize() {
     }
 
     LOCK_MUTEX(m_proc_lock);
-    m_devices = listDevices();
+    auto devices = listDevices();
+    this->m_devices.clear();
+    for (auto& device : devices) {
+        DeviceBox box = {
+          .dev = device,
+        };
+        this->m_devices.push_back(box);
+    }
     m_is_listening = true;
     m_event_thread.post([this](){
         _INFO("LibusbMgr event thread started");
@@ -71,25 +78,27 @@ int LibusbMgr::onDevicePlug(libusb_device* dev) {
         int ret = libusb_get_device_descriptor(dev, &desc);
         _ERROR_RETURN_IF(ret != LIBUSB_SUCCESS, ret, "libusb_get_device_descriptor failed: %s", LibusbUtils::errString(ret));
 
-        LibusbDevice device(dev, desc);
         // 检查设备是否已经在 m_devices 中
         for (auto& d : m_devices) {
-            if (d.device() == dev) {
+            if (d.dev.device() == dev) {
                 _INFO("device already in m_devices");
                 return LIBUSB_SUCCESS;
             }
         }
-        m_devices.push_back(device);
-        deviceInfo = device.info();
+        DeviceBox box = {
+            .dev = LibusbDevice(dev, desc)
+        };
+        m_devices.push_back(box);
+        deviceInfo = box.dev.info();
     }
 
     m_work_thread.post([deviceInfo, this]() {
         LOCK_MUTEX(m_proc_lock);
         if (auto* dd = findDevice(deviceInfo)) {
-            dd->prepare();
-            _INFO("device plugged: %s", dd->toString());
+            dd->dev.prepare();
+            _INFO("device plugged: %s", dd->dev.toString());
             if (m_listener) {
-                m_listener->onDevicePlug(dd->info());
+                m_listener->onDevicePlug(dd->dev.info());
             }
 
             this->onDeviceListUpdate();
@@ -100,27 +109,30 @@ int LibusbMgr::onDevicePlug(libusb_device* dev) {
 
 int LibusbMgr::onDeviceUnplug(libusb_device* dev) {
     LOCK_MUTEX(m_proc_lock);
-    LibusbDevice device;
+    DeviceBox box = {};
     // 从 m_devices 中删除 dev
     for (auto it = m_devices.begin(); it != m_devices.end(); ++it) {
-        if (it->device() == dev) {
-            device = *it;
+        if (it->dev.device() == dev) {
+            box = *it;
             m_devices.erase(it);
             break;
         }
     }
-    if (device.valid()) {
-        _INFO("device unplugged: %s", device.toString());
+
+    LibusbDevice device = box.dev;
+    if (box.dev.valid()) {
+        box.release();
+        _INFO("device unplugged: %s", box.dev.toString());
     } else {
         _INFO("device not found: %p", dev);
     }
     m_work_thread.post([device, this]() {
-        LOCK_MUTEX(m_proc_lock);
         if (device.valid()) {
             if (m_listener) {
                 m_listener->onDeviceUnplug(device.info());
             }
         }
+        LOCK_MUTEX(m_proc_lock);
         this->onDeviceListUpdate();
     });
     return LIBUSB_SUCCESS;
@@ -129,40 +141,19 @@ int LibusbMgr::onDeviceUnplug(libusb_device* dev) {
 std::list<LibusbDeviceInfo> LibusbMgr::getDeviceList() {
     LOCK_MUTEX(m_proc_lock);
     std::list<LibusbDeviceInfo> devices;
-    for (auto& device : m_devices) {
-        devices.push_back(device.info());
+    for (auto& d : m_devices) {
+        devices.push_back(d.dev.info());
     }
     return devices;
-}
-
-bool LibusbMgr::openDevice(const LibusbDeviceInfo& devInfo) {
-    LOCK_MUTEX(m_proc_lock);
-    bool result = false;
-    if (LibusbDevice* device = findDevice(devInfo)) {
-        if (AOAProtocol::isAccessory(devInfo)) {
-            result = AOAProtocol::openAccessory(*device);
-        } else {
-            result = device->open() == LIBUSB_SUCCESS;
-        }
-
-        if (!result) {
-            _ERROR("open device(%s) failed: %s", device->name());
-        }
-        _INFO("device opened: %s", device->toString());
-    } else {
-        _ERROR("open device failed! device not found: %s", devInfo.toString());
-    }
-    this->onDeviceListUpdate();
-    return result;
 }
 
 bool LibusbMgr::setupDeviceToAccessory(const LibusbDeviceInfo& devInfo, const AOAInfo& aoaInfo) {
     LOCK_MUTEX(m_proc_lock);
     bool result = false;
-    if (LibusbDevice* device = findDevice(devInfo)) {
-        result = AOAProtocol::setupDeviceToAccessory(*device, aoaInfo);
+    if (DeviceBox* box = findDevice(devInfo)) {
+        result = AOAProtocol::setupDeviceToAccessory(box->dev, aoaInfo);
         if (!result) {
-            _ERROR("setup device(%s) to accessory failed!", device->name());
+            _ERROR("setup device(%s) to accessory failed!", box->dev.name());
         }
     } else {
         _ERROR("setup device to accessory failed! device not found: %s", devInfo.toString());
@@ -171,13 +162,58 @@ bool LibusbMgr::setupDeviceToAccessory(const LibusbDeviceInfo& devInfo, const AO
     return result;
 }
 
+std::shared_ptr<LibusbDeviceTransfer> LibusbMgr::openDevice(const LibusbDeviceInfo& devInfo) {
+    LOCK_MUTEX(m_proc_lock);
+    std::shared_ptr<LibusbDeviceTransfer> transfer = nullptr;
+    if (DeviceBox* box = findDevice(devInfo)) {
+        if (box->dev.isOpened()) {
+            return box->transfer;
+        }
+        bool result = false;
+        if (AOAProtocol::isAccessory(devInfo)) {
+            result = AOAProtocol::openAccessory(box->dev);
+        } else {
+            result = box->dev.open() == LIBUSB_SUCCESS;
+        }
+
+        if (result) {
+            box->transfer = std::make_shared<LibusbDeviceTransfer>(*this, box->dev);
+            transfer = box->transfer;
+            _INFO("device opened: %s", box->dev.toString());
+        } else {
+            _ERROR("open device(%s) failed: %s", box->dev.name());
+        }
+    } else {
+        _ERROR("open device failed! device not found: %s", devInfo.toString());
+    }
+    this->onDeviceListUpdate();
+    return transfer;
+}
+
+std::list<LibusbConfig> LibusbMgr::getDeviceConfig(const LibusbDeviceInfo& devInfo) {
+    LOCK_MUTEX(m_proc_lock);
+    if (DeviceBox* box = findDevice(devInfo)) {
+        return box->dev.getConfigs();
+    }
+    return std::list<LibusbConfig>();
+}
+
+bool LibusbMgr::claimInterface(const LibusbDeviceInfo& devInfo,
+    const LibusbInterfaceSetting settings, const libusb_endpoint_transfer_type type) {
+    LOCK_MUTEX(m_proc_lock);
+    if (DeviceBox* box = findDevice(devInfo)) {
+        return box->dev.claimInterface(settings, type);
+    }
+    return false;
+}
+
 bool LibusbMgr::closeDevice(const LibusbDeviceInfo& devInfo) {
     LOCK_MUTEX(m_proc_lock);
     bool result = false;
-    if (LibusbDevice* device = findDevice(devInfo)) {
-        device->close();
+    if (DeviceBox* box = findDevice(devInfo)) {
+        box->closeDevice();
         result = true;
-        _INFO("device closed: %s", device->toString());
+        _INFO("device closed: %s", box->dev.toString());
     } else {
         _ERROR("close device failed! device not found: %s", devInfo.toString());
     }
@@ -186,10 +222,10 @@ bool LibusbMgr::closeDevice(const LibusbDeviceInfo& devInfo) {
 }
 
 // 注意加锁
-LibusbDevice* LibusbMgr::findDevice(const LibusbDeviceInfo& dev_info) {
-    for (auto& device : m_devices) {
-        if (device == dev_info) {
-            return &device;
+LibusbMgr::DeviceBox* LibusbMgr::findDevice(const LibusbDeviceInfo& dev_info) {
+    for (auto& box : m_devices) {
+        if (box.dev == dev_info) {
+            return &box;
         }
     }
     return nullptr;
@@ -223,8 +259,8 @@ std::list<LibusbDevice> LibusbMgr::listDevices() {
 void LibusbMgr::onDeviceListUpdate() {
     if (m_listener) {
         std::list<LibusbDeviceInfo> devices;
-        for (auto& device : m_devices) {
-            devices.push_back(device.info());
+        for (auto& d : m_devices) {
+            devices.push_back(d.dev.info());
         }
         m_listener->onDeviceListUpdate(devices);
     }
@@ -238,8 +274,8 @@ void LibusbMgr::release() {
     }
 
     m_is_listening = false;
-    for (auto& device : m_devices) {
-        device.close();
+    for (auto& box : m_devices) {
+        box.release();
     }
     m_devices.clear();
 

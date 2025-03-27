@@ -9,6 +9,8 @@
 
 #include "AOAProtocol.h"
 #include "LibusbMgr.h"
+#include "hv/hv.h"
+#include "hv/hloop.h"
 
 using namespace znative;
 
@@ -18,6 +20,8 @@ std::list<LibusbDeviceInfo> devices;
 bool needUpdateDeviceList = false;
 std::list<LibusbDeviceInfo> new_devices_list;
 std::mutex m_update_mutex;
+
+std::shared_ptr<LibusbDeviceTransfer> transfer = nullptr;
 
 AOAInfo aoaInfo = {
     "AILive Inc.",
@@ -31,9 +35,15 @@ AOAInfo aoaInfo = {
 void LibusbWindow::onAppInit(int width, int height) {
     usbMgr.setListener(this);
 }
-
+static void on_accept(hio_t* io) {}
 void LibusbWindow::onAppExit() {
     usbMgr.release();
+
+    // hloop_t* loop = hloop_new(0);
+    //
+    // static char proxy_host[64] = "0.0.0.0";
+    // static int  proxy_port = 1080;
+    // hloop_create_tcp_server(loop, proxy_host, proxy_port, on_accept);
 }
 
 void LibusbWindow::onVisible(int width, int height) {
@@ -69,10 +79,15 @@ void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
             if (dev.is_opened) {
                 if (ImGui::SmallButton("关闭")) {
                     usbMgr.closeDevice(dev);
+                    transfer = nullptr;
                 }
             } else {
                 if (ImGui::SmallButton("打开配件")) {
-                    usbMgr.openDevice(dev);
+                    transfer = usbMgr.openDevice(dev);
+                    if (transfer) {
+                        transfer->setListener(this);
+                        transfer->start();
+                    }
                 }
             }
         } else {
@@ -84,6 +99,11 @@ void LibusbWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
         i += 1;
     }
     ImGui::EndChild();
+    if (transfer && transfer->isRunning()) {
+        if (ImGui::Button("发送数据")) {
+            transfer->send((uint8_t*)"hello", 5);
+        }
+    }
     ImGui::End();
 }
 
@@ -101,6 +121,14 @@ void LibusbWindow::onDeviceListUpdate(std::list<LibusbDeviceInfo> devList) {
     needUpdateDeviceList = true;
 }
 
+
+void LibusbWindow::onDataRecv(const uint8_t* data, const int len) {
+    _INFO("recv data(%d): %p", len, data);
+}
+
+void LibusbWindow::onDataSend(const int len) {
+    _INFO("send data(%d)", len);
+}
 
 
 //

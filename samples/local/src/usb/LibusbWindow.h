@@ -7,7 +7,7 @@
 #include "LibusbMgr.h"
 #include "../IWindow.h"
 
-class LibusbWindow : public IWindow, znative::LibusbDeviceListener {
+class LibusbWindow : public IWindow, znative::LibusbDeviceListener, znative::LibusbDeviceTransferListener {
 public:
     LibusbWindow() : IWindow("测试 Libusb") {
 
@@ -31,5 +31,10 @@ public:
     void onDeviceUnplug(const znative::LibusbDeviceInfo& dev) override;
 
     void onDeviceListUpdate(std::list<znative::LibusbDeviceInfo> devList) override;
+
+public:
+    void onDataRecv(const uint8_t* data, const int len) override;
+
+    void onDataSend(const int len) override;
 };
 

@@ -138,7 +138,7 @@ public:
         return m_active_in_endpoint.valid();
     }
 
-    LibusbEndpoint getActiveInEndpoint() const {
+    const LibusbEndpoint& getActiveInEndpoint() const {
         return m_active_in_endpoint;
     }
 
@@ -147,7 +147,7 @@ public:
         return m_active_out_endpoint.valid();
     }
 
-    LibusbEndpoint getActiveOutEndpoint() const {
+    const LibusbEndpoint& getActiveOutEndpoint() const {
         return m_active_out_endpoint;
     }
 
@@ -544,6 +544,8 @@ public:
     const libusb_device_descriptor& desc() const { return m_desc; }
 
     const LibusbDeviceInfo& info() const { return m_info; }
+
+    const LibusbInterfaceSetting& activeInterface() const { return m_active_interface; }
 
     std::string getDescString(uint8_t index) const {
         _ERROR_RETURN_IF(!m_handle, "", "getDescString(%d) failed, Device is not open!", index);
