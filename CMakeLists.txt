@@ -175,6 +175,7 @@ set(COMMON_SOURCES
         ${COMMON_SRC_PATH}/utils/YuvUtils.cpp
         ${COMMON_SRC_PATH}/utils/FileUtils.cpp
         ${COMMON_SRC_PATH}/media/ZMedia.cpp
+        ${COMMON_SRC_PATH}/net/TCPServer.cpp
 )
 set(COMMON_INCLUDES
         ${COMMON_INCLUDES}
