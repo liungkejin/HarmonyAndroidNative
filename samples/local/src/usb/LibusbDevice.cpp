@@ -148,10 +148,11 @@ int LibusbDevice::recvInterrupt(unsigned char* data, int length, int* actual_len
 }
 
 void LibusbDevice::close() {
-    if (m_active_interface.valid()) {
-        libusb_release_interface(m_handle, m_active_interface.number());
-    }
     if (m_handle) {
+        if (m_active_interface.valid()) {
+            libusb_release_interface(m_handle, m_active_interface.number());
+            m_active_interface = {};
+        }
         libusb_close(m_handle);
         m_handle = nullptr;
         m_info.is_opened = false;

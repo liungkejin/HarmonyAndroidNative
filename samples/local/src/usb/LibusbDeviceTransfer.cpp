@@ -33,8 +33,8 @@ bool LibusbDeviceTransfer::start() {
 }
 
 void LibusbDeviceTransfer::stop() {
-    if (m_is_released) {
-        _ERROR("device is released");
+    if (!m_is_running) {
+        _ERROR("device is stopped");
         return;
     }
     _INFO("device transfer stopping...");

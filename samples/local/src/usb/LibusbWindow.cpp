@@ -37,7 +37,6 @@ void LibusbWindow::onAppInit(int width, int height) {
 }
 static void on_accept(hio_t* io) {}
 void LibusbWindow::onAppExit() {
-    usbMgr.release();
 
     // hloop_t* loop = hloop_new(0);
     //
@@ -49,6 +48,10 @@ void LibusbWindow::onAppExit() {
 void LibusbWindow::onVisible(int width, int height) {
     usbMgr.initialize();
     devices = usbMgr.getDeviceList();
+}
+
+void LibusbWindow::onInvisible(int width, int height) {
+    usbMgr.release();
 }
 
 void LibusbWindow::onPreRender(int width, int height) {
