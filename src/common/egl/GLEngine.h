@@ -16,6 +16,7 @@
 NAMESPACE_DEFAULT
 
 typedef std::function<bool(int width, int height)> RenderRunnable;
+typedef std::function<void(void *surface, int width, int height)> SurfaceChangeListener;
 
 class GLEngine {
 public:
@@ -30,6 +31,10 @@ public:
     }
 
     void updateSurface(void *surface, int width, int height);
+    
+    void setSurfaceChangeListener(SurfaceChangeListener listener) {
+        m_surface_change_listener = listener;
+    }
 
     void sync(const Runnable &runnable, int timeoutMs = -1) { m_event_thread.sync(runnable, timeoutMs); }
 
@@ -51,6 +56,7 @@ protected:
 
     void *m_surface = nullptr;
     int m_surf_width = 0, m_surf_height = 0;
+    SurfaceChangeListener m_surface_change_listener = nullptr;
 
     EGLCtx m_ctx;
     EventThread m_event_thread;

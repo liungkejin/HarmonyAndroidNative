@@ -37,6 +37,9 @@ void GLEngine::onUpdateSurface(void *surface, int width, int height) {
         m_surf_width = 0;
         m_surf_height = 0;
     }
+    if (m_surface_change_listener != nullptr) {
+        m_surface_change_listener(m_surface, m_surf_width, m_surf_height);
+    }
 
     _INFO("GLEngine(%s) update surface(%p) result: %s, surface size(%d x %d)", m_name.c_str(), surface,
           (result ? "success" : "fail"), m_surf_width, m_surf_height);
