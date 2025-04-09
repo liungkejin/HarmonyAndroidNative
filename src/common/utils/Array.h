@@ -15,13 +15,14 @@
 
 NAMESPACE_DEFAULT
 
+// TODO 这个 Array 需要优化
 class Array : Object {
 public:
     Array() {}
 
-    Array(const Array &other) : m_capacity(other.m_capacity),
-                                m_put_size(other.m_put_size),
-                                m_data(other.m_data), Object(other) {}
+    Array(const Array &other) : Object(other),
+                                m_data(other.m_data),
+                                m_capacity(other.m_capacity), m_put_size(other.m_put_size) {}
 
     ~Array() {
         if (m_data && no_reference()) {
@@ -117,6 +118,56 @@ private:
     uint8_t *m_data = nullptr;
     size_t m_capacity = 0;
     size_t m_put_size = 0;
+};
+
+template <typename T>
+class FlexArray {
+public:
+    FlexArray() {}
+    FlexArray(const FlexArray &other) : m_data(other.m_data),
+                                        m_data_size(other.m_data_size), m_capacity(other.m_capacity) {}
+
+    FlexArray& operator=(const FlexArray &other) {
+        m_data = other.m_data;
+        m_data_size = other.m_data_size;
+        m_capacity = other.m_capacity;
+        return *this;
+    }
+
+    bool operator == (const T *other) {
+        return *m_data == other;
+    }
+
+    T &operator[](size_t index) {
+        _FATAL_IF(index >= m_data_size, "Invalid index(%d) array size: %d", index, m_data_size);
+        return m_data[index];
+    }
+
+public:
+    size_t size() const { return m_data_size; }
+    size_t capacity() const { return m_capacity; }
+
+    T* obtain(size_t size) {
+        if (size > m_capacity) {
+            m_capacity = size;
+            m_data = std::make_shared<T*>(new T[size]);
+        }
+        m_data_size = size;
+        return *m_data;
+    }
+
+    T * data() { return *m_data; }
+
+    void free() {
+        m_data = nullptr;
+        m_data_size = 0;
+        m_capacity = 0;
+    }
+
+private:
+    std::shared_ptr<T*> m_data = nullptr;
+    size_t m_data_size = 0;
+    size_t m_capacity = 0;
 };
 
 NAMESPACE_END

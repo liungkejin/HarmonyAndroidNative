@@ -42,6 +42,8 @@ option(ZNATIVE_BUILD_STATIC "Build static library" ON) # build static library
 option(ZNATIVE_BUILD_LOCAL_SAMPLE "Build local sample" ON) # enable local sample
 option(ZNATIVE_ENABLE_OPENCV "Enable opencv library" OFF) # use opencv library
 option(ZNATIVE_ENABLE_GL "Enable EGL/OpenGL" ON) # enable OpenGL
+option(ZNATIVE_ENABLE_LIBHV "Enable libhv" ON) # enable libhv
+
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
     option(ZNATIVE_ENABLE_DEBUG "Enable debug" ON)
 else()
@@ -126,7 +128,6 @@ set(CMAKE_INSTALL_LIBDIR ${LIBRARY_INSTALL_DIR})
 
 # eventpp
 add_subdirectory(${COMMON_LIBS_PATH}/eventpp-0.1.3)
-
 set(COMMON_LIBS eventpp)
 set(COMMON_INCLUDES
         # tinyformat
@@ -136,6 +137,12 @@ set(COMMON_INCLUDES
         # eventpp
         ${COMMON_LIBS_PATH}/eventpp-0.1.3/include
 )
+
+# libhv
+if (${ZNATIVE_ENABLE_LIBHV})
+    add_subdirectory(${COMMON_LIBS_PATH}/libhv-1.3.3)
+    set(COMMON_LIBS ${COMMON_LIBS} ${HV_LIBRARIES})
+endif ()
 
 if (ZANDROID)
     include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/Android.cmake)
@@ -168,6 +175,7 @@ set(COMMON_SOURCES
         ${COMMON_SRC_PATH}/utils/YuvUtils.cpp
         ${COMMON_SRC_PATH}/utils/FileUtils.cpp
         ${COMMON_SRC_PATH}/media/ZMedia.cpp
+        ${COMMON_SRC_PATH}/net/TCPServer.cpp
 )
 set(COMMON_INCLUDES
         ${COMMON_INCLUDES}

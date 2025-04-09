@@ -44,16 +44,13 @@ int LibusbDevice::open() {
     }
 
     int ret = libusb_open(m_dev, &m_handle);
-    if (ret) {
-        _ERROR("Failed to open device: %s", LibusbUtils::errString(ret));
-    }
-    else {
-        m_info.is_opened = true;
-        if (this->m_info.product.empty()) {
-            this->m_info.manufacturer = this->getDescString(m_desc.iManufacturer);
-            this->m_info.product = this->getDescString(m_desc.iProduct);
-            this->m_info.serial_number = this->getDescString(m_desc.iSerialNumber);
-        }
+    _ERROR_RETURN_IF(ret != 0, ret, "Failed to open device: %s", LibusbUtils::errString(ret))
+
+    m_info.is_opened = true;
+    if (this->m_info.product.empty()) {
+        this->m_info.manufacturer = this->getDescString(m_desc.iManufacturer);
+        this->m_info.product = this->getDescString(m_desc.iProduct);
+        this->m_info.serial_number = this->getDescString(m_desc.iSerialNumber);
     }
 
     return ret;
@@ -64,9 +61,11 @@ int LibusbDevice::active(const int interfaceNumber) const {
 
     int ret = libusb_kernel_driver_active(m_handle, interfaceNumber);
     if (ret != 0) {
-        ret = libusb_detach_kernel_driver(m_handle, interfaceNumber);
-        if (ret != 0) {
-            _ERROR("Failed to detach kernel driver: %s", LibusbUtils::errString(ret));
+        if (libusb_has_capability(LIBUSB_CAP_SUPPORTS_DETACH_KERNEL_DRIVER)) {
+            ret = libusb_detach_kernel_driver(m_handle, interfaceNumber);
+            if (ret != 0) {
+                _ERROR("Failed to detach kernel driver: %s", LibusbUtils::errString(ret));
+            }
         }
     }
     return ret;
@@ -112,9 +111,9 @@ int LibusbDevice::sendBulk(unsigned char* data, int length, int* actual_length, 
     _FATAL_IF(!m_handle, "Device is not open");
     _FATAL_IF(!m_active_interface.valid(), "Interface is not claimed");
 
-    uint8_t endpoint = m_active_interface.getActiveInEndpoint().address();
+    uint8_t endpoint = m_active_interface.getActiveOutEndpoint().address();
     int ret = libusb_bulk_transfer(m_handle, endpoint, data, length, actual_length, timeout);
-    _ERROR_IF(ret != 0, "Failed to send bulk transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
+    _ERROR_IF(ret != 0 && ret != LIBUSB_ERROR_TIMEOUT, "Failed to send bulk transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
 }
 
@@ -124,7 +123,7 @@ int LibusbDevice::recvBulk(unsigned char* data, int length, int* actual_length, 
 
     uint8_t endpoint = m_active_interface.getActiveInEndpoint().address();
     int ret = libusb_bulk_transfer(m_handle, endpoint, data, length, actual_length, timeout);
-    _ERROR_IF(ret != 0, "Failed to recv bulk transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
+    _ERROR_IF(ret != 0 && ret != LIBUSB_ERROR_TIMEOUT, "Failed to recv bulk transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
 }
 
@@ -134,7 +133,7 @@ int LibusbDevice::sendInterrupt(unsigned char* data, int length, int* actual_len
 
     uint8_t endpoint = m_active_interface.getActiveOutEndpoint().address();
     int ret = libusb_interrupt_transfer(m_handle, endpoint, data, length, actual_length, timeout);
-    _ERROR_IF(ret!= 0, "Failed to send interrupt transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
+    _ERROR_IF(ret != 0 && ret != LIBUSB_ERROR_TIMEOUT, "Failed to send interrupt transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
 }
 
@@ -142,17 +141,18 @@ int LibusbDevice::recvInterrupt(unsigned char* data, int length, int* actual_len
     _FATAL_IF(!m_handle, "Device is not open");
     _FATAL_IF(!m_active_interface.valid(), "Interface is not claimed");
 
-    uint8_t endpoint = m_active_interface.getActiveOutEndpoint().address();
+    uint8_t endpoint = m_active_interface.getActiveInEndpoint().address();
     int ret = libusb_interrupt_transfer(m_handle, endpoint, data, length, actual_length, timeout);
-    _ERROR_IF(ret!= 0, "Failed to recv interrupt transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
+    _ERROR_IF(ret != 0 && ret != LIBUSB_ERROR_TIMEOUT, "Failed to recv interrupt transfer(endpoint: %d): %s", endpoint, LibusbUtils::errString(ret));
     return ret;
 }
 
 void LibusbDevice::close() {
-    if (m_active_interface.valid()) {
-        libusb_release_interface(m_handle, m_active_interface.number());
-    }
     if (m_handle) {
+        if (m_active_interface.valid()) {
+            libusb_release_interface(m_handle, m_active_interface.number());
+            m_active_interface = {};
+        }
         libusb_close(m_handle);
         m_handle = nullptr;
         m_info.is_opened = false;

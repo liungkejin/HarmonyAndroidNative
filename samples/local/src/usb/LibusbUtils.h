@@ -11,6 +11,8 @@
 
 NAMESPACE_DEFAULT
 
+typedef libusb_endpoint_transfer_type EndpointTransferType;
+
 class LibusbUtils {
 public:
     static std::string toHexString(const uint64_t val) {
