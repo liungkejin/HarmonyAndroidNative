@@ -86,7 +86,16 @@ check_function("socketpair" "sys/socket.h")
 check_function("eventfd" "sys/eventfd.h")
 check_function("setproctitle" "unistd.h")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hconfig.h.in ${CMAKE_CURRENT_SOURCE_DIR}/hconfig.h)
+set(HCONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/hconfig)
+if (${CMAKE_SYSTEM_NAME} STREQUAL "Android")
+    set(HCONFIG_DIR ${HCONFIG_DIR}/${CMAKE_SYSTEM_NAME}/${CMAKE_ANDROID_ARCH_ABI})
+elseif (${CMAKE_SYSTEM_NAME} STREQUAL "OHOS")
+    set(HCONFIG_DIR ${HCONFIG_DIR}/${CMAKE_SYSTEM_NAME}/${OHOS_ARCH})
+else ()
+    set(HCONFIG_DIR ${HCONFIG_DIR}/${CMAKE_SYSTEM_NAME}/${CMAKE_SYSTEM_PROCESSOR})
+endif ()
+message(STATUS "hconfig dir: ${HCONFIG_DIR}")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/hconfig.h.in ${HCONFIG_DIR}/hconfig.h)
 
 # see Makefile.in
 set(CMAKE_C_STANDARD 99)
