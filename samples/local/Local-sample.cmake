@@ -64,6 +64,7 @@ set(SAMPLE_SOURCES
         ${SAMPLE_SRC_DIR}/usb/LibusbMgr.cpp
         ${SAMPLE_SRC_DIR}/usb/AOAProtocol.cpp
         ${SAMPLE_SRC_DIR}/usb/LibusbDeviceTransfer.cpp
+        ${SAMPLE_SRC_DIR}/net/NetTestWindow.cpp
 )
 
 add_executable(local-sample

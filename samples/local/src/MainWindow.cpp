@@ -10,10 +10,12 @@
 #include <common/utils/ThreadPool.h>
 
 #include "gl/GLTestWindow.h"
+#include "net/NetTestWindow.h"
 #include "usb/LibusbWindow.h"
 
 static GLTestWindow g_gl_test_window;
 static LibusbWindow g_libusb_window;
+static NetTestWindow g_net_test_window;
 
 #ifdef WIN32
 #include "win32/WinCamTestWindow.h"
@@ -36,6 +38,7 @@ void MainWindow::onInit(int width, int height) {
     g_all_windows.push_back(&g_win_cam_test_window);
 #endif
     g_all_windows.push_back(&g_libusb_window);
+    g_all_windows.push_back(&g_net_test_window);
 
     for (auto *p: g_all_windows) {
         p->onAppInit(width, height);
