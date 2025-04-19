@@ -5,40 +5,37 @@
 #include "TCPClient.h"
 
 #include <common/utils/Base.h>
+#include <hv/EventLoopThread.h>
 
 NAMESPACE_DEFAULT
 class TCPClientContext {
 public:
-    TCPClientContext(TCPClient* c) : client(c) {
-    }
-
-    ~TCPClientContext() {
-        m_event_thread.quit();
-        this->release();
-    }
-
-    TCPClient* client;
-
     std::string host;
     int port = 0;
 
     bool connected = false;
 
     TCPClientListener* listener = nullptr;
-    hloop_t* loop = nullptr;
-    hio_t* listen_io = nullptr;
 
-    std::mutex lock;
+public:
+    explicit TCPClientContext(TCPClient* c) : m_client(c) {
+    }
+
+    ~TCPClientContext() {
+        this->release();
+    }
 
     bool connect(const std::string& host, int port, int timeoutMs = 0) {
-        LOCK_MUTEX(lock);
+        LOCK_MUTEX(m_lock);
         this->releaseInternal();
-        this->loop = hloop_new(HLOOP_FLAG_AUTO_FREE);
-        if (this->loop == nullptr) {
-            return false;
-        }
-        this->listen_io = hio_create_socket(loop, host.c_str(), port, HIO_TYPE_TCP, HIO_CLIENT_SIDE);
-        if (listen_io == nullptr) {
+
+        m_event_loop_thread = std::make_unique<hv::EventLoopThread>();
+        m_event_loop_thread->start();
+        hloop_t* loop = m_event_loop_thread->hloop();
+        _ERROR_RETURN_IF(loop == nullptr, false, "tcp client loop thread start failed");
+
+        this->m_listen_io = hio_create_socket(loop, host.c_str(), port, HIO_TYPE_TCP, HIO_CLIENT_SIDE);
+        if (m_listen_io == nullptr) {
             _ERROR("hio_create_socket failed(%s:%d)", host.c_str(), port);
             this->releaseInternal();
             return false;
@@ -48,67 +45,59 @@ public:
         this->port = port;
         _INFO("tcpclient connect(%s:%d) timeoutms = %d", host.c_str(), port, timeoutMs);
         if (timeoutMs > 0) {
-            hio_set_connect_timeout(listen_io, timeoutMs);
+            hio_set_connect_timeout(m_listen_io, timeoutMs);
         }
 
-        hevent_set_userdata(listen_io, this);
-        hio_setcb_connect(listen_io, [](hio_t* io) {
+        hevent_set_userdata(m_listen_io, this);
+        hio_setcb_connect(m_listen_io, [](hio_t* io) {
             TCPClientContext* ctx = (TCPClientContext*)hevent_userdata(io);
             if (ctx) {
                 ctx->onConnect();
             }
         });
 
-        hio_setcb_close(listen_io, [](hio_t* io) {
+        hio_setcb_close(m_listen_io, [](hio_t* io) {
             TCPClientContext* ctx = (TCPClientContext*)hevent_userdata(io);
             if (ctx) {
                 ctx->onClose();
             }
         });
 
-        hio_setcb_read(listen_io, [](hio_t* io, void* buf, int readbytes) {
+        hio_setcb_read(m_listen_io, [](hio_t* io, void* buf, int readbytes) {
             TCPClientContext* ctx = (TCPClientContext*)hevent_userdata(io);
             if (ctx) {
                 ctx->onRecv((const uint8_t*)buf, readbytes);
             }
         });
 
-        int ret = hio_connect(listen_io);
+        int ret = hio_connect(m_listen_io);
         if (ret != 0) {
             _ERROR("hio_connect(%s:%d) failed: %d", host.c_str(), port, ret);
             this->releaseInternal();
             return false;
         }
 
-        hio_read_start(listen_io);
-        m_event_thread.post([this]() {
-            if (loop) {
-                _INFO("TCPClient run loop");
-                hloop_run(loop);
-                _INFO("TCPClient loop stopped");
-            }
-            else {
-                _ERROR("TCPClient loop is null");
-            }
-        });
-        _INFO("hio_connect(%s:%d) success", host.c_str(), port);
+        hio_read_start(m_listen_io);
+        _INFO("TCPClient run loop");
+        hloop_run(loop);
+        _INFO("TCPClient(%s:%d) start success", host.c_str(), port);
         return true;
     }
 
     void onConnect() {
-        LOCK_MUTEX(lock);
+        LOCK_MUTEX(m_lock);
         this->connected = true;
         if (listener) {
-            listener->onConnect(*client);
+            listener->onConnect(*m_client);
         }
     }
 
     int send(const uint8_t* data, const int len) {
-        LOCK_MUTEX(lock);
+        LOCK_MUTEX(m_lock);
         if (!connected) {
             return -1;
         }
-        int ret = hio_write(listen_io, data, len);
+        int ret = hio_write(m_listen_io, data, len);
         if (ret != len) {
             _ERROR("hio_write failed: %d", ret);
         }
@@ -119,23 +108,23 @@ public:
     }
 
     void onRecv(const uint8_t* data, const int len) {
-        LOCK_MUTEX(lock);
+        LOCK_MUTEX(m_lock);
         if (listener) {
-            listener->onRecv(*client, data, len);
+            listener->onRecv(*m_client, data, len);
         }
     }
 
     void onClose() {
-        LOCK_MUTEX(lock);
+        LOCK_MUTEX(m_lock);
         this->connected = false;
         if (listener) {
-            listener->onDisconnect(*client);
+            listener->onDisconnect(*m_client);
         }
     }
 
     void release() {
         _INFO("TCPClient disconnect");
-        LOCK_MUTEX(lock);
+        LOCK_MUTEX(m_lock);
         this->releaseInternal();
         _INFO("TCPClient disconnect done");
     }
@@ -143,19 +132,21 @@ public:
 private:
     void releaseInternal() {
         this->connected = false;
-        if (listen_io) {
-            hio_close(listen_io);
-            listen_io = nullptr;
+        if (m_listen_io) {
+            hio_close(m_listen_io);
+            m_listen_io = nullptr;
         }
-        if (loop) {
-            hloop_stop(loop);
-            hloop_free(&loop);
-            loop = nullptr;
+        if (m_event_loop_thread) {
+            m_event_loop_thread->stop();
         }
     }
 
 private:
-    EventThread m_event_thread;
+    std::mutex m_lock;
+
+    TCPClient* m_client;
+    hio_t* m_listen_io = nullptr;
+    std::unique_ptr<hv::EventLoopThread> m_event_loop_thread = nullptr;
 };
 
 TCPClient::TCPClient() {

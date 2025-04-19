@@ -6,6 +6,7 @@
 
 #include <common/Log.h>
 #include <common/utils/Base.h>
+#include <hv/EventLoopThread.h>
 
 NAMESPACE_DEFAULT
 class TCPServerContext {
@@ -15,7 +16,6 @@ public:
 
     ~TCPServerContext() {
         this->stop();
-        m_event_thread.quit();
     }
 
     void setListener(TCPServerListener* listener) {
@@ -26,16 +26,25 @@ public:
         return m_listen_io != nullptr;
     }
 
+    std::string getHost() const {
+        return m_host;
+    }
+
+    int getPort() const {
+        return m_port;
+    }
+
     bool start(const std::string& host, int port) {
         LOCK_MUTEX(m_lock);
         this->stopInternal();
 
-        hloop_t* loop = hloop_new(HLOOP_FLAG_AUTO_FREE);
+        m_event_loop_thread = std::make_unique<hv::EventLoopThread>();
+        m_event_loop_thread->start();
+        hloop_t *loop = m_event_loop_thread->hloop();
         _ERROR_RETURN_IF(loop == nullptr, false, "tcp server hloop_new failed");
 
         hio_t* io = hio_create_socket(loop, host.c_str(), port, HIO_TYPE_TCP, HIO_SERVER_SIDE);
         if (io == nullptr) {
-            hloop_free(&loop);
             _ERROR_RETURN_IF(io == nullptr, false, "tcp server hio_create_socket failed");
         }
         hevent_set_userdata(io, this);
@@ -51,26 +60,18 @@ public:
         });
         int ret = hio_accept(io);
         if (ret != 0) {
-            hloop_free(&loop);
             hio_close(io);
             _ERROR("hio_accept failed: %d", ret);
             return false;
         }
 
-        m_loop = loop;
         m_listen_io = io;
+        m_host = host;
+        m_port = port;
 
-        _INFO("tcp server start(%s:%d), loop: %p, listen io: %p: %d", host.c_str(), port, m_loop, m_listen_io,
-              hio_id(m_listen_io));
-        m_event_thread.post([this]() {
-            if (m_loop) {
-                _INFO("tcp server loop");
-                hloop_run(m_loop);
-                _INFO("tcp server loop end");
-            } else {
-                _ERROR("tcp server == null");
-            }
-        });
+        _INFO("tcp server run loop");
+        hloop_run(loop);
+        _INFO("tcp server start(%s:%d) success, listen io: %p: %d", host.c_str(), port, m_listen_io, hio_id(m_listen_io));
         return true;
     }
 
@@ -135,7 +136,7 @@ public:
         LOCK_MUTEX(m_lock);
         auto it = m_connections.find(io);
         if (it == m_connections.end()) {
-            _ERROR("onClose[%p:%d] not found", io);
+            _WARN("onClose[%p] not found, all connections(%d)", io, m_connections.size());
             return;
         }
         TCPServerConnection* conn = it->second;
@@ -171,12 +172,8 @@ private:
             m_listen_io = nullptr;
             _INFO("TCPServerContext close listen_io");
         }
-
-        if (m_loop) {
-            hloop_stop(m_loop);
-            hloop_free(&m_loop);
-            m_loop = nullptr;
-            _INFO("TCPServerContext free loop");
+        if (m_event_loop_thread) {
+            m_event_loop_thread->stop();
         }
     }
 
@@ -185,13 +182,12 @@ public:
     std::string m_host;
     int m_port = 0;
 
-    hloop_t* m_loop = nullptr;
     hio_t* m_listen_io = nullptr;
 
     std::unordered_map<hio_t*, TCPServerConnection*> m_connections;
 
     TCPServerListener* m_listener = nullptr;
-    EventThread m_event_thread;
+    std::unique_ptr<hv::EventLoopThread> m_event_loop_thread;
 
     std::mutex m_lock;
 };
