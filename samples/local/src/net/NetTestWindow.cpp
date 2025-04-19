@@ -6,6 +6,7 @@
 
 #include <common/net/TCPClient.h>
 #include <common/net/TCPServer.h>
+#include <common/net/WebSocket.h>
 
 using namespace znative;
 
@@ -50,12 +51,50 @@ MyTCPClientListener m_tcp_client_listener;
 
 char m_client_input_buffer[1024] = {0};
 
+
+WSocketClient m_ws_client;
+std::shared_ptr<WSocketServer> m_ws_server;
+
 void NetTestWindow::onVisible(int width, int height) {
     m_tcp_server.setListener(&m_tcp_server_listener);
     m_tcp_client.setListener(&m_tcp_client_listener);
+
+    m_ws_server = std::make_shared<WSocketServer>();
+    WSService ws;
+    ws.onopen = [](const WebSocketChannelPtr& channel, const HttpRequestPtr& req) {
+        _INFO("websocket server onopen");
+        channel->send("hello world");
+    };
+    ws.onmessage = [](const WebSocketChannelPtr& channel, const std::string& msg) {
+        WSOpCode code = channel->opcode;
+        _INFO("websocket server onmessage: %s, opcode: %d", msg.c_str(), code);
+        channel->send("response_msg");
+    };
+    ws.onclose = [](const WebSocketChannelPtr& channel) {
+        _INFO("websocket server onclose");
+    };
+    ws.ping_interval = 10000;
+    m_ws_server->start(19998, ws);
+
+    WSClientHandler handler;
+    handler.onopen = [](WSocketClient& client) {
+        _INFO("websocket client onopen");
+    };
+    handler.onmessage = [](WSocketClient& client, const std::string& msg, WSOpCode code) {
+        _INFO("websocket client onmessage: %s, opcode: %d", msg.c_str(), code);
+    };
+    handler.onclose = [](WSocketClient& client) {
+        _INFO("websocket client onclose");
+    };
+    m_ws_client.setHandler(handler);
 }
 
 void NetTestWindow::onInvisible(int width, int height) {
+    m_tcp_server.stop();
+    m_tcp_client.disconnect();
+
+    m_ws_server->stop();
+    m_ws_client.disconnect();
 }
 
 
@@ -97,5 +136,22 @@ void NetTestWindow::onRenderImgui(int width, int height, ImGuiIO& io) {
             m_tcp_client.connect("127.0.0.1", server_port);
         }
     }
+
+    if (m_ws_client.isConnected()) {
+        ImGui::Text("WebSocketClient 已连接");
+        if (ImGui::Button("发送数据")) {
+            m_ws_client.send("hello world from client");
+        }
+        if (ImGui::Button("断开 WebSocketClient")) {
+            m_ws_client.disconnect();
+        }
+    } else if (m_ws_client.isConnecting()) {
+        ImGui::Text("WebSocketClient 正在连接");
+    } else {
+        if (ImGui::Button("连接 WebSocketClient(ws://127.0.0.1:19998)")) {
+            m_ws_client.connect("ws://127.0.0.1:19998");
+        }
+    }
+
     ImGui::End();
 }
